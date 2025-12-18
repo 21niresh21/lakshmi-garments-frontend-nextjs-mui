@@ -15,10 +15,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { InvoiceDetails } from "../_types/invoiceDetails";
-import { InvoiceErrors } from "./page";
 import dayjs from "dayjs";
 import { Supplier } from "../_types/supplier";
 import { Transport } from "../_types/transport";
+import { InvoiceErrors } from "./invoice.types";
 
 interface Props {
   value: InvoiceDetails;

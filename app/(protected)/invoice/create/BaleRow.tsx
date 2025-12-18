@@ -5,7 +5,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Bale } from "../_types/Bale";
 import { Category } from "@/app/_types/Category";
 import { SubCategory } from "@/app/_types/SubCategory";
-import { BaleErrors } from "./page";
+import { BaleErrors } from "./invoice.types";
 
 interface Props {
   bale: Bale;

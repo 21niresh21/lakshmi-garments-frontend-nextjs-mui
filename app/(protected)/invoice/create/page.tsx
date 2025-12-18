@@ -25,29 +25,9 @@ import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useConfirmation } from "@/app/components/shared/ConfirmationProvider";
 import { createStock } from "@/app/api/invoiceApi";
 import { useUser } from "@/app/context/UserContext";
+import { BaleErrors, INITIAL_INVOICE, INITIAL_LR, InvoiceErrors, LRErrors } from "./invoice.types";
 
-export type InvoiceErrors = FieldErrors<InvoiceDetails>;
 
-export const INITIAL_INVOICE: InvoiceDetails = {
-  invoiceNumber: "",
-  invoiceDate: "",
-  receivedDate: "",
-  supplierID: undefined,
-  transportID: undefined,
-  transportCost: 0,
-  istransportPaid: false,
-};
-
-export const INITIAL_LR: LRDetails = {
-  lorryReceipts: [],
-  transportType: "transport",
-};
-
-export type BaleErrors = Partial<Record<keyof Bale, string>>;
-export type LRErrors = {
-  lrNumber?: string;
-  bales?: Record<string, BaleErrors>; // baleId -> errors
-};
 
 function page() {
   const [invoice, setInvoice] = useState<InvoiceDetails>(INITIAL_INVOICE);

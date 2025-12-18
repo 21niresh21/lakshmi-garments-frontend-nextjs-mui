@@ -15,7 +15,7 @@ import LRAccordionSection from "./LRBaleDetails";
 import { Category } from "@/app/_types/Category";
 import { SubCategory } from "@/app/_types/SubCategory";
 import { Bale } from "../_types/Bale";
-import { LRErrors } from "./page";
+import { LRErrors } from "./invoice.types";
 
 interface Props {
   value: LRDetails;
