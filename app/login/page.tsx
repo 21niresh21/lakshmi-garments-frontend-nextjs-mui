@@ -25,6 +25,7 @@ export default function LoginPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Single change handler for both username and password
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,6 +35,7 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    setLoading(true);
     const { username, password } = credentials;
     if (!username || !password) return;
 
@@ -46,6 +48,8 @@ export default function LoginPage() {
       router.push("/invoice/create");
     } catch (err) {
       setError("Invalid username or password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,7 +137,14 @@ export default function LoginPage() {
             </Typography>
           )}
 
-          <Button type="submit" variant="contained" size="large" sx={{ mt: 1 }}>
+          <Button
+            loading={loading}
+            // loadingPosition="end"
+            type="submit"
+            variant="contained"
+            size="large"
+            sx={{ mt: 1 }}
+          >
             Login
           </Button>
         </Box>
