@@ -7,8 +7,8 @@ import {
   Typography,
 } from "@mui/material";
 import React, { Dispatch, SetStateAction } from "react";
-import { JobworkForm } from "./page";
 import { Employee } from "@/app/_types/Employee";
+import { JobworkForm } from "./_types/jobwork.types";
 
 export type BatchSerialCode = {
   id: number;
@@ -28,7 +28,7 @@ export default function AssignmentForm({
   jobworkTypes,
   setForm,
   jobwork,
-  employees
+  employees,
 }: Props) {
   console.log("type", jobwork.jobworkType);
   return (
@@ -101,7 +101,7 @@ export default function AssignmentForm({
               fullWidth
               autoHighlight
               options={employees}
-              getOptionLabel={(emp)=>emp.name}
+              getOptionLabel={(emp) => emp.name}
               value={jobwork.employee}
               onChange={(_, value) => {
                 setForm((prev) => ({
