@@ -21,21 +21,21 @@ export const sidebarGroups: SidebarGroup[] = [
     title: 'Invoice',
     items: [
       { label: 'Add Invoice', href: '/invoice/create', icon: <ReceiptLongIcon /> },
-      { label: 'Invoices', href: '/invoice/list', icon: <InventoryIcon/> },
+      // { label: 'Invoices', href: '/invoice/list', icon: <InventoryIcon/> },
     ],
   },
   {
     title: 'Production',
     items: [
       { label: 'Create Batch', href: '/batch/create', icon: <LayersIcon /> },
-      { label: 'Assign Batch', href: '/batch/assign', icon: <AssignmentAddIcon /> },
+      // { label: 'Assign Batch', href: '/batch/assign', icon: <AssignmentAddIcon /> },
     ],
   },
-  {
-    title: 'Masters',
-    items: [
-      { label: 'Suppliers', href: '/supplier', icon: <PeopleIcon /> },
-      { label: 'Transports', href: '/transports', icon: <LocalShippingIcon /> },
-    ],
-  },
+  // {
+  //   title: 'Masters',
+  //   items: [
+  //     { label: 'Suppliers', href: '/supplier', icon: <PeopleIcon /> },
+  //     { label: 'Transports', href: '/transports', icon: <LocalShippingIcon /> },
+  //   ],
+  // },
 ];
