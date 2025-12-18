@@ -14,6 +14,7 @@ import { createBatch } from "@/app/api/batchApi";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useUser } from "@/app/context/UserContext";
 import { BatchStatus } from "@/app/_types/BatchStatus";
+import { useState } from "react";
 
 interface Props {
   serialCode: string;
@@ -27,12 +28,14 @@ export default function BatchPreview({
   onClear,
 }: //   onClear,
 Props) {
+  const [loading, setLoading] = useState(false);
   const { notify } = useNotification();
   const { user } = useUser();
   const hasSelectedItems =
     batchDetails?.items?.some((item) => item.selected) ?? false;
 
   const submitBatch = () => {
+    setLoading(true);
     const payload = {
       ...batchDetails,
       serialCode,
@@ -51,7 +54,8 @@ Props) {
         notify("Batch has been created.", "success");
         onClear();
       })
-      .catch((err) => notify("Some error occured", "error"));
+      .catch((err) => notify("Some error occured", "error"))
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -148,6 +152,8 @@ Props) {
           startIcon={<CheckCircleIcon />}
           size="small"
           variant="contained"
+          loading={loading}
+          loadingPosition="start"
         >
           Create
         </Button>

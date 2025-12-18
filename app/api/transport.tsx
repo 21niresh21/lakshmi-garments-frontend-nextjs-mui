@@ -16,6 +16,6 @@ export const fetchTransports = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching transports", error);
-    return [];
+    throw error;
   }
 };

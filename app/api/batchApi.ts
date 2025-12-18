@@ -26,6 +26,7 @@ export const getUnfinishedUrgentBatches = async () => {
     return response.data;
   } catch (error) {
     console.error("Error getting unfinished urgent batches:", error);
+    throw error;
   }
 };
 
@@ -35,6 +36,7 @@ export const getUnfinishedBatches = async () => {
     return response.data;
   } catch (error) {
     console.error("Error getting unfinished batchs:", error);
+    throw error
   }
 };
 
@@ -43,7 +45,7 @@ export const getJobworkTypes = async (serialCode: string) => {
     const response = await axiosInstance.get(
       `${baseUrl}/jobwork-types/${serialCode}`
     );
-    console.log(response)
+    console.log(response);
     return response.data;
   } catch (error) {
     console.error("Error getting possible jobwork types:", error);

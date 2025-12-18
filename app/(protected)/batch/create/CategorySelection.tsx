@@ -1,9 +1,6 @@
-import { Inventory } from "@/app/_types/Inventory";
 import {
   Box,
   Checkbox,
-  FormControlLabel,
-  FormGroup,
   Switch,
   TextField,
   Typography,

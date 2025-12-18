@@ -15,6 +15,6 @@ export const fetchCategories = async (search?: string): Promise<Category[]> => {
     return response.data;
   } catch (error) {
     console.error("Error fetching categories:", error);
-    return []; // ✅ safe fallback for UI
+    throw error
   }
 };

@@ -11,7 +11,7 @@ export const INITIAL_INVOICE: InvoiceDetails = {
   receivedDate: "",
   supplierID: undefined,
   transportID: undefined,
-  transportCost: 0,
+  transportCost: undefined,
   istransportPaid: false,
 };
 

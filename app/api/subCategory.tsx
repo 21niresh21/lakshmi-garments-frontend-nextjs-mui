@@ -20,6 +20,6 @@ export const fetchSubCategories = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching sub-categories:", error);
-    return []; // ✅ safe for autocomplete
+    throw error
   }
 };

@@ -20,6 +20,6 @@ export const fetchSuppliers = async (search?: string): Promise<Supplier[]> => {
     return response.data;
   } catch (error) {
     console.error("Error fetching suppliers", error);
-    return [];
+    throw error
   }
 };

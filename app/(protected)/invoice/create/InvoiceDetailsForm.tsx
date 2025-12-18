@@ -5,7 +5,6 @@ import {
   TextField,
   Switch,
   FormControlLabel,
-  MenuItem,
   FormControl,
   Box,
   Typography,
@@ -14,8 +13,9 @@ import {
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { InvoiceDetails } from "../_types/invoiceDetails";
 import dayjs from "dayjs";
+
+import { InvoiceDetails } from "../_types/invoiceDetails";
 import { Supplier } from "../_types/supplier";
 import { Transport } from "../_types/transport";
 import { InvoiceErrors } from "./invoice.types";
@@ -36,25 +36,29 @@ export default function InvoiceDetailsForm({
   transports,
 }: Props) {
   return (
-    <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Invoice Details
-      </Typography>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box>
+        <Typography variant="h5" sx={{ mb: 2 }}>
+          Invoice Details
+        </Typography>
 
-      <Grid container spacing={2}>
-        <Grid size={4}>
-          <TextField
-            fullWidth
-            value={value.invoiceNumber}
-            onChange={(e) => onChange({ invoiceNumber: e.target.value })}
-            error={!!errors?.invoiceNumber}
-            helperText={errors?.invoiceNumber}
-            label="Invoice Number"
-          />
-        </Grid>
-        <Grid size={4}>
-          <FormControl fullWidth>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Grid container spacing={2}>
+          {/* Invoice Number */}
+          <Grid size={4}>
+            <TextField
+              id="invoice-number"
+              fullWidth
+              label="Invoice Number"
+              value={value.invoiceNumber}
+              onChange={(e) => onChange({ invoiceNumber: e.target.value })}
+              error={!!errors.invoiceNumber}
+              helperText={errors.invoiceNumber}
+            />
+          </Grid>
+
+          {/* Invoice Date */}
+          <Grid size={4}>
+            <FormControl fullWidth>
               <DatePicker
                 label="Invoice Date"
                 format="DD/MM/YYYY"
@@ -64,23 +68,24 @@ export default function InvoiceDetailsForm({
                     invoiceDate: date ? date.format("DD-MM-YYYY") : "",
                   })
                 }
+                maxDate={dayjs()}
                 slotProps={{
                   textField: {
-                    helperText: errors.invoiceDate,
-                    error: Boolean(errors.invoiceDate),
+                    id: "invoice-date",
                     fullWidth: true,
+                    error: Boolean(errors.invoiceDate),
+                    helperText: errors.invoiceDate,
                   },
                 }}
-                maxDate={dayjs()}
               />
-            </LocalizationProvider>
-          </FormControl>
-        </Grid>
-        <Grid size={4}>
-          <FormControl fullWidth>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
+            </FormControl>
+          </Grid>
+
+          {/* Received Date */}
+          <Grid size={4}>
+            <FormControl fullWidth>
               <DatePicker
-                label="Recieved Date"
+                label="Received Date"
                 format="DD/MM/YYYY"
                 value={value.receivedDate ? dayjs(value.receivedDate) : null}
                 onChange={(date) =>
@@ -88,88 +93,107 @@ export default function InvoiceDetailsForm({
                     receivedDate: date ? date.format("DD-MM-YYYY") : "",
                   })
                 }
+                maxDate={dayjs()}
                 slotProps={{
                   textField: {
-                    helperText: errors.receivedDate,
-                    error: Boolean(errors.receivedDate),
+                    id: "received-date",
                     fullWidth: true,
+                    error: Boolean(errors.receivedDate),
+                    helperText: errors.receivedDate,
                   },
                 }}
-                maxDate={dayjs()}
               />
-            </LocalizationProvider>
-          </FormControl>
-        </Grid>
-        <Grid size={4}>
-          <Autocomplete
-            disablePortal
-            autoHighlight
-            options={suppliers}
-            getOptionLabel={(option) => option.name}
-            value={suppliers.find((s) => s.id === value.supplierID) || null}
-            onChange={(_, selected) => {
-              onChange({
-                supplierID: selected ? Number(selected.id) : undefined,
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Supplier"
-                error={!!errors?.supplierID}
-                helperText={errors?.supplierID}
-              />
-            )}
-          />
-        </Grid>
-        <Grid size={4}>
-          <Autocomplete
-            disablePortal
-            autoHighlight
-            options={transports}
-            getOptionLabel={(option) => option.name}
-            value={transports.find((s) => s.id === value.transportID) || null}
-            onChange={(_, selected) => {
-              onChange({
-                transportID: selected ? Number(selected.id) : undefined,
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Transport"
-                error={!!errors?.transportID}
-                helperText={errors?.transportID}
-              />
-            )}
-          />
-        </Grid>
-        <Grid size={4}>
+            </FormControl>
+          </Grid>
+
+          {/* Supplier */}
+          <Grid size={4}>
+            <Autocomplete
+              id="supplier-autocomplete"
+              disablePortal
+              autoHighlight
+              options={suppliers}
+              getOptionLabel={(option) => option.name}
+              value={suppliers.find((s) => s.id === value.supplierID) || null}
+              onChange={(_, selected) =>
+                onChange({
+                  supplierID: selected ? Number(selected.id) : undefined,
+                })
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  id="supplier-input"
+                  label="Supplier"
+                  error={!!errors.supplierID}
+                  helperText={errors.supplierID}
+                />
+              )}
+            />
+          </Grid>
+
+          {/* Transport */}
+          <Grid size={4}>
+            <Autocomplete
+              id="transport-autocomplete"
+              disablePortal
+              autoHighlight
+              options={transports}
+              getOptionLabel={(option) => option.name}
+              value={transports.find((t) => t.id === value.transportID) || null}
+              onChange={(_, selected) =>
+                onChange({
+                  transportID: selected ? Number(selected.id) : undefined,
+                })
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  id="transport-input"
+                  label="Transport"
+                  error={!!errors.transportID}
+                  helperText={errors.transportID}
+                />
+              )}
+            />
+          </Grid>
+
+          {/* Transport Cost */}
+          <Grid size={4}>
             <TextField
+              id="transport-cost"
               type="number"
               label="Transport Cost"
-              onChange={(e) =>
-                onChange({ transportCost: Number(e.target.value) })
-              }
-              error={!!errors?.transportCost}
-              helperText={errors?.transportCost}
               fullWidth
+              value={value.transportCost ?? ""}
+              onChange={(e) => {
+                const raw = e.target.value;
+
+                onChange({
+                  transportCost: raw === "" ? undefined : Number(raw),
+                });
+              }}
+              error={!!errors.transportCost}
+              helperText={errors.transportCost}
             />
+          </Grid>
+
+          {/* Transport Paid */}
+          <Grid>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={value.istransportPaid}
+                  onChange={(e) =>
+                    onChange({ istransportPaid: e.target.checked })
+                  }
+                />
+              }
+              label="Transport Paid"
+            />
+          </Grid>
         </Grid>
-        <Grid>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={value.istransportPaid}
-                onChange={(e) =>
-                  onChange({ istransportPaid: e.target.checked })
-                }
-              />
-            }
-            label="Transport Paid"
-          />
-        </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </LocalizationProvider>
   );
 }

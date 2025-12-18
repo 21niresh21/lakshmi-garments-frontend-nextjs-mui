@@ -30,7 +30,7 @@ export default function UserMenu() {
   return (
     <>
       <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-        <Avatar sx={{ bgcolor: "blue" }}>
+        <Avatar sx={{ bgcolor: "primary.main",height : 35, width : 35 }}>
           {user?.name?.[0]?.toUpperCase() || "U"}
         </Avatar>
       </IconButton>

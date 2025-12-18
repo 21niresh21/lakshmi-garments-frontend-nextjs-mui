@@ -13,6 +13,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import CategoryIcon from "@mui/icons-material/Category";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
+import InboxIcon from "@mui/icons-material/Inbox";
 
 export default function Page() {
   const { notify } = useNotification();
@@ -93,6 +94,7 @@ export default function Page() {
     try {
       loadInventory();
     } catch {
+      notify("Error fetching inventory data", "error");
       console.log("error when fetching inventory");
     }
   }, []);
@@ -102,7 +104,7 @@ export default function Page() {
 
     fetchNextSerialCode(selection.categoryName)
       .then((serialCode) => setNextSerialCode(serialCode))
-      .catch((err) => console.error(err));
+      .catch((err) => notify("Server error"));
   }, [selection?.categoryName]);
 
   return (
@@ -207,10 +209,21 @@ export default function Page() {
               flexDirection: "column",
             }}
           >
-            <CategoryIcon sx={{ fontSize: 100, color: "gray" }} />
-            <Typography variant="h6" color="gray">
-              Choose from the above categories to start forming the Batch
-            </Typography>
+            {inventory.length > 0 ? (
+              <>
+                <CategoryIcon sx={{ fontSize: 100, color: "gray" }} />
+                <Typography variant="h6" color="gray">
+                  Choose from the above categories to start forming the Batch
+                </Typography>
+              </>
+            ) : (
+              <>
+                <InboxIcon sx={{ fontSize: 100, color: "gray" }} />
+                <Typography variant="h6" color="gray">
+                  Inventory is empty.
+                </Typography>
+              </>
+            )}
           </Box>
         )}
         {selection && (

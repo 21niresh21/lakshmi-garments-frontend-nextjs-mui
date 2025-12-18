@@ -1,9 +1,8 @@
 "use client";
 
 import InvoiceDetailsForm from "./InvoiceDetailsForm";
-import { Box, Button, Divider, Grid, Stack } from "@mui/material";
+import { Box, Button, Divider, Grid, Stack, Typography } from "@mui/material";
 import { InvoiceDetails } from "../_types/invoiceDetails";
-import { FieldErrors } from "@/app/_types/errors";
 import { useEffect, useRef, useState } from "react";
 import { Supplier } from "../_types/supplier";
 import { Transport } from "../_types/transport";
@@ -25,15 +24,20 @@ import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useConfirmation } from "@/app/components/shared/ConfirmationProvider";
 import { createStock } from "@/app/api/invoiceApi";
 import { useUser } from "@/app/context/UserContext";
-import { BaleErrors, INITIAL_INVOICE, INITIAL_LR, InvoiceErrors, LRErrors } from "./invoice.types";
-
-
+import {
+  BaleErrors,
+  INITIAL_INVOICE,
+  INITIAL_LR,
+  InvoiceErrors,
+  LRErrors,
+} from "./invoice.types";
 
 function page() {
   const [invoice, setInvoice] = useState<InvoiceDetails>(INITIAL_INVOICE);
   const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
   const [lr, setLr] = useState<LRDetails>(INITIAL_LR);
   const [lrErrors, setLrErrors] = useState<Record<string, LRErrors>>({});
+  const [loading, setLoading] = useState(false);
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [transports, setTransports] = useState<Transport[]>([]);
@@ -186,6 +190,7 @@ function page() {
     }
 
     if (Object.keys(errors).length === 0) {
+      setLoading(true);
       const payload = {
         ...invoice,
         invoiceDate: invoice.invoiceDate.replaceAll("-", "/"),
@@ -200,7 +205,9 @@ function page() {
         setLr(INITIAL_LR);
         localStorage.removeItem("invoiceDraft");
       } catch {
-        notify("Some error occured", "error");
+        notify("An error occured during submission", "error");
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -251,6 +258,7 @@ function page() {
       loadCategories();
       loadSubCategories();
     } catch {
+      notify("Error fetching data")
       console.log("error fetch master data");
     }
   }, []);
@@ -298,7 +306,12 @@ function page() {
             >
               Save Draft
             </Button>
-            <Button variant="contained" onClick={submitInvoice}>
+            <Button
+              variant="contained"
+              loading={loading}
+              loadingPosition="start"
+              onClick={submitInvoice}
+            >
               Submit Invoice
             </Button>
           </Stack>
