@@ -12,20 +12,7 @@ import AssignmentForm from "./AssignmentForm";
 import { fetchEmployees, fetchEmployeeStats } from "@/app/api/employeeApi";
 import { Employee } from "@/app/_types/Employee";
 import EmployeeStats from "./EmployeeStats";
-
-export const INITIAL_JOBWORK: JobworkForm = {
-  serialCode: "",
-  jobworkType: "",
-  assignedBy: undefined,
-  employee: null,
-};
-
-export type JobworkForm = {
-  serialCode: string;
-  jobworkType: string;
-  assignedBy?: number;
-  employee: Employee | null;
-};
+import { INITIAL_JOBWORK, JobworkForm } from "./_types/jobwork.types";
 
 export default function Page() {
   const [urgentBatches, setUrgentBatches] = useState([]);
@@ -76,7 +63,11 @@ export default function Page() {
   }, [jobwork.jobworkType]);
 
   return (
-    <Grid container sx={{ height: "calc(100vh - 130px)",overflow: "hidden" }} spacing={2}>
+    <Grid
+      container
+      sx={{ height: "calc(100vh - 130px)", overflow: "hidden" }}
+      spacing={2}
+    >
       <Grid
         container
         direction="column"
