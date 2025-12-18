@@ -15,7 +15,7 @@ import { login } from "../api/loginApi";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import FaceIcon from "@mui/icons-material/Face";
-import LockIcon from '@mui/icons-material/Lock';
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function LoginPage() {
   const router = useRouter();

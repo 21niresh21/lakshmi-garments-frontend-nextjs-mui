@@ -24,6 +24,7 @@ import { LR } from "../_types/LR";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useConfirmation } from "@/app/components/shared/ConfirmationProvider";
 import { createStock } from "@/app/api/invoiceApi";
+import { useUser } from "@/app/context/UserContext";
 
 export type InvoiceErrors = FieldErrors<InvoiceDetails>;
 
@@ -60,6 +61,7 @@ function page() {
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
 
   const { notify } = useNotification();
+  const { user } = useUser();
 
   const validateInvoice = (): boolean => {
     const errors: InvoiceErrors = {};
@@ -209,20 +211,17 @@ function page() {
         invoiceDate: invoice.invoiceDate.replaceAll("-", "/"),
         receivedDate: invoice.receivedDate.replaceAll("-", "/"),
         lorryReceipts: lr.lorryReceipts,
-        createdById: 1,
+        createdById: user?.id,
       };
-      console.log("submitting", invoice);
-
-      // try {
-      //   await createStock(payload);
-      //   notify("Invoice has been saved", "success");
-      //   setInvoice(INITIAL_INVOICE);
-      //   setLr(INITIAL_LR);
-      //       localStorage.removeItem("invoiceDraft");
-
-      // } catch {
-      //   notify("Some error occured", "error");
-      // }
+      try {
+        await createStock(payload);
+        notify("Invoice has been saved", "success");
+        setInvoice(INITIAL_INVOICE);
+        setLr(INITIAL_LR);
+        localStorage.removeItem("invoiceDraft");
+      } catch {
+        notify("Some error occured", "error");
+      }
     }
   };
 
@@ -237,7 +236,7 @@ function page() {
   useEffect(() => {
     const savedDraft = localStorage.getItem("invoiceDraft");
     if (savedDraft) {
-      notify('Restored saved draft', 'info')
+      notify("Restored saved draft", "info");
       try {
         const parsed = JSON.parse(savedDraft);
         if (parsed.invoice) setInvoice(parsed.invoice);
