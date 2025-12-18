@@ -52,6 +52,7 @@ export default function Page() {
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}
           onRowsPerPageChange={setRowsPerPage}
+          searchPlacedHolder="Search Suppliers..."
           searchValue={search}
           onSearchChange={setSearch}
           sortBy={sortBy}

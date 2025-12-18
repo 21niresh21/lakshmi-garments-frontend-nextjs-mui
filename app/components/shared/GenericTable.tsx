@@ -16,8 +16,10 @@ import {
   TextField,
   LinearProgress,
   TableSortLabel,
+  InputAdornment,
 } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
+import SearchIcon from "@mui/icons-material/Search";
 
 // ---- Types ----
 export type SortOrder = "asc" | "desc";
@@ -32,8 +34,8 @@ export type Column<T> = {
 
 export type RowAction<T> = {
   label: string;
-  onClick: (row: T) => void;
-  icon?: React.ReactNode;
+  onClick: (row: T, event: React.MouseEvent<HTMLElement>) => void;
+  icon?: (row: T) => React.ReactNode;
 };
 
 interface GenericTableProps<T> {
@@ -55,6 +57,7 @@ interface GenericTableProps<T> {
   onSortChange?: (columnId: string, order: SortOrder) => void;
 
   // Toolbar
+  searchPlacedHolder: string;
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
@@ -82,6 +85,7 @@ export default function GenericTable<T extends { id?: string | number }>({
   sortBy,
   sortOrder = "asc",
   onSortChange,
+  searchPlacedHolder = "Search...",
   showSearch = true,
   searchValue = "",
   onSearchChange,
@@ -113,9 +117,18 @@ export default function GenericTable<T extends { id?: string | number }>({
           <TextField
             id="generic-table-search"
             size="small"
-            placeholder="Search…"
+            placeholder={searchPlacedHolder}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
         )}
 
@@ -126,7 +139,7 @@ export default function GenericTable<T extends { id?: string | number }>({
       <TableContainer
         sx={{
           flexGrow: 1,
-          maxHeight: 400, // 👈 set your desired height
+          maxHeight: 600, // 👈 set your desired height
           overflowY: "auto",
         }}
       >
@@ -196,9 +209,11 @@ export default function GenericTable<T extends { id?: string | number }>({
                         key={action.label}
                         component="span"
                         sx={{ cursor: "pointer", ml: 1 }}
-                        onClick={() => action.onClick(row)}
+                        onClick={(e) => action.onClick(row, e)}
                       >
-                        {action.icon ?? action.label}
+                        {typeof action.icon === "function"
+                          ? action.icon(row)
+                          : action.icon}
                       </Box>
                     ))}
                   </TableCell>

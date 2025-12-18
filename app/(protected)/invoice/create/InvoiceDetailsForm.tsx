@@ -62,8 +62,12 @@ export default function InvoiceDetailsForm({
               <DatePicker
                 label="Invoice Date"
                 format="DD/MM/YYYY"
-                value={value.invoiceDate ? dayjs(value.invoiceDate) : null}
-                onChange={(date) =>
+                value={
+                  value.invoiceDate
+                    ? dayjs(value.invoiceDate, "DD-MM-YYYY", true)
+                    : null
+                }
+                onAccept={(date) =>
                   onChange({
                     invoiceDate: date ? date.format("DD-MM-YYYY") : "",
                   })
@@ -87,8 +91,12 @@ export default function InvoiceDetailsForm({
               <DatePicker
                 label="Received Date"
                 format="DD/MM/YYYY"
-                value={value.receivedDate ? dayjs(value.receivedDate) : null}
-                onChange={(date) =>
+                value={
+                  value.receivedDate
+                    ? dayjs(value.receivedDate, "DD-MM-YYYY", true)
+                    : null
+                }
+                onAccept={(date) =>
                   onChange({
                     receivedDate: date ? date.format("DD-MM-YYYY") : "",
                   })
@@ -109,6 +117,8 @@ export default function InvoiceDetailsForm({
           {/* Supplier */}
           <Grid size={4}>
             <Autocomplete
+            openOnFocus
+              autoSelect
               id="supplier-autocomplete"
               disablePortal
               autoHighlight
@@ -136,6 +146,8 @@ export default function InvoiceDetailsForm({
           <Grid size={4}>
             <Autocomplete
               id="transport-autocomplete"
+              openOnFocus
+              autoSelect
               disablePortal
               autoHighlight
               options={transports}

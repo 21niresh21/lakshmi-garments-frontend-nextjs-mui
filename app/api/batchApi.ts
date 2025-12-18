@@ -1,8 +1,19 @@
 import axiosInstance from "../config/axiosConfig";
 import { BatchStatus } from "../_types/BatchStatus";
+import { FetchBatchesParams } from "./_types/Batch";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const baseUrl = API_BASE_URL + "/batches";
+
+export const fetchBatches = async (params?: FetchBatchesParams) => {
+  try {
+    const response = await axiosInstance.get(baseUrl, { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batches:", error);
+    throw error;
+  }
+};
 
 export const createBatch = async (batchDetails: any) => {
   try {
@@ -36,7 +47,7 @@ export const getUnfinishedBatches = async () => {
     return response.data;
   } catch (error) {
     console.error("Error getting unfinished batchs:", error);
-    throw error
+    throw error;
   }
 };
 
@@ -49,6 +60,16 @@ export const getJobworkTypes = async (serialCode: string) => {
     return response.data;
   } catch (error) {
     console.error("Error getting possible jobwork types:", error);
+    throw error;
+  }
+};
+
+export const recycleBatch = async (batchId: number) => {
+  try {
+    const response = await axiosInstance.post(`${baseUrl}/recycle/${batchId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error recycling batch:", error);
     throw error;
   }
 };

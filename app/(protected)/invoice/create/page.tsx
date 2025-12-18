@@ -31,6 +31,7 @@ import {
   InvoiceErrors,
   LRErrors,
 } from "./invoice.types";
+import dayjs from "dayjs";
 
 function page() {
   const [invoice, setInvoice] = useState<InvoiceDetails>(INITIAL_INVOICE);
@@ -53,9 +54,15 @@ function page() {
       errors.invoiceNumber = "Invoice number is required";
 
     if (!invoice.invoiceDate) errors.invoiceDate = "Invoice date is required";
+    else if (dayjs(invoice.invoiceDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")){
+      errors.invoiceDate = "Cannot select a future date"
+    }
 
     if (!invoice.receivedDate)
       errors.receivedDate = "Received date is required";
+    else if (dayjs(invoice.receivedDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")){
+      errors.receivedDate = "Cannot select a future date"
+    }
 
     if (!invoice.supplierID) errors.supplierID = "Supplier is required";
 
@@ -258,7 +265,7 @@ function page() {
       loadCategories();
       loadSubCategories();
     } catch {
-      notify("Error fetching data")
+      notify("Error fetching data");
       console.log("error fetch master data");
     }
   }, []);

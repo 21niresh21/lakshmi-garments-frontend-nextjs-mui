@@ -81,6 +81,8 @@ export default function BaleRow({
 
       <Autocomplete
         disablePortal
+        autoSelect
+        openOnFocus
         autoHighlight
         size="small"
         options={categories}
@@ -104,6 +106,8 @@ export default function BaleRow({
 
       <Autocomplete
         disablePortal
+        openOnFocus
+        autoSelect
         autoHighlight
         size="small"
         options={subCategories}
