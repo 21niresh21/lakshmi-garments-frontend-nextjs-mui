@@ -33,165 +33,119 @@ export default function BatchFiltersPanel({
   createdByOptions,
 }: Props) {
   return (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-        Filters
-      </Typography>
-
-      <Grid container spacing={2}>
-        {/* Category */}
-        <Grid size={12}>
-          <Select
-            fullWidth
-            multiple
-            displayEmpty
-            value={filters.categoryNames}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                categoryNames: e.target.value as string[],
-              })
-            }
-            renderValue={(selected) =>
-              selected.length === 0 ? (
-                <Typography color="text.secondary">Category</Typography>
-              ) : (
-                <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                  {(selected as string[]).map((v) => (
-                    <Chip key={v} label={v} size="small" />
-                  ))}
-                </Box>
-              )
-            }
+    <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "50% 50%",
+          gridTemplateRows: "repeat(3, auto)",
+          gap: "10px",
+          pl: 3,
+          pr: 3,
+          pt: 1,
+        }}
+      >
+        <Box sx={{ padding: 1, textAlign: "left" }}>
+          <Typography variant="h6" fontWeight={600}>
+            FILTERS
+          </Typography>
+        </Box>
+        <Box sx={{ padding: 1, textAlign: "right" }}>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ fontWeight: 600 }}
+            startIcon={<FilterListOffIcon />}
+            onClick={clearFilter}
           >
-            {categories.map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
-              </MenuItem>
-            ))}
-          </Select>
-        </Grid>
+            Clear Filters
+          </Button>
+        </Box>
 
-        {/* Status */}
-        <Grid size={12}>
-          <Select
-            fullWidth
-            multiple
-            displayEmpty
-            value={filters.batchStatusNames}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                batchStatusNames: e.target.value as string[],
-              })
-            }
-            renderValue={(selected) =>
-              selected.length === 0 ? (
-                <Typography color="text.secondary">Status</Typography>
-              ) : (
-                <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                  {(selected as string[]).map((v) => (
-                    <Chip key={v} label={v} size="small" />
-                  ))}
-                </Box>
-              )
-            }
-          >
-            {Object.values(BatchStatus).map((s) => (
-              <MenuItem key={s} value={s}>
-                {s}
-              </MenuItem>
-            ))}
-          </Select>
-        </Grid>
+        <Box sx={{ padding: 1 }}>
+          <FormControl fullWidth>
+            <Autocomplete
+              size="small"
+              multiple
+              value={filter.categories || []}
+              options={
+                categories && categories.length > 0
+                  ? categories.map((c) => c.name)
+                  : []
+              }
+              onChange={handleCategoryChange}
+              renderInput={(params) => (
+                <TextField {...params} label="Filter by Categories" />
+              )}
+              disableCloseOnSelect
+            />
+          </FormControl>
+        </Box>
 
-        {/* Priority */}
-        <Grid size={12}>
-          <Select
-            fullWidth
-            displayEmpty
-            value={
-              filters.isUrgent.length === 0
-                ? ""
-                : filters.isUrgent[0]
-                ? "HIGH"
-                : "NORMAL"
-            }
-            // onChange={(e) =>
-            //   onChange({
-            //     ...filters,
-            //     isUrgent:
-            //       e.target.value === ""
-            //         ? []
-            //         : e.target.value === "HIGH"
-            //         ? [true]
-            //         : [false],
-            //   })
-            // }
-          >
-            <MenuItem value="">Priority</MenuItem>
-            <MenuItem value="HIGH">High</MenuItem>
-            <MenuItem value="NORMAL">Normal</MenuItem>
-          </Select>
-        </Grid>
+        {/* Status Filter */}
+        <Box sx={{ padding: 1 }}>
+          <FormControl fullWidth>
+            <Autocomplete
+              size="small"
+              multiple
+              value={filter.batchStatusNames || []}
+              options={statuses}
+              onChange={handleStatusChange}
+              renderInput={(params) => (
+                <TextField {...params} label="Filter by Statuses" />
+              )}
+              disableCloseOnSelect
+            />
+          </FormControl>
+        </Box>
 
-        {/* Created By */}
-        <Grid size={12}>
-          <Select
-            fullWidth
-            displayEmpty
-            value={filters.createdBy ?? ""}
-            onChange={(e) =>
-              onChange({ ...filters, createdBy: e.target.value || undefined })
-            }
-          >
-            <MenuItem value="">Created By</MenuItem>
-            {createdByOptions.map((u) => (
-              <MenuItem key={u} value={u}>
-                {u}
-              </MenuItem>
-            ))}
-          </Select>
-        </Grid>
-
-        {/* Date Range */}
-        <Grid size={12}>
-          <DatePicker
-            label="From"
-            // value={filters.startDate ? new Date(filters.startDate) : null}
-            onChange={(date) =>
-              onChange({
-                ...filters,
-                startDate: date ? date.toISOString().split("T")[0] : undefined,
-              })
-            }
-            slotProps={{ textField: { size: "small", fullWidth: true } }}
-          />
-        </Grid>
-
-        <Grid size={12}>
-          <DatePicker
-            label="To"
-            // value={filters.endDate ? new Date(filters.endDate) : null}
-            onChange={(date) =>
-              onChange({
-                ...filters,
-                endDate: date ? date.toISOString().split("T")[0] : undefined,
-              })
-            }
-            slotProps={{ textField: { size: "small", fullWidth: true } }}
-          />
-        </Grid>
-
-        {/* Actions */}
-        <Grid size={12}>
-          <Box display="flex" justifyContent="flex-end" gap={1}>
-            <Button variant="outlined" onClick={onReset}>
-              Reset
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
-    </Paper>
+        {/* Batch Dates */}
+        <Box sx={{ padding: 1 }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Batch Start Date"
+              value={startDate}
+              onChange={(v) => handleBatchDateChange("startDate", v)}
+              maxDate={today}
+              slotProps={{ textField: { fullWidth: true, size: "small" } }}
+            />
+          </LocalizationProvider>
+        </Box>
+        <Box sx={{ padding: 1 }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Batch End Date"
+              value={endDate}
+              onChange={(v) => handleBatchDateChange("endDate", v)}
+              maxDate={today}
+              slotProps={{ textField: { fullWidth: true, size: "small" } }}
+            />
+          </LocalizationProvider>
+        </Box>
+        <Box sx={{ padding: 1 }}>
+          <Typography sx={{ pl: 1.5 }}>Batch Status</Typography>
+          <FormControl sx={{ mt : 1, ml: 1, width: 300, flexDirection : "row" }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  value="Urgent"
+                  checked={filter.isUrgent?.includes(true) || false}
+                  onChange={handleUrgentStatusChange}
+                />
+              }
+              label="Urgent"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  value="Not Urgent"
+                  checked={filter.isUrgent?.includes(false) || false}
+                  onChange={handleUrgentStatusChange}
+                />
+              }
+              label="Not Urgent"
+            />
+          </FormControl>
+        </Box>
+      </Box>
   );
 }

@@ -5,6 +5,7 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import LayersIcon from "@mui/icons-material/Layers";
 import AssignmentAddIcon from "@mui/icons-material/AssignmentAdd";
 import DynamicFeedIcon from "@mui/icons-material/DynamicFeed";
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 
 export type SidebarItem = {
   label: string;
@@ -37,11 +38,19 @@ export const sidebarGroups: SidebarGroup[] = [
       // { label: 'Assign Batch', href: '/batch/assign', icon: <AssignmentAddIcon /> },
     ],
   },
-  // {
-  //   title: 'Masters',
-  //   items: [
-  //     { label: 'Suppliers', href: '/supplier', icon: <PeopleIcon /> },
-  //     { label: 'Transports', href: '/transports', icon: <LocalShippingIcon /> },
-  //   ],
-  // },
+    {
+    title: "Jobwork",
+    items: [
+      // { label: "Create Batch", href: "/batch/create", icon: <LayersIcon /> },
+      { label: "In Pass", href: "/jobwork/inpass", icon: <AssignmentTurnedInIcon /> },
+      // { label: 'Assign Batch', href: '/batch/assign', icon: <AssignmentAddIcon /> },
+    ],
+  },
+  {
+    title: 'Masters',
+    items: [
+      { label: 'Suppliers', href: '/supplier', icon: <PeopleIcon /> },
+      { label: 'Transports', href: '/transport', icon: <LocalShippingIcon /> },
+    ],
+  },
 ];

@@ -101,7 +101,7 @@ export default function GenericTable<T extends { id?: string | number }>({
   };
 
   return (
-    <Paper sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
+    <Paper sx={{ width: "100%", display: "flex", flexDirection: "column" }} elevation={3}>
       {/* Loading indicator */}
       {loading && <LinearProgress />}
 
