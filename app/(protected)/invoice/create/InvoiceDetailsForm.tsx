@@ -117,8 +117,7 @@ export default function InvoiceDetailsForm({
           {/* Supplier */}
           <Grid size={4}>
             <Autocomplete
-            openOnFocus
-              autoSelect
+              openOnFocus
               id="supplier-autocomplete"
               disablePortal
               autoHighlight
@@ -147,7 +146,6 @@ export default function InvoiceDetailsForm({
             <Autocomplete
               id="transport-autocomplete"
               openOnFocus
-              autoSelect
               disablePortal
               autoHighlight
               options={transports}

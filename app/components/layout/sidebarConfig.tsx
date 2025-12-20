@@ -26,7 +26,7 @@ export const sidebarGroups: SidebarGroup[] = [
         href: "/invoice/create",
         icon: <ReceiptLongIcon />,
       },
-      // { label: 'Invoices', href: '/invoice/list', icon: <InventoryIcon/> },
+      { label: "Invoices", href: "/invoice/list", icon: <InventoryIcon /> },
     ],
   },
   {
