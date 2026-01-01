@@ -1,13 +1,15 @@
 export enum BatchStatus {
   CREATED = "CREATED",
-  PACKAGED = "PACKAGED",
-  WIP = "WIP",
+  CLOSED = "CLOSED",
+  ASSIGNED = "ASSIGNED",
   DISCARDED = "DISCARDED",
+  COMPLETED = "COMPLETED"
 }
 
 export const BatchStatusColorMap = {
   CREATED: "info",
-  WIP: "warning",
-  PACKAGED: "success",
+  ASSIGNED: "warning",
+  CLOSED: "success",
   DISCARDED: "error",
+  COMPLETED: "info"
 } as const;

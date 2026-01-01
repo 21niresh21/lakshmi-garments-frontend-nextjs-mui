@@ -36,19 +36,28 @@ Props) {
 
   const submitBatch = () => {
     setLoading(true);
+    const selectedItems = batchDetails.items.filter((i) => i.selected);
+
+    const getQty = (item: any) => (item.qty === "" ? item.maxQty : item.qty);
+
+    const totalQuantity = selectedItems.reduce(
+      (sum, item) => sum + getQty(item),
+      0
+    );
+
     const payload = {
       ...batchDetails,
       serialCode,
       batchStatus: BatchStatus.CREATED,
       createdByID: user?.id,
       isUrgent: batchDetails.urgent,
-      subCategories: batchDetails.items
-        .filter((item) => item.selected) // only selected items
-        .map((item) => ({
-          subCategoryName: item.name,
-          quantity: item.qty,
-        })),
+      totalQuantity : totalQuantity,
+      subCategories: selectedItems.map((item) => ({
+        subCategoryName: item.name,
+        quantity: getQty(item),
+      })),
     };
+
     createBatch(payload)
       .then(() => {
         notify("Batch has been created.", "success");

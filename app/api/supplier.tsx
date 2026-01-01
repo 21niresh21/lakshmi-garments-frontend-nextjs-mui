@@ -1,3 +1,4 @@
+import { Supplier } from "../(protected)/invoice/_types/supplier";
 import { SupplierFormData } from "../components/shared/SupplierFormModal";
 import axiosInstance from "../config/axiosConfig";
 import { SupplierParams } from "./_types/SupplierParams";
@@ -5,10 +6,13 @@ import { SupplierParams } from "./_types/SupplierParams";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const baseUrl = API_BASE_URL + "/suppliers";
 
-export const addSupplier = async (supplierData: SupplierFormData) => {
+export const addSupplier = async (
+  supplierData: SupplierFormData
+): Promise<Supplier> => {
   try {
-    const response = await axiosInstance.post(baseUrl, supplierData);
-    return response;
+    const response = await axiosInstance.post<Supplier>(baseUrl, supplierData);
+
+    return response.data; // ✅ return the actual Supplier
   } catch (error) {
     throw error;
   }

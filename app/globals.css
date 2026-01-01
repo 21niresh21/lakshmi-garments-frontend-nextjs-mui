@@ -51,3 +51,8 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   visibility: hidden;
 }
 
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}

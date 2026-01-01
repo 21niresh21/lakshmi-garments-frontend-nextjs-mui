@@ -6,14 +6,16 @@ import { Bale } from "../_types/Bale";
 export type InvoiceErrors = FieldErrors<InvoiceDetails>;
 
 export const INITIAL_INVOICE: InvoiceDetails = {
+  id : 0,
   invoiceNumber: "",
   invoiceDate: "",
   receivedDate: "",
   supplierID: undefined,
   transportID: undefined,
   transportCost: undefined,
-  istransportPaid: false,
+  isTransportPaid: false,
 };
+
 
 export const INITIAL_LR: LRDetails = {
   lorryReceipts: [],

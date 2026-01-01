@@ -9,7 +9,7 @@ import {
   TextField,
   Stack,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type TransportFormData = {
   name: string;
@@ -35,6 +35,7 @@ export default function TransportFormModal({
   const [form, setForm] = useState<TransportFormData>({
     name: "",
   });
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Populate data when editing
   useEffect(() => {
@@ -58,7 +59,17 @@ export default function TransportFormModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      TransitionProps={{
+        onEntered: () => {
+          nameInputRef.current?.focus();
+        },
+      }}
+    >
       <DialogTitle>
         {mode === "create" ? "Add Transport" : "Edit Transport"}
       </DialogTitle>
@@ -66,6 +77,7 @@ export default function TransportFormModal({
       <DialogContent>
         <Stack spacing={2} mt={1}>
           <TextField
+            inputRef={nameInputRef}
             label="Transport Name"
             value={form.name}
             onChange={handleChange("name")}

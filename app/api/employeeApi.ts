@@ -4,12 +4,37 @@ import axiosInstance from "../config/axiosConfig";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const baseUrl = API_BASE_URL + "/employees";
 
-export const fetchEmployees = async (): Promise<Employee[]> => {
+export const fetchEmployees = async (
+  search: string = ""
+): Promise<Employee[]> => {
   try {
-    const response = await axiosInstance.get(baseUrl);
+    const response = await axiosInstance.get(`${baseUrl}?search=${search}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching employees:", error);
+    throw error;
+  }
+};
+
+export const createEmployee = async (data: any): Promise<Employee[]> => {
+  try {
+    const response = await axiosInstance.post(`${baseUrl}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating employee:", error);
+    throw error;
+  }
+};
+
+export const updateEmployee = async (
+  id: number,
+  data: any
+): Promise<Employee[]> => {
+  try {
+    const response = await axiosInstance.put(`${baseUrl}/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating employee:", error);
     throw error;
   }
 };

@@ -28,6 +28,8 @@ interface Props {
   subCategories: SubCategory[];
   errors: Record<string, LRErrors>;
   onClearBaleError?: (lrId: string, baleId: string, field: keyof Bale) => void;
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
+  setSubCategories: React.Dispatch<React.SetStateAction<SubCategory[]>>;
 }
 
 export default function LRAccordionSection({
@@ -37,6 +39,8 @@ export default function LRAccordionSection({
   subCategories,
   errors,
   onClearBaleError,
+  setCategories,
+  setSubCategories,
 }: Props) {
   /* ---------------- LR actions ---------------- */
 
@@ -136,6 +140,8 @@ export default function LRAccordionSection({
               {lr.bales.map((bale) => (
                 <Box key={bale.id} width="100%">
                   <BaleRow
+                    setCategories={setCategories}
+                    setSubCategories={setSubCategories}
                     bale={bale}
                     onChange={(patch) => {
                       updateBale(lr.id, bale.id, patch);

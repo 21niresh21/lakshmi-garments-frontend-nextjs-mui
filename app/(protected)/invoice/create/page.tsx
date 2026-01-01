@@ -54,20 +54,26 @@ function page() {
       errors.invoiceNumber = "Invoice number is required";
 
     if (!invoice.invoiceDate) errors.invoiceDate = "Invoice date is required";
-    else if (dayjs(invoice.invoiceDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")){
-      errors.invoiceDate = "Cannot select a future date"
+    else if (
+      dayjs(invoice.invoiceDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
+    ) {
+      errors.invoiceDate = "Cannot select a future date";
     }
 
     if (!invoice.receivedDate)
       errors.receivedDate = "Received date is required";
-    else if (dayjs(invoice.receivedDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")){
-      errors.receivedDate = "Cannot select a future date"
+    else if (
+      dayjs(invoice.receivedDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
+    ) {
+      errors.receivedDate = "Cannot select a future date";
     }
 
     if (!invoice.supplierID) errors.supplierID = "Supplier is required";
 
     if (!invoice.transportID) errors.transportID = "Transport is required";
-
+    if (invoice.transportCost && invoice.transportCost <= 0)
+      errors.transportCost = "Transport cost cannot be negative";
+    console.log("errors", errors);
     setInvoiceErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -96,9 +102,15 @@ function page() {
         const baleErrors: BaleErrors = {};
         if (!bale.baleNumber) baleErrors.baleNumber = "Bale number is required";
         if (!bale.price) baleErrors.price = "Bale price is required";
+        if (bale.price && bale.price < 0) {
+          baleErrors.price = "Price must be > 0";
+        }
         if (!bale.quantity) baleErrors.quantity = "Bale quantity is required";
         if (!bale.quality) baleErrors.quality = "Bale quality is required";
         if (!bale.length) baleErrors.length = "Bale length is required";
+        if (bale.length && bale.length < 0) {
+          baleErrors.length = "Length must be > 0"
+        }
         if (!bale.subCategoryID)
           baleErrors.subCategoryID = "Sub Category is required";
         if (!bale.categoryID) baleErrors.categoryID = "Category is required";
@@ -143,7 +155,7 @@ function page() {
     });
   };
 
-  const updateInvoice = (patch: Partial<InvoiceDetails>) => {
+  const handleInvoiceChange = (patch: Partial<InvoiceDetails>) => {
     setInvoice((prev) => ({ ...prev, ...patch }));
 
     setInvoiceErrors((prev) => {
@@ -277,9 +289,11 @@ function page() {
           <InvoiceDetailsForm
             value={invoice}
             errors={invoiceErrors}
-            onChange={updateInvoice}
+            onChange={handleInvoiceChange}
             suppliers={suppliers}
             transports={transports}
+            setSuppliers={setSuppliers}
+            setTransports={setTransports}
           />
         </Grid>
         <Grid size={12}>
@@ -293,6 +307,8 @@ function page() {
             subCategories={subCategories}
             lrErrors={lrErrors}
             onClearBaleError={handleClearBaleError}
+            setCategories={setCategories}
+            setSubCategories={setSubCategories}
           />
         </Grid>
         <Grid size={12}>

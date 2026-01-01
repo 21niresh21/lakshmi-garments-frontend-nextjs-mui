@@ -9,7 +9,7 @@ import {
   TextField,
   Stack,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type SupplierFormData = {
   name: string;
@@ -37,6 +37,7 @@ export default function SupplierFormModal({
     name: "",
     location: "",
   });
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Populate data when editing
   useEffect(() => {
@@ -61,7 +62,17 @@ export default function SupplierFormModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      TransitionProps={{
+        onEntered: () => {
+          nameInputRef.current?.focus();
+        },
+      }}
+    >
       <DialogTitle>
         {mode === "create" ? "Add Supplier" : "Edit Supplier"}
       </DialogTitle>
@@ -69,6 +80,7 @@ export default function SupplierFormModal({
       <DialogContent>
         <Stack spacing={2} mt={1}>
           <TextField
+            inputRef={nameInputRef}
             label="Supplier Name"
             value={form.name}
             onChange={handleChange("name")}

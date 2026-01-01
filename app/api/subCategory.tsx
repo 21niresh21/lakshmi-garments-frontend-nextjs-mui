@@ -1,4 +1,5 @@
 import { SubCategory } from "../_types/SubCategory";
+import { SubCategoryFormData } from "../components/shared/SubCategoryFormModal";
 import axiosInstance from "../config/axiosConfig";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -20,6 +21,37 @@ export const fetchSubCategories = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching sub-categories:", error);
-    throw error
+    throw error;
+  }
+};
+
+export const addSubCategory = async (
+  subCategoryData: SubCategoryFormData
+): Promise<SubCategory> => {
+  try {
+    const response = await axiosInstance.post<SubCategory>(
+      baseUrl,
+      subCategoryData
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateSubCategory = async (
+  subCategoryId: number,
+  updatedData: SubCategoryFormData
+) => {
+  try {
+    const response = await axiosInstance.put(
+      `${baseUrl}/${subCategoryId}`,
+      updatedData
+    );
+
+    return response.data; // return only data (best practice)
+  } catch (error) {
+    console.error("Error updating sub category:", error);
+    throw error;
   }
 };

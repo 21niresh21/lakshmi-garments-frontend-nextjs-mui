@@ -1,106 +1,92 @@
 "use client";
 
-import { Autocomplete, Grid, Stack, TextField } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { Button, Divider, Grid, Stack, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import { fetchJobworkDetail } from "@/app/api/jobworkApi";
+import CuttingForm from "../../batch/assign/CuttingForm";
+// import CuttingInpass from "./CuttingInpass";
 import JobworkSummary from "./JobworkSummary";
-import {
-  fetchJobworks,
-  fetchUnfinishedJobworks,
-} from "@/app/api/jobworkApi";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-import { fetchEmployees } from "@/app/api/employeeApi";
+import { fetchItems } from "@/app/api/itemApi";
+import JobworkItemsTable from "./JobworkItemsTable";
+import { Item } from "@/app/_types/Item";
 
 export default function Page() {
   const { notify } = useNotification();
+  const [jobworkNumber, setJobworkNumber] = useState<string>("");
+  const [jobwork, setJobwork] = useState<any | null>(null);
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const [jobworks, setJobworks] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<string[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
 
-  const [selectedJobwork, setSelectedJobwork] = useState<any | null>(null);
-  const [selectedEmployee, setSelectedEmployee] = useState<string>("");
+  const handleFind = async () => {
+    const trimmed = jobworkNumber.trim().toUpperCase();
 
-  // -----------------------------
-  // Initial data load
-  // -----------------------------
+    if (!trimmed) return;
+
+    const jobworkNumberRegex = /^JW-\d{8}-\d{3}$/;
+    if (!jobworkNumberRegex.test(trimmed)) {
+      setError("Jobwork Number format must be JW-YYYYMMDD-XXX");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetchJobworkDetail(trimmed);
+      setJobwork(res);
+    } catch (error) {
+      notify("No jobwork found", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchEmployees()
-      .then((res) => setEmployees(res.map((emp: any) => emp.name)))
-      .catch(() => notify("Error when fetching employees", "error"));
-
-    fetchJobworks()
-      .then((res) => setJobworks(res.content))
-      .catch(() => notify("Error when fetching jobworks", "error"));
-  }, [notify]);
-
-  // -----------------------------
-  // Fetch unfinished jobworks when filters change
-  // -----------------------------
-  useEffect(() => {
-    const jobworkNumber = selectedJobwork?.jobworkNumber ?? "";
-    const employeeName = selectedEmployee;
-
-    // Do nothing if no filters are selected
-    if (!jobworkNumber || !employeeName) return;
-
-    console.log(Boolean(employeeName), Boolean(jobworkNumber))
-    fetchUnfinishedJobworks(employeeName, jobworkNumber).catch(() =>
-      notify("Error when fetching unfinished jobworks", "error")
-    );
-  }, [selectedJobwork, selectedEmployee]);
+    fetchItems().then((res) => setItems(res));
+  }, []);
 
   return (
     <>
-      {/* Filters */}
-      <Grid container size={12} mb={2}>
-        <Stack columnGap={2} flexDirection="row">
-          {/* Jobwork Autocomplete */}
-          <Autocomplete
-            id="jobwork-autocomplete"
-            openOnFocus
-            autoSelect
-            disablePortal
-            autoHighlight
-            options={jobworks}
-            getOptionLabel={(jw) => jw?.jobworkNumber ?? ""}
-            value={selectedJobwork}
-            onChange={(_, selected) => setSelectedJobwork(selected)}
-            isOptionEqualToValue={(option, value) =>
-              option.jobworkNumber === value.jobworkNumber
-            }
-            renderInput={(params) => (
-              <TextField {...params} label="Jobwork Number" />
-            )}
-            sx={{ width: 400 }}
-          />
-
-          {/* Employee Autocomplete */}
-          <Autocomplete
-            id="employee-autocomplete"
-            openOnFocus
-            autoSelect
-            disablePortal
-            autoHighlight
-            options={employees}
-            value={selectedEmployee}
-            onChange={(_, selected) => {
-              setSelectedEmployee(selected ?? "");
-            }}
-            renderInput={(params) => (
-              <TextField {...params} label="Employee Name" />
-            )}
-            sx={{ width: 400 }}
-          />
-        </Stack>
-      </Grid>
-
-      {/* Content */}
-      <Grid container size={12}>
-        {/* {selectedJobwork.jobwork} */}
-        {/* <Grid size={5}>
-          <JobworkSummary jobwork={selectedJobwork} />
+      <Grid container spacing={2} height="100%">
+        <Grid size={8}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <TextField
+              label="Jobwork Number"
+              value={jobworkNumber}
+              onChange={(e) => {
+                setJobworkNumber(e.target.value.toUpperCase());
+                setError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleFind(); // trigger the same function as the button
+                }
+              }}
+              sx={{ width: 360 }}
+              error={Boolean(error)}
+              helperText={error}
+            />
+            <Button
+              sx={{ height: 40 }}
+              variant="contained"
+              onClick={handleFind}
+              disabled={!jobworkNumber}
+              loading={loading}
+              loadingPosition="start"
+            >
+              Find
+            </Button>
+          </Stack>
+          {jobwork && <JobworkItemsTable jobwork={jobwork} allItems={items} />}
         </Grid>
-        <Grid size={2}>wefe</Grid>
-        <Grid size={5}>efefe</Grid> */}
+        <Grid size={0.5}>{jobwork && <Divider orientation="vertical" />}</Grid>
+        <Grid size={3.5}>
+          {jobwork?.jobworkType === "CUTTING" && (
+            <>
+              <JobworkSummary jobwork={jobwork} />
+            </>
+          )}
+        </Grid>
       </Grid>
     </>
   );

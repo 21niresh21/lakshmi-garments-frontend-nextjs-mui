@@ -1,3 +1,4 @@
+import { Transport } from "../(protected)/invoice/_types/transport";
 import { TransportFormData } from "../components/shared/TransportFormModal";
 import axiosInstance from "../config/axiosConfig";
 import { TransportParams } from "./_types/TransportParams";
@@ -5,10 +6,12 @@ import { TransportParams } from "./_types/TransportParams";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const baseUrl = API_BASE_URL + "/transports";
 
-export const addTransport = async (transportData: TransportFormData) => {
+export const addTransport = async (
+  transportData: TransportFormData
+): Promise<Transport> => {
   try {
     const response = await axiosInstance.post(baseUrl, transportData);
-    return response;
+    return response.data;
   } catch (error) {
     throw error;
   }

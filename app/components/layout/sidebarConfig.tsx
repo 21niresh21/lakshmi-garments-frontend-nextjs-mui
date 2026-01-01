@@ -5,7 +5,13 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import LayersIcon from "@mui/icons-material/Layers";
 import AssignmentAddIcon from "@mui/icons-material/AssignmentAdd";
 import DynamicFeedIcon from "@mui/icons-material/DynamicFeed";
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import BadgeIcon from "@mui/icons-material/Badge";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import CategoryIcon from "@mui/icons-material/Category";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import PsychologyIcon from "@mui/icons-material/Psychology";
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 export type SidebarItem = {
   label: string;
@@ -38,19 +44,32 @@ export const sidebarGroups: SidebarGroup[] = [
       // { label: 'Assign Batch', href: '/batch/assign', icon: <AssignmentAddIcon /> },
     ],
   },
-    {
+  {
     title: "Jobwork",
     items: [
-      // { label: "Create Batch", href: "/batch/create", icon: <LayersIcon /> },
-      { label: "In Pass", href: "/jobwork/inpass", icon: <AssignmentTurnedInIcon /> },
-      // { label: 'Assign Batch', href: '/batch/assign', icon: <AssignmentAddIcon /> },
+      { label: "View Jobworks", href: "/jobwork/list", icon: <AssignmentIcon /> },
+      {
+        label: "In Pass",
+        href: "/jobwork/inpass",
+        icon: <AssignmentTurnedInIcon />,
+      },
+      { label: "Out Pass", href: "/batch/assign", icon: <AssignmentAddIcon /> },
     ],
   },
   {
-    title: 'Masters',
+    title: "Masters",
     items: [
-      { label: 'Suppliers', href: '/supplier', icon: <PeopleIcon /> },
-      { label: 'Transports', href: '/transport', icon: <LocalShippingIcon /> },
+      { label: "Suppliers", href: "/supplier", icon: <PeopleIcon /> },
+      { label: "Transports", href: "/transport", icon: <LocalShippingIcon /> },
+      { label: "Employees", href: "/employee", icon: <BadgeIcon /> },
+      { label: "Items", href: "/item", icon: <ViewModuleIcon /> },
+      { label: "Categories", href: "/category", icon: <CategoryIcon /> },
+      {
+        label: "Sub Categories",
+        href: "/subcategory",
+        icon: <AccountTreeIcon />,
+      },
+      { label: "Skills", href: "/skill", icon: <PsychologyIcon /> },
     ],
   },
 ];

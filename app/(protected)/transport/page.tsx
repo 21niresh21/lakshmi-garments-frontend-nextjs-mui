@@ -3,7 +3,6 @@
 import GenericTable from "@/app/components/shared/GenericTable";
 import { Grid, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { useEffect, useState } from "react";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { Transport } from "../invoice/_types/transport";
@@ -15,6 +14,7 @@ import {
 import TransportFormModal, {
   TransportFormData,
 } from "@/app/components/shared/TransportFormModal";
+import AirportShuttleIcon from '@mui/icons-material/AirportShuttle';
 
 export default function Page() {
   const { notify } = useNotification();
@@ -115,7 +115,7 @@ export default function Page() {
               onClick={handleAddTransport}
               title="Add Transport"
             >
-              <PersonAddAlt1Icon />
+              <AirportShuttleIcon />
             </IconButton>,
           ]}
         />

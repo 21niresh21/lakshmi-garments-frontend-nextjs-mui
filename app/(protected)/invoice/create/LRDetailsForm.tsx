@@ -26,6 +26,8 @@ interface Props {
   subCategories: SubCategory[];
   lrErrors: Record<string, LRErrors>;
   onClearBaleError?: (lrId: string, baleId: string, field: keyof Bale) => void;
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
+  setSubCategories: React.Dispatch<React.SetStateAction<SubCategory[]>>;
 }
 
 export default function LRDetailsForm({
@@ -35,9 +37,12 @@ export default function LRDetailsForm({
   subCategories,
   lrErrors,
   onClearBaleError,
+  setCategories,
+  setSubCategories,
 }: Props) {
   const [lrNumber, setLrNumber] = useState("");
   const hasMounted = useRef(false);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
 
   // ✅ Generate SELF LR only on client AFTER mount
   useEffect(() => {
@@ -117,6 +122,12 @@ export default function LRDetailsForm({
                   ? "Auto-generated"
                   : "Enter LR number"
               }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitButtonRef.current?.click();
+                }
+              }}
               onChange={(e) => setLrNumber(e.target.value)}
             />
 
@@ -126,6 +137,7 @@ export default function LRDetailsForm({
               disabled={!lrNumber}
               size="medium"
               variant="contained"
+              ref={submitButtonRef}
             >
               Add LR
             </Button>
@@ -144,6 +156,8 @@ export default function LRDetailsForm({
             subCategories={subCategories}
             errors={lrErrors}
             onClearBaleError={onClearBaleError}
+            setCategories={setCategories}
+            setSubCategories={setSubCategories}
           />
         </Grid>
       </Grid>

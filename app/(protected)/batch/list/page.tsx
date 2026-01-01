@@ -55,9 +55,10 @@ type SubCategoryWithQuantity = {
 
 const BatchStatusIconMap = {
   CREATED: NewReleasesIcon,
-  WIP: PrecisionManufacturingIcon,
-  PACKAGED: CheckCircleIcon,
+  ASSIGNED: PrecisionManufacturingIcon,
+  CLOSED: CheckCircleIcon,
   DISCARDED: RecyclingIcon,
+  COMPLETED: NewReleasesIcon,
 } as const;
 
 interface BatchRow {
@@ -176,8 +177,14 @@ export default function Page() {
     if (batch.batchStatus === BatchStatus.DISCARDED) {
       notify("Batch has already been discarded", "warning");
       return;
-    } else if (batch.batchStatus === BatchStatus.PACKAGED) {
+    } else if (batch.batchStatus === BatchStatus.CLOSED) {
       notify("Batch has already been packaged", "warning");
+      return;
+    } else if (
+      batch.batchStatus === BatchStatus.ASSIGNED ||
+      batch.batchStatus === BatchStatus.COMPLETED
+    ) {
+      notify("Batch is in use", "warning");
       return;
     }
     try {

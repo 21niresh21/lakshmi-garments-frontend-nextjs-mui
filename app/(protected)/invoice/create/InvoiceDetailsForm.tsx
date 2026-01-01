@@ -9,6 +9,7 @@ import {
   Box,
   Typography,
   Autocomplete,
+  createFilterOptions,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -19,6 +20,17 @@ import { InvoiceDetails } from "../_types/invoiceDetails";
 import { Supplier } from "../_types/supplier";
 import { Transport } from "../_types/transport";
 import { InvoiceErrors } from "./invoice.types";
+import { GenericAutocomplete } from "@/app/components/shared/GenericAutocomplete";
+import { useState } from "react";
+import SupplierFormModal, {
+  SupplierFormData,
+} from "@/app/components/shared/SupplierFormModal";
+import { addSupplier } from "@/app/api/supplier";
+import { useNotification } from "@/app/components/shared/NotificationProvider";
+import TransportFormModal, {
+  TransportFormData,
+} from "@/app/components/shared/TransportFormModal";
+import { addTransport } from "@/app/api/transport";
 
 interface Props {
   value: InvoiceDetails;
@@ -26,6 +38,8 @@ interface Props {
   onChange: (patch: Partial<InvoiceDetails>) => void;
   suppliers: Supplier[];
   transports: Transport[];
+  setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
+  setTransports: React.Dispatch<React.SetStateAction<Transport[]>>;
 }
 
 export default function InvoiceDetailsForm({
@@ -33,8 +47,49 @@ export default function InvoiceDetailsForm({
   errors,
   onChange,
   suppliers,
+  setSuppliers,
   transports,
+  setTransports,
 }: Props) {
+  const { notify } = useNotification();
+  type CreateEntityType = "supplier" | "transport" | null;
+
+  const [createDialog, setCreateDialog] = useState<{
+    type: CreateEntityType;
+    prefillName: string;
+  }>({
+    type: null,
+    prefillName: "",
+  });
+
+  const createSupplier = async (data: SupplierFormData) => {
+    try {
+      const createdSupplier = await addSupplier(data);
+      setCreateDialog({ type: null, prefillName: "" });
+      setSuppliers((prev) => [...prev, createdSupplier]);
+      onChange({ supplierID: createdSupplier.id });
+      notify("Supplier created successfully", "success");
+    } catch (err: any) {
+      notify(err?.response?.data ?? "Error saving supplier", "error");
+    }
+  };
+
+  const createTransport = async (data: TransportFormData) => {
+    try {
+      const createdTransport = await addTransport(data);
+      console.log("created t", createdTransport);
+
+      setCreateDialog({ type: null, prefillName: "" });
+      setTransports((prev) => [...prev, createdTransport]);
+      onChange({ transportID: createdTransport.id });
+      notify("Transport created successfully", "success");
+    } catch (err: any) {
+      console.log(err);
+
+      notify(err?.response?.data ?? "Error saving transport", "error");
+    }
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
@@ -116,55 +171,55 @@ export default function InvoiceDetailsForm({
 
           {/* Supplier */}
           <Grid size={4}>
-            <Autocomplete
-              openOnFocus
-              id="supplier-autocomplete"
-              disablePortal
-              autoHighlight
+            <GenericAutocomplete<Supplier>
+              label="Supplier"
               options={suppliers}
-              getOptionLabel={(option) => option.name}
               value={suppliers.find((s) => s.id === value.supplierID) || null}
-              onChange={(_, selected) =>
-                onChange({
-                  supplierID: selected ? Number(selected.id) : undefined,
-                })
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  id="supplier-input"
-                  label="Supplier"
-                  error={!!errors.supplierID}
-                  helperText={errors.supplierID}
-                />
-              )}
+              onChange={(supplier) => onChange({ supplierID: supplier?.id })}
+              allowCreate
+              getOptionLabel={(s) => s.name}
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+              onCreateClick={(name) => {
+                setCreateDialog({
+                  type: "supplier",
+                  prefillName: name,
+                });
+              }}
+              error={errors.supplierID}
+            />
+            <SupplierFormModal
+              open={createDialog.type === "supplier"}
+              mode="create"
+              onSubmit={createSupplier}
+              onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+              initialData={{ name: createDialog.prefillName, location: "" }}
             />
           </Grid>
 
           {/* Transport */}
           <Grid size={4}>
-            <Autocomplete
-              id="transport-autocomplete"
-              openOnFocus
-              disablePortal
-              autoHighlight
+            <GenericAutocomplete<Transport>
+              label="Transport"
               options={transports}
-              getOptionLabel={(option) => option.name}
               value={transports.find((t) => t.id === value.transportID) || null}
-              onChange={(_, selected) =>
-                onChange({
-                  transportID: selected ? Number(selected.id) : undefined,
-                })
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  id="transport-input"
-                  label="Transport"
-                  error={!!errors.transportID}
-                  helperText={errors.transportID}
-                />
-              )}
+              onChange={(transport) => onChange({ transportID: transport?.id })}
+              allowCreate
+              getOptionLabel={(t) => t.name}
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+              onCreateClick={(name) => {
+                setCreateDialog({
+                  type: "transport",
+                  prefillName: name,
+                });
+              }}
+              error={errors.transportID}
+            />
+            <TransportFormModal
+              open={createDialog.type === "transport"}
+              mode="create"
+              onSubmit={createTransport}
+              onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+              initialData={{ name: createDialog.prefillName }}
             />
           </Grid>
 
@@ -178,7 +233,6 @@ export default function InvoiceDetailsForm({
               value={value.transportCost ?? ""}
               onChange={(e) => {
                 const raw = e.target.value;
-
                 onChange({
                   transportCost: raw === "" ? undefined : Number(raw),
                 });
@@ -193,9 +247,9 @@ export default function InvoiceDetailsForm({
             <FormControlLabel
               control={
                 <Switch
-                  checked={value.istransportPaid}
+                  checked={value.isTransportPaid}
                   onChange={(e) =>
-                    onChange({ istransportPaid: e.target.checked })
+                    onChange({ isTransportPaid: e.target.checked })
                   }
                 />
               }

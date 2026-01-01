@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  fetchBatches,
   getJobworkTypes,
   getUnfinishedBatches,
   getUnfinishedUrgentBatches,
@@ -13,6 +14,8 @@ import { fetchEmployees, fetchEmployeeStats } from "@/app/api/employeeApi";
 import { Employee } from "@/app/_types/Employee";
 import EmployeeStats from "./EmployeeStats";
 import { INITIAL_JOBWORK, JobworkForm } from "./_types/jobwork.types";
+import CuttingForm from "./CuttingForm";
+import { fetchNextJobworkNumber } from "@/app/api/jobworkApi";
 
 export default function Page() {
   const [urgentBatches, setUrgentBatches] = useState([]);
@@ -21,6 +24,7 @@ export default function Page() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeStats, setEmployeeStats] = useState({});
   const [jobwork, setJobwork] = useState<JobworkForm>(INITIAL_JOBWORK);
+  const [availableQty, setAvailableQty] = useState<number>();
 
   useEffect(() => {
     getUnfinishedUrgentBatches().then((res) => {
@@ -31,10 +35,14 @@ export default function Page() {
       setPendingBatches(res);
     });
 
-    fetchEmployeeStats(1).then((res) => {
-      setEmployeeStats(res);
-      console.log(res);
-    });
+    fetchNextJobworkNumber().then((res) =>
+      setJobwork((prev) => ({ ...prev, jobworkNumber: res }))
+    );
+
+    // fetchEmployeeStats(1).then((res) => {
+    //   setEmployeeStats(res);
+    //   console.log(res);
+    // });
   }, []);
 
   useEffect(() => {
@@ -50,9 +58,14 @@ export default function Page() {
         jobworkType: "",
       }));
     }
+
+    fetchBatches({ search: jobwork.serialCode }).then((res) => {
+      setAvailableQty(res.content[0].availableQuantity);
+    });
   }, [jobwork.serialCode]);
 
   useEffect(() => {
+    console.log(jobwork.jobworkType);
     if (jobwork.jobworkType && jobwork.serialCode.trim() !== "") {
       fetchEmployees()
         .then((res) => {
@@ -75,16 +88,17 @@ export default function Page() {
         spacing={2}
         sx={{ minHeight: 0 }}
       >
-        <Grid height="70%" size={12}>
+        <Grid size={12}>
           <AssignmentForm
             pendingBatches={pendingBatches}
             jobworkTypes={jobworkTypes}
             employees={employees}
-            setForm={setJobwork}
+            setJobwork={setJobwork}
             jobwork={jobwork}
+            availableQty={availableQty?? 0}
           />
         </Grid>
-        <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+        {/* <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
           <Grid size={6} sx={{ minHeight: 0 }}>
             <BatchList batchList={urgentBatches} />
           </Grid>
@@ -92,7 +106,7 @@ export default function Page() {
           <Grid size={6} sx={{ minHeight: 0 }}>
             <EmployeeStats />
           </Grid>
-        </Grid>
+        </Grid> */}
       </Grid>
       <Grid size={4}>gg</Grid>
     </Grid>

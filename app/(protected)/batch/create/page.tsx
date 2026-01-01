@@ -29,7 +29,7 @@ export default function Page() {
       items: category.subCategories.map((sc) => ({
         name: sc.subCategoryName,
         maxQty: sc.count,
-        qty: sc.count > 0 ? 1 : 0,
+        qty: sc.count > 0 ? sc.count : 0,
         selected: false,
       })),
     });
