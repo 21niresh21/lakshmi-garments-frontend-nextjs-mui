@@ -41,6 +41,7 @@ import { fetchTransports } from "@/app/api/transport";
 import dayjs from "dayjs";
 import { INITIAL_INVOICE, InvoiceErrors } from "../create/invoice.types";
 import { InvoiceDetails } from "../_types/invoiceDetails";
+import { useRouter } from "next/navigation";
 
 type SubCategoryWithQuantity = {
   id: number;
@@ -125,6 +126,7 @@ const HEADERS = [
 
 export default function Page() {
   const { notify } = useNotification();
+  const  router  = useRouter();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
@@ -317,6 +319,7 @@ export default function Page() {
             setSortBy(col);
             setSortOrder(order);
           }}
+          onRowClick={(row) => router.push(`/invoice/${row.id}`)}
           columns={HEADERS}
           rowActions={[
             {

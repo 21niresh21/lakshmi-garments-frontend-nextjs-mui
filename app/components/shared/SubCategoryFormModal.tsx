@@ -35,6 +35,7 @@ export default function SubCategoryFormModal({
   const [form, setForm] = useState<SubCategoryFormData>({
     name: "",
   });
+
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Populate data when editing
@@ -54,7 +55,9 @@ export default function SubCategoryFormModal({
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!form.name || loading) return;
     onSubmit(form);
   };
 
@@ -74,31 +77,34 @@ export default function SubCategoryFormModal({
         {mode === "create" ? "Add Sub Category" : "Edit Sub Category"}
       </DialogTitle>
 
-      <DialogContent>
-        <Stack spacing={2} mt={1}>
-          <TextField
-            inputRef={nameInputRef}
-            label="Sub Category Name"
-            value={form.name}
-            onChange={handleChange("name")}
-            fullWidth
-            required
-          />
-        </Stack>
-      </DialogContent>
+      {/* ✅ FORM WRAPPER ENABLES ENTER KEY */}
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              inputRef={nameInputRef}
+              label="Sub Category Name"
+              value={form.name}
+              onChange={handleChange("name")}
+              fullWidth
+              required
+            />
+          </Stack>
+        </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading || !form.name}
-        >
-          {mode === "create" ? "Create" : "Save"}
-        </Button>
-      </DialogActions>
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading || !form.name}
+          >
+            {mode === "create" ? "Create" : "Save"}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

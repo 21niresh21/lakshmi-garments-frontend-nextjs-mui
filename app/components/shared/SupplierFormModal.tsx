@@ -37,7 +37,9 @@ export default function SupplierFormModal({
     name: "",
     location: "",
   });
+
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
 
   // Populate data when editing
   useEffect(() => {
@@ -58,6 +60,7 @@ export default function SupplierFormModal({
     };
 
   const handleSubmit = () => {
+    if (!form.name || !form.location || loading) return;
     onSubmit(form);
   };
 
@@ -67,6 +70,12 @@ export default function SupplierFormModal({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleSubmit();
+        }
+      }}
       TransitionProps={{
         onEntered: () => {
           nameInputRef.current?.focus();
@@ -86,9 +95,16 @@ export default function SupplierFormModal({
             onChange={handleChange("name")}
             fullWidth
             required
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                locationInputRef.current?.focus();
+              }
+            }}
           />
 
           <TextField
+            inputRef={locationInputRef}
             label="Location"
             value={form.location}
             onChange={handleChange("location")}

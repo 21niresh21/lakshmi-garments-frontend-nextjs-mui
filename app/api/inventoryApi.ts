@@ -2,7 +2,7 @@ import { Inventory } from "../_types/Inventory";
 import axiosInstance from "../config/axiosConfig";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-const baseUrl = API_BASE_URL + "/material-inventory";
+const baseUrl = API_BASE_URL + "/inventories";
 
 export const fetchInventory = async (): Promise<Inventory[]> => {
   try {

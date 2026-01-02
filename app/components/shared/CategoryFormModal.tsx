@@ -37,6 +37,7 @@ export default function CategoryFormModal({
     name: "",
     code: "",
   });
+
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Populate data when editing
@@ -57,7 +58,9 @@ export default function CategoryFormModal({
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!form.name || !form.code || loading) return;
     onSubmit(form);
   };
 
@@ -77,39 +80,42 @@ export default function CategoryFormModal({
         {mode === "create" ? "Add Category" : "Edit Category"}
       </DialogTitle>
 
-      <DialogContent>
-        <Stack spacing={2} mt={1}>
-          <TextField
-            inputRef={nameInputRef}
-            label="Category Name"
-            value={form.name}
-            onChange={handleChange("name")}
-            fullWidth
-            required
-          />
+      {/* ✅ FORM WRAPPER */}
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              inputRef={nameInputRef}
+              label="Category Name"
+              value={form.name}
+              onChange={handleChange("name")}
+              fullWidth
+              required
+            />
 
-          <TextField
-            label="Code"
-            value={form.code}
-            onChange={handleChange("code")}
-            fullWidth
-            required
-          />
-        </Stack>
-      </DialogContent>
+            <TextField
+              label="Code"
+              value={form.code}
+              onChange={handleChange("code")}
+              fullWidth
+              required
+            />
+          </Stack>
+        </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading || !form.name || !form.code}
-        >
-          {mode === "create" ? "Create" : "Save"}
-        </Button>
-      </DialogActions>
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"   // ✅ important
+            variant="contained"
+            disabled={loading || !form.name || !form.code}
+          >
+            {mode === "create" ? "Create" : "Save"}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

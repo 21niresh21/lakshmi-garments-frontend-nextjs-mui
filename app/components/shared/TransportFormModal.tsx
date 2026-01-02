@@ -35,6 +35,7 @@ export default function TransportFormModal({
   const [form, setForm] = useState<TransportFormData>({
     name: "",
   });
+
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Populate data when editing
@@ -55,6 +56,7 @@ export default function TransportFormModal({
     };
 
   const handleSubmit = () => {
+    if (!form.name || loading) return;
     onSubmit(form);
   };
 
@@ -64,6 +66,12 @@ export default function TransportFormModal({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleSubmit();
+        }
+      }}
       TransitionProps={{
         onEntered: () => {
           nameInputRef.current?.focus();

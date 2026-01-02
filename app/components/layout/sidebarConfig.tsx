@@ -11,7 +11,9 @@ import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import CategoryIcon from "@mui/icons-material/Category";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import PsychologyIcon from "@mui/icons-material/Psychology";
-import AssignmentIcon from '@mui/icons-material/Assignment';
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import { Roles } from "@/app/_types/RoleType";
+import WarehouseIcon from '@mui/icons-material/Warehouse';
 
 export type SidebarItem = {
   label: string;
@@ -22,6 +24,7 @@ export type SidebarItem = {
 export type SidebarGroup = {
   title: string;
   items: SidebarItem[];
+  allowFor?: string[];
 };
 
 export const sidebarGroups: SidebarGroup[] = [
@@ -35,6 +38,14 @@ export const sidebarGroups: SidebarGroup[] = [
       },
       { label: "Invoices", href: "/invoice/list", icon: <InventoryIcon /> },
     ],
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
+  },
+  {
+    title: "Inventory",
+    items: [
+      { label: "Inventory", href: "/inventory", icon: <WarehouseIcon /> },
+    ],
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
   },
   {
     title: "Production",
@@ -43,11 +54,16 @@ export const sidebarGroups: SidebarGroup[] = [
       { label: "View Batches", href: "/batch/list", icon: <DynamicFeedIcon /> },
       // { label: 'Assign Batch', href: '/batch/assign', icon: <AssignmentAddIcon /> },
     ],
+    allowFor: [Roles.PRODUCTION_ADMIN, Roles.SUPER_ADMIN],
   },
   {
     title: "Jobwork",
     items: [
-      { label: "View Jobworks", href: "/jobwork/list", icon: <AssignmentIcon /> },
+      {
+        label: "View Jobworks",
+        href: "/jobwork/list",
+        icon: <AssignmentIcon />,
+      },
       {
         label: "In Pass",
         href: "/jobwork/inpass",
@@ -55,6 +71,7 @@ export const sidebarGroups: SidebarGroup[] = [
       },
       { label: "Out Pass", href: "/batch/assign", icon: <AssignmentAddIcon /> },
     ],
+    allowFor: [Roles.PRODUCTION_ADMIN, Roles.SUPER_ADMIN],
   },
   {
     title: "Masters",
@@ -71,5 +88,6 @@ export const sidebarGroups: SidebarGroup[] = [
       },
       { label: "Skills", href: "/skill", icon: <PsychologyIcon /> },
     ],
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.PRODUCTION_ADMIN, Roles.SUPER_ADMIN],
   },
 ];

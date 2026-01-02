@@ -39,3 +39,13 @@ export const updateInvoice = async (
     console.error("error updating invoice", error);
   }
 };
+
+export const fetchInvoiceDetail = async (invoiceId: string) => {
+  try {
+    const response = await axiosInstance.get(`${baseUrl}/${invoiceId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching invoice details:", error);
+    throw error;
+  }
+};

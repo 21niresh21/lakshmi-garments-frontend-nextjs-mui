@@ -43,7 +43,7 @@ interface GenericTableProps<T> {
   rows: T[];
   columns: Column<T>[];
 
-  // Pagination (optional)
+  // Pagination
   pagination?: boolean;
   page?: number;
   rowsPerPage?: number;
@@ -51,23 +51,26 @@ interface GenericTableProps<T> {
   onPageChange?: (page: number) => void;
   onRowsPerPageChange?: (size: number) => void;
 
-  // Sorting (server-side friendly)
+  // Sorting
   sortBy?: string;
   sortOrder?: SortOrder;
   onSortChange?: (columnId: string, order: SortOrder) => void;
 
   // Toolbar
-  searchPlacedHolder: string;
+  searchPlacedHolder?: string;
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   toolbarExtras?: React.ReactNode;
 
-  // UI States
+  // ✅ Row click
+  onRowClick?: (row: T) => void;
+
+  // UI states
   loading?: boolean;
   noDataText?: string;
 
-  // Row actions
+  // Actions
   rowActions?: RowAction<T>[];
 }
 
@@ -93,6 +96,7 @@ export default function GenericTable<T extends { id?: string | number }>({
   loading = false,
   noDataText = "No data available",
   rowActions,
+  onRowClick,
 }: GenericTableProps<T>) {
   const handleSort = (columnId: string) => {
     if (!onSortChange) return;
@@ -101,8 +105,10 @@ export default function GenericTable<T extends { id?: string | number }>({
   };
 
   return (
-    <Paper sx={{ width: "100%", display: "flex", flexDirection: "column" }} elevation={3}>
-      {/* Loading indicator */}
+    <Paper
+      sx={{ width: "100%", display: "flex", flexDirection: "column" }}
+      elevation={3}
+    >
       {loading && <LinearProgress />}
 
       {/* Toolbar */}
@@ -115,19 +121,16 @@ export default function GenericTable<T extends { id?: string | number }>({
 
         {showSearch && onSearchChange && (
           <TextField
-            id="generic-table-search"
             size="small"
             placeholder={searchPlacedHolder}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
             }}
           />
         )}
@@ -136,40 +139,24 @@ export default function GenericTable<T extends { id?: string | number }>({
       </Toolbar>
 
       {/* Table */}
-      <TableContainer
-        sx={{
-          flexGrow: 1,
-          maxHeight: 600, // 👈 set your desired height
-          overflowY: "auto",
-        }}
-      >
-        <Table stickyHeader size="medium">
+      <TableContainer sx={{ flexGrow: 1, maxHeight: 600 }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow
-              sx={{
-                backgroundColor: (theme) => theme.palette.primary.main,
-              }}
+              sx={{ backgroundColor: (theme) => theme.palette.primary.main }}
             >
               {columns.map((col) => (
                 <TableCell
                   key={String(col.id)}
                   align={col.align}
-                  sx={{
-                    color: (theme) => theme.palette.primary.contrastText,
-                    fontWeight: 600,
-                  }}
+                  sx={{ color: "white", fontWeight: 600 }}
                 >
                   {col.sortable && onSortChange ? (
                     <TableSortLabel
                       active={sortBy === col.id}
                       direction={sortBy === col.id ? sortOrder : "asc"}
                       onClick={() => handleSort(String(col.id))}
-                      sx={{
-                        color: "inherit",
-                        "& .MuiTableSortLabel-icon": {
-                          color: "inherit !important",
-                        },
-                      }}
+                      sx={{ color: "inherit" }}
                     >
                       {col.label}
                     </TableSortLabel>
@@ -182,10 +169,7 @@ export default function GenericTable<T extends { id?: string | number }>({
               {rowActions && (
                 <TableCell
                   align="right"
-                  sx={{
-                    color: (theme) => theme.palette.primary.contrastText,
-                    fontWeight: 600,
-                  }}
+                  sx={{ color: "white", fontWeight: 600 }}
                 >
                   Actions
                 </TableCell>
@@ -195,7 +179,19 @@ export default function GenericTable<T extends { id?: string | number }>({
 
           <TableBody>
             {rows.map((row, idx) => (
-              <TableRow key={(row as any).id ?? idx} hover>
+              <TableRow
+                key={(row as any).id ?? idx}
+                hover
+                sx={{
+                  cursor: onRowClick ? "pointer" : "default",
+                }}
+                onClick={(e) => {
+                  // Prevent navigation when clicking action buttons
+                  if ((e.target as HTMLElement).closest("[data-row-action]"))
+                    return;
+                  onRowClick?.(row);
+                }}
+              >
                 {columns.map((col) => (
                   <TableCell key={String(col.id)} align={col.align}>
                     {col.render ? col.render(row) : (row as any)[col.id]}
@@ -207,6 +203,7 @@ export default function GenericTable<T extends { id?: string | number }>({
                     {rowActions.map((action) => (
                       <Box
                         key={action.label}
+                        data-row-action
                         component="span"
                         sx={{ cursor: "pointer", ml: 1 }}
                         onClick={(e) => action.onClick(row, e)}
@@ -238,7 +235,6 @@ export default function GenericTable<T extends { id?: string | number }>({
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
       {pagination && (
         <TablePagination
           component="div"

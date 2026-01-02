@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 
   // 👇 REQUIRED for Spring Boot static hosting
-  output: "export",
+  // output: "export",
   trailingSlash: true,
 
   // 👇 Fixes image issues in static export

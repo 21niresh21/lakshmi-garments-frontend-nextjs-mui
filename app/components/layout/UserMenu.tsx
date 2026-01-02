@@ -4,10 +4,7 @@ import * as React from "react";
 import { Avatar, IconButton, Menu, MenuItem, Divider } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useRouter } from "next/navigation";
-
-type User = {
-  name?: string;
-};
+import { User } from "@/app/_types/User";
 
 export default function UserMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -30,7 +27,7 @@ export default function UserMenu() {
   return (
     <>
       <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-        <Avatar sx={{ bgcolor: "primary.main",height : 35, width : 35 }}>
+        <Avatar sx={{ bgcolor: "primary.main", height: 35, width: 35 }}>
           {user?.name?.[0]?.toUpperCase() || "U"}
         </Avatar>
       </IconButton>
@@ -40,7 +37,9 @@ export default function UserMenu() {
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
       >
-        <MenuItem disabled>{user?.name || "User"}</MenuItem>
+        <MenuItem disabled>
+          {`${user?.name} (${user?.role.name})` || "User"}
+        </MenuItem>
         <Divider />
         <MenuItem onClick={logout}>
           <LogoutIcon fontSize="small" sx={{ mr: 1 }} />

@@ -10,15 +10,18 @@ import {
 
 interface Props {
   category: Inventory;
-  onChange: (category: Inventory) => void;
+  onChange?: (category: Inventory) => void;
+  readOnly?: boolean;
 }
 
-export default function CategoryCard({ category, onChange }: Props) {
+export default function CategoryCard({ category, onChange, readOnly }: Props) {
   return (
     <Card sx={{ height: "100%", width: "100%" }}>
       <CardActionArea
         onClick={() => {
-          onChange(category);
+          if (!readOnly && onChange) {
+            onChange(category);
+          }
         }}
         sx={{
           display: "flex",
