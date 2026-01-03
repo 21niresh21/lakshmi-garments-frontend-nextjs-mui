@@ -129,6 +129,7 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
           value={row.purchaseCost}
           onChange={(e) => handleNumberChange("purchaseCost", e.target.value)}
           inputProps={{ min: 0 }}
+          sx={{ width: 70 }}
         />
       </TableCell>
 
@@ -143,6 +144,7 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
           }
           error={row.purchasedQuantity === 0 && emptyRow}
           inputProps={{ min: 0 }}
+          sx={{ width: 70 }}
         />
       </TableCell>
 

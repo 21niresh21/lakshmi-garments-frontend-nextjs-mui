@@ -100,16 +100,16 @@ function page() {
 
       lr.bales.forEach((bale) => {
         const baleErrors: BaleErrors = {};
-        if (!bale.baleNumber) baleErrors.baleNumber = "Bale number is required";
+        if (!bale.baleNumber.trim()) baleErrors.baleNumber = "Bale number is required";
         if (!bale.price) baleErrors.price = "Bale price is required";
         if (bale.price && bale.price < 0) {
           baleErrors.price = "Price must be > 0";
         }
         if (!bale.quantity) baleErrors.quantity = "Bale quantity is required";
-        if (!bale.quality) baleErrors.quality = "Bale quality is required";
+        if (!bale.quality?.trim()) baleErrors.quality = "Bale quality is required";
         if (!bale.length) baleErrors.length = "Bale length is required";
         if (bale.length && bale.length < 0) {
-          baleErrors.length = "Length must be > 0"
+          baleErrors.length = "Length must be > 0";
         }
         if (!bale.subCategoryID)
           baleErrors.subCategoryID = "Sub Category is required";
@@ -216,6 +216,7 @@ function page() {
         receivedDate: invoice.receivedDate.replaceAll("-", "/"),
         lorryReceipts: lr.lorryReceipts,
         createdById: user?.id,
+        isTransportPaid: invoice.transportCost ? invoice.isTransportPaid : true,
       };
       try {
         await createStock(payload);

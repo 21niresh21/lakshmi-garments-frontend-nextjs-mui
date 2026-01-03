@@ -37,6 +37,7 @@ export const updateInvoice = async (
     return response;
   } catch (error) {
     console.error("error updating invoice", error);
+    throw error
   }
 };
 

@@ -33,6 +33,7 @@ export default function InvoiceDetailsPage() {
   const [lorryReceipts, setLorryReceipts] = useState<LorryReceipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingLR, setSavingLR] = useState<number | null>(null);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
 
   // Fetch invoice details
   useEffect(() => {
@@ -47,6 +48,8 @@ export default function InvoiceDetailsPage() {
           })) ?? [];
         setLorryReceipts(lrs);
         setInvoice(res);
+
+        setCanEdit(res.canEdit);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -107,9 +110,10 @@ export default function InvoiceDetailsPage() {
                     handleUpdateLR(lr); // trigger the same function as the button
                   }
                 }}
+                disabled={lr.lrnumber.startsWith('SELF')}
                 sx={{ width: 250 }} // narrower input
               />
-              <Button
+              {!lr.lrnumber.startsWith('SELF') && <Button
                 variant="contained"
                 size="small"
                 onClick={() => handleUpdateLR(lr)}
@@ -120,11 +124,11 @@ export default function InvoiceDetailsPage() {
                 }
               >
                 {savingLR === lr.id ? "Updating..." : "Update"}
-              </Button>
+              </Button>}
             </Stack>
 
             {/* 🔹 Bale Table */}
-            <BaleTable bales={lr.baleDTOs ?? []} />
+            <BaleTable canEdit={canEdit} bales={lr.baleDTOs ?? []} />
           </Paper>
         ))}
       </Stack>

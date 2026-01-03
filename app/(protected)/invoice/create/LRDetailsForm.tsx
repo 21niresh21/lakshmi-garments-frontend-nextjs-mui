@@ -134,7 +134,7 @@ export default function LRDetailsForm({
             <Button
               sx={{ height: 35 }}
               onClick={addLr}
-              disabled={!lrNumber}
+              disabled={!lrNumber.trim()}
               size="medium"
               variant="contained"
               ref={submitButtonRef}

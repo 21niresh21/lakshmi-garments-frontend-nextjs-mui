@@ -187,6 +187,7 @@ export default function BaleRow({
             prefillName: name,
           });
         }}
+        error={errors?.subCategoryID}
         sx={{ flex: 3 }}
       />
       <SubCategoryFormModal

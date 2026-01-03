@@ -33,6 +33,7 @@ import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturi
 import ExpandCircleDownIcon from "@mui/icons-material/ExpandCircleDown";
 import { SubCategory } from "@/app/_types/SubCategory";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
+import { useRouter } from "next/navigation";
 
 type Employee = {
   id: number;
@@ -147,6 +148,7 @@ const HEADERS = [
 
 export default function Page() {
   const { notify } = useNotification();
+  const router = useRouter();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
@@ -262,6 +264,7 @@ export default function Page() {
             setSortBy(col);
             setSortOrder(order);
           }}
+          onRowClick={(row) => router.push(`/batch/${row.id}`)}
           columns={HEADERS}
           rowActions={[
             {

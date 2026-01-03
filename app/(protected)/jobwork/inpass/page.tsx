@@ -77,7 +77,13 @@ export default function Page() {
               Find
             </Button>
           </Stack>
-          {jobwork && <JobworkItemsTable jobwork={jobwork} allItems={items} />}
+          {jobwork && (
+            <JobworkItemsTable
+              setJobwork={setJobwork}
+              jobwork={jobwork}
+              allItems={items}
+            />
+          )}
         </Grid>
         <Grid size={0.5}>{jobwork && <Divider orientation="vertical" />}</Grid>
         <Grid size={3.5}>

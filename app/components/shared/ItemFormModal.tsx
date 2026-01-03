@@ -49,8 +49,7 @@ export default function ItemFormModal({
   }, [open, initialData]);
 
   const handleChange =
-    (field: keyof ItemFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (field: keyof ItemFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
@@ -70,35 +69,42 @@ export default function ItemFormModal({
         },
       }}
     >
-      <DialogTitle>
-        {mode === "create" ? "Add Item" : "Edit Item"}
-      </DialogTitle>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+      >
+        <DialogTitle>
+          {mode === "create" ? "Add Item" : "Edit Item"}
+        </DialogTitle>
 
-      <DialogContent>
-        <Stack spacing={2} mt={1}>
-          <TextField
-            inputRef={nameInputRef}
-            label="Item Name"
-            value={form.name}
-            onChange={handleChange("name")}
-            fullWidth
-            required
-          />
-        </Stack>
-      </DialogContent>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              inputRef={nameInputRef}
+              label="Item Name"
+              value={form.name}
+              onChange={handleChange("name")}
+              fullWidth
+              required
+            />
+          </Stack>
+        </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading || !form.name}
-        >
-          {mode === "create" ? "Create" : "Save"}
-        </Button>
-      </DialogActions>
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            type="submit" // ✅ important
+            variant="contained"
+            disabled={loading || !form.name}
+          >
+            {mode === "create" ? "Create" : "Save"}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

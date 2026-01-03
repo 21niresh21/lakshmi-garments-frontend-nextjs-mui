@@ -14,6 +14,7 @@ import {
   Stack,
   Box,
   CircularProgress,
+  Badge,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -42,6 +43,9 @@ import dayjs from "dayjs";
 import { INITIAL_INVOICE, InvoiceErrors } from "../create/invoice.types";
 import { InvoiceDetails } from "../_types/invoiceDetails";
 import { useRouter } from "next/navigation";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import InvoiceFilter, { InvoiceFilterType } from "./InvoiceFilter";
+import { Transport } from "../_types/transport";
 
 type SubCategoryWithQuantity = {
   id: number;
@@ -65,7 +69,7 @@ const HEADERS = [
   {
     id: "invoiceNumber",
     label: "Invoice Number",
-    sortable: true,
+    // sortable: true,
   },
   {
     id: "invoiceDate",
@@ -107,7 +111,7 @@ const HEADERS = [
   {
     id: "createdAt",
     label: "Created At",
-    sortable: true,
+    // sortable: true,
     render: (row: any) => formatToShortDate(row.createdAt),
   },
   {
@@ -126,7 +130,7 @@ const HEADERS = [
 
 export default function Page() {
   const { notify } = useNotification();
-  const  router  = useRouter();
+  const router = useRouter();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
@@ -136,8 +140,22 @@ export default function Page() {
 
   const [rows, setRows] = useState<BatchRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [transports, setTransports] = useState<Supplier[]>([]);
+  const [transports, setTransports] = useState<Transport[]>([]);
   const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
+
+  const [filters, setFilters] = useState<InvoiceFilterType>({
+    supplierNames: [],
+    transportNames: [],
+    isPaid: [],
+    invoiceStartDate: "",
+    invoiceEndDate: "",
+  });
+
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
+    null
+  );
+
+  const openFilter = Boolean(filterAnchorEl);
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] =
@@ -148,6 +166,46 @@ export default function Page() {
   const [subCategories, setSubCategories] = useState<SubCategoryWithQuantity[]>(
     []
   );
+
+// Count active filters
+const activeFilterCount =
+  (filters.supplierNames?.length || 0) +
+  (filters.transportNames?.length || 0) +
+  (filters.isPaid?.length || 0) +
+  ((filters.invoiceStartDate || filters.invoiceEndDate) ? 1 : 0);
+
+
+  const handleOpenFilter = (e: React.MouseEvent<HTMLElement>) => {
+    setFilterAnchorEl(e.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setFilterAnchorEl(null);
+  };
+
+  const handleApplyFilter = () => {
+    setPage(0);
+    loadInvoices(); // optional but clear
+    handleCloseFilter();
+  };
+
+  const toBackendDate = (date: string) => {
+    if (!date) return "";
+    const [dd, mm, yyyy] = date.split("-");
+    return `${yyyy}-${mm}-${dd}`; // yyyy-MM-dd
+  };
+
+  const handleResetFilter = () => {
+    setFilters({
+      supplierNames: [],
+      transportNames: [],
+      isPaid: [],
+      invoiceStartDate: "",
+      invoiceEndDate: "",
+    });
+    setPage(0);
+    handleCloseFilter();
+  };
 
   const handleInvoiceChange = (patch: Partial<InvoiceDetails>) => {
     setSelectedInvoice((prev) => ({ ...prev, ...patch }));
@@ -176,7 +234,7 @@ export default function Page() {
   const validateInvoice = (invoice: InvoiceDetails): boolean => {
     console.log("validation", invoice);
     const errors: InvoiceErrors = {};
-    if (!invoice.invoiceNumber)
+    if (!invoice.invoiceNumber.trim())
       errors.invoiceNumber = "Invoice number is required";
 
     if (!invoice.invoiceDate) errors.invoiceDate = "Invoice date is required";
@@ -250,18 +308,23 @@ export default function Page() {
 
   const loadInvoices = async () => {
     try {
+      const { invoiceStartDate, invoiceEndDate, ...otherFilters } = filters;
+
       const data = await fetchInvoices({
         pageNo: page,
         pageSize: rowsPerPage,
         sortBy,
         sortOrder,
         search,
-        // batchStatusNames: batchStatusFilter,
-        // categoryNames: categoryFilter,
-        // isUrgent: isUrgentFilter,
-        // startDate: dateRange.start,
-        // endDate: dateRange.end,
+        ...otherFilters, // supplierNames, transportNames, isPaid
+        invoiceStartDate: invoiceStartDate
+          ? toBackendDate(invoiceStartDate)
+          : undefined,
+        invoiceEndDate: invoiceEndDate
+          ? toBackendDate(invoiceEndDate)
+          : undefined,
       });
+
       setTotalCount(data.totalElements);
       setRows(data.content); // assuming backend returns { content, totalElements, etc. }
     } catch (err) {
@@ -277,6 +340,7 @@ export default function Page() {
     search,
     sortBy,
     sortOrder,
+    filters,
     // batchStatusFilter,
     // categoryFilter,
     // isUrgentFilter,
@@ -284,19 +348,14 @@ export default function Page() {
   ]);
 
   useEffect(() => {
-    if (openModal) {
-      fetchSuppliers()
-        .then((res) => setSuppliers(res))
-        .catch((err) => {
-          notify("Error fetching suppliers", "error");
-        });
-      fetchTransports()
-        .then((res) => setTransports(res))
-        .catch((err) => {
-          notify("Error fetching transports", "error");
-        });
-    }
-  }, [openModal]);
+    fetchSuppliers()
+      .then(setSuppliers)
+      .catch(() => notify("Error fetching suppliers", "error"));
+
+    fetchTransports()
+      .then(setTransports)
+      .catch(() => notify("Error fetching transports", "error"));
+  }, []);
 
   return (
     <Grid container>
@@ -332,8 +391,32 @@ export default function Page() {
               onClick: (row) => handleEditInvoice(row),
             },
           ]}
+          toolbarExtras={
+            <Badge
+              badgeContent={activeFilterCount}
+              color="primary"
+              overlap="circular"
+              invisible={activeFilterCount === 0} // hide badge when no filters active
+            >
+              <IconButton onClick={handleOpenFilter}>
+                <FilterAltIcon />
+              </IconButton>
+            </Badge>
+          }
         />
       </Grid>
+
+      <InvoiceFilter
+        anchorEl={filterAnchorEl}
+        open={openFilter}
+        filters={filters}
+        suppliers={suppliers}
+        transports={transports}
+        onChange={setFilters}
+        onApply={handleApplyFilter}
+        onReset={handleResetFilter}
+        onClose={handleCloseFilter}
+      />
 
       {/* ✅ POPPER (render ONCE, outside table) */}
       <InvoiceFormModal

@@ -70,35 +70,42 @@ export default function SkillFormModal({
         },
       }}
     >
-      <DialogTitle>
-        {mode === "create" ? "Add Skill" : "Edit Skill"}
-      </DialogTitle>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+      >
+        <DialogTitle>
+          {mode === "create" ? "Add Skill" : "Edit Skill"}
+        </DialogTitle>
 
-      <DialogContent>
-        <Stack spacing={2} mt={1}>
-          <TextField
-            inputRef={nameInputRef}
-            label="Skill Name"
-            value={form.name}
-            onChange={handleChange("name")}
-            fullWidth
-            required
-          />
-        </Stack>
-      </DialogContent>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              inputRef={nameInputRef}
+              label="Skill Name"
+              value={form.name}
+              onChange={handleChange("name")}
+              fullWidth
+              required
+            />
+          </Stack>
+        </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading || !form.name}
-        >
-          {mode === "create" ? "Create" : "Save"}
-        </Button>
-      </DialogActions>
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            type="submit" // ✅ important
+            variant="contained"
+            disabled={loading || !form.name}
+          >
+            {mode === "create" ? "Create" : "Save"}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

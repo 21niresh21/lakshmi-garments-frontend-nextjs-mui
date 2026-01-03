@@ -70,70 +70,74 @@ export default function EmployeeFormModal({
   }, []);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      TransitionProps={{
-        onEntered: () => {
-          nameInputRef.current?.focus();
-        },
-      }}
-    >
-      <DialogTitle>
-        {mode === "create" ? "Add Employee" : "Edit Employee"}
-      </DialogTitle>
+<Dialog
+  open={open}
+  onClose={onClose}
+  fullWidth
+  maxWidth="sm"
+  TransitionProps={{
+    onEntered: () => {
+      nameInputRef.current?.focus();
+    },
+  }}
+>
+  <form
+    onSubmit={(e) => {
+      e.preventDefault();
+      handleSubmit();
+    }}
+  >
+    <DialogTitle>
+      {mode === "create" ? "Add Employee" : "Edit Employee"}
+    </DialogTitle>
 
-      <DialogContent>
-        <Stack spacing={2} mt={1}>
-          <TextField
-            inputRef={nameInputRef}
-            label="Employee Name"
-            value={form.name}
-            onChange={handleChange("name")}
-            fullWidth
-            required
-          />
+    <DialogContent>
+      <Stack spacing={2} mt={1}>
+        <TextField
+          inputRef={nameInputRef}
+          label="Employee Name"
+          value={form.name}
+          onChange={handleChange("name")}
+          fullWidth
+          required
+        />
 
-          <Autocomplete
-            multiple
-            openOnFocus
-            id="skills-autocomplete"
-            disablePortal
-            autoHighlight
-            options={skills}
-            getOptionLabel={(option) => option.name}
-            value={skills.filter((skill) => form.skills?.includes(skill.id))}
-            onChange={(_, selectedOptions) => {
-              const ids = selectedOptions.map((opt) => opt.id);
-              setForm((prev) => ({ ...prev, skills: ids }));
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                id="skill-input"
-                label="Skills"
-                // error={!!errors.supplierName}
-                // helperText={errors.supplierName}
-              />
-            )}
-          />
-        </Stack>
-      </DialogContent>
+        <Autocomplete
+          multiple
+          openOnFocus
+          id="skills-autocomplete"
+          disablePortal
+          autoHighlight
+          options={skills}
+          getOptionLabel={(option) => option.name}
+          value={skills.filter((skill) =>
+            form.skills?.includes(skill.id)
+          )}
+          onChange={(_, selectedOptions) => {
+            const ids = selectedOptions.map((opt) => opt.id);
+            setForm((prev) => ({ ...prev, skills: ids }));
+          }}
+          renderInput={(params) => (
+            <TextField {...params} label="Skills" />
+          )}
+        />
+      </Stack>
+    </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading || !form.name}
-        >
-          {mode === "create" ? "Create" : "Save"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <DialogActions>
+      <Button onClick={onClose} disabled={loading}>
+        Cancel
+      </Button>
+      <Button
+        type="submit"                 // ✅ key change
+        variant="contained"
+        disabled={loading || !form.name}
+      >
+        {mode === "create" ? "Create" : "Save"}
+      </Button>
+    </DialogActions>
+  </form>
+</Dialog>
+
   );
 }

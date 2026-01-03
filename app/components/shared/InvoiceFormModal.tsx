@@ -188,7 +188,7 @@ export default function InvoiceFormModal({
               options={suppliers.map((s) => s.name)}
               value={initialData.supplierName}
               onChange={(_, supplier) =>
-                onChange({ supplierName: supplier ?? undefined })
+                onChange({ supplierName: supplier ?? "" })
               }
               renderInput={(params) => (
                 <TextField
@@ -209,7 +209,7 @@ export default function InvoiceFormModal({
               // getOptionLabel={(option) => option.name}
               value={initialData.transportName}
               onChange={(_, transport) =>
-                onChange({ transportName: transport ?? undefined })
+                onChange({ transportName: transport ?? "" })
               }
               renderInput={(params) => (
                 <TextField

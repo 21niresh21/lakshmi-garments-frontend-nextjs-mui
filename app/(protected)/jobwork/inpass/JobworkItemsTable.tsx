@@ -25,6 +25,7 @@ import { JobworkStatus } from "@/app/_types/JobworkStatus";
 interface JobworkItemsTableProps {
   allItems: Item[];
   jobwork: any; // ✅ jobwork assigned qty
+  setJobwork: React.Dispatch<React.SetStateAction<any | null>>;
 }
 
 const toNumber = (v: number | "") => (v === "" ? 0 : v);
@@ -32,6 +33,7 @@ const toNumber = (v: number | "") => (v === "" ? 0 : v);
 export default function JobworkItemsTable({
   allItems,
   jobwork,
+  setJobwork
 }: JobworkItemsTableProps) {
   const assignedQuantity = jobwork.jobworkItems.reduce(
     (sum: number, item: any) => sum + item.quantity,
@@ -98,6 +100,12 @@ export default function JobworkItemsTable({
     jobwork.jobworkStatus === JobworkStatus.COMPLETED;
   const remainingQty = assignedQuantity - totalEntered;
 
+  const canSubmit =
+    totalEntered === assignedQuantity &&
+    jobwork.jobworkStatus !== JobworkStatus.COMPLETED &&
+    rows.length > 0 &&
+    !!rows[0].item;
+
   // ✅ Submit handler
   const handleSubmit = () => {
     if (totalExceeded) {
@@ -111,7 +119,9 @@ export default function JobworkItemsTable({
     };
     createJobworkReceipt(payload)
       .then((res) => {
-        notify("Submission successful!", "success");
+        notify("Jobwork accepted!", "success");
+        setRows([])
+        setJobwork(null)
       })
       .catch((err) => {
         notify("An error occured", "error");
@@ -125,7 +135,9 @@ export default function JobworkItemsTable({
       <Typography sx={{ my: 2 }}>
         Assigned Qty: <b>{assignedQuantity}</b> | Remaining:{" "}
         <b style={{ color: remainingQty < 0 ? "red" : "inherit" }}>
-          {JobworkStatus.COMPLETED ? 0 : assignedQuantity}
+          {JobworkStatus.COMPLETED === jobwork.jobworkStatus
+            ? 0
+            : remainingQty}
         </b>
       </Typography>
 
@@ -136,8 +148,8 @@ export default function JobworkItemsTable({
               <TableCell>Item</TableCell>
               <TableCell>Returned</TableCell>
               <TableCell>Wage</TableCell>
-              <TableCell>Purchase Cost</TableCell>
-              <TableCell>Purchase Qty</TableCell>
+              <TableCell>Sales Cost</TableCell>
+              <TableCell>Sales Qty</TableCell>
               <TableCell>Supplier Damage</TableCell>
               <TableCell>Repairable</TableCell>
               <TableCell>Unrepairable</TableCell>
@@ -168,7 +180,7 @@ export default function JobworkItemsTable({
         <Button
           variant="contained"
           onClick={handleAddRow}
-          disabled={rows.length >= allItems.length}
+          // disabled={rows.length >= allItems.length}
         >
           Add Item
         </Button>
@@ -177,7 +189,7 @@ export default function JobworkItemsTable({
           variant="contained"
           color="success"
           onClick={handleSubmit}
-          disabled={rows.length === 0 || !rows[0].item} // can't submit empty
+          disabled={canSubmit} // can't submit empty
         >
           Submit
         </Button>

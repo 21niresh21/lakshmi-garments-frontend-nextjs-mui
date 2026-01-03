@@ -48,6 +48,7 @@ import { fetchSubCategories } from "@/app/api/subCategory";
 import BaleFormModal from "@/app/components/shared/BaleFormModal";
 import { BaleDetails, BaleErrors, INITIAL_BALE } from "./bale.types";
 import { updateBale } from "@/app/api/baleApi";
+import { useUser } from "@/app/context/UserContext";
 
 interface BaleRow {
   id: number;
@@ -62,13 +63,13 @@ interface BaleRow {
 
 type Props = {
   bales: BaleRow[];
+  canEdit: boolean;
 };
 
 const HEADERS = [
   {
     id: "baleNumber",
     label: "Bale Number",
-    sortable: true,
   },
   {
     id: "quantity",
@@ -96,9 +97,10 @@ const HEADERS = [
   },
 ];
 
-export default function BaleTable({ bales }: Props) {
+export default function BaleTable({ bales, canEdit }: Props) {
   console.log(bales);
   const { notify } = useNotification();
+  const { user } = useUser();
   const router = useRouter();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -192,7 +194,11 @@ export default function BaleTable({ bales }: Props) {
       if (!validateBale(data)) {
         return;
       }
-      await updateBale(data.id, data);
+      const payload = {
+        ...data,
+        updatedById: user?.id,
+      };
+      await updateBale(data.id, payload);
       notify("Invoice updated successfully", "success");
       setOpenModal(false);
       setRows((prevRows) =>
@@ -222,41 +228,6 @@ export default function BaleTable({ bales }: Props) {
     setSubCategories([]);
     setBaleErrors({});
   };
-
-  const loadInvoices = async () => {
-    try {
-      const data = await fetchInvoices({
-        pageNo: page,
-        pageSize: rowsPerPage,
-        sortBy,
-        sortOrder,
-        search,
-        // batchStatusNames: batchStatusFilter,
-        // categoryNames: categoryFilter,
-        // isUrgent: isUrgentFilter,
-        // startDate: dateRange.start,
-        // endDate: dateRange.end,
-      });
-      setTotalCount(data.totalElements);
-      setRows(data.content); // assuming backend returns { content, totalElements, etc. }
-    } catch (err) {
-      console.error("Error loading invoices:", err);
-    }
-  };
-
-  //   useEffect(() => {
-  //     loadInvoices();
-  //   }, [
-  //     page,
-  //     rowsPerPage,
-  //     search,
-  //     sortBy,
-  //     sortOrder,
-  //     // batchStatusFilter,
-  //     // categoryFilter,
-  //     // isUrgentFilter,
-  //     // dateRange,
-  //   ]);
 
   useEffect(() => {
     setRows(bales ?? []);
@@ -291,17 +262,21 @@ export default function BaleTable({ bales }: Props) {
             setSortOrder(order);
           }}
           columns={HEADERS}
-          rowActions={[
-            {
-              label: "Edit",
-              icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
-              onClick: (row) => handleEditBale(row),
-            },
-          ]}
+          rowActions={
+            canEdit
+              ? [
+                  {
+                    label: "Edit",
+                    icon: () => (
+                      <IconButton size="small">
+                        <EditIcon sx={{ color: "gray" }} />
+                      </IconButton>
+                    ),
+                    onClick: (row) => handleEditBale(row),
+                  },
+                ]
+              : undefined
+          }
         />
       </Grid>
 
