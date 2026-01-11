@@ -292,7 +292,7 @@ export default function Page() {
 
   const loadRequests = async () => {
     try {
-      const requestedByNames: string = user?.name ?? "";
+      const requestedByNames: string = user?.username ?? "";
 
       const data = await fetchWorkflowRequests({
         pageNo: page,
@@ -335,7 +335,7 @@ export default function Page() {
   }, []);
 
   console.log(Roles.SUPER_ADMIN);
-  const canApprove = user?.role?.name === Roles.SUPER_ADMIN;
+  // const canApprove = user?.role?.name === Roles.SUPER_ADMIN;
 
   return (
     <Grid container>
@@ -360,25 +360,25 @@ export default function Page() {
           }}
           onRowClick={(row) => router.push(`/requests/workflow/${row.id}`)}
           columns={HEADERS}
-          rowActions={
-            canApprove
-              ? [
-                  {
-                    label: "Approve",
-                    icon: (row) =>
-                      row.requestStatus === WorkflowRequestStatus.PENDING &&
-                      user?.role?.name === Roles.SUPER_ADMIN ? (
-                        <Tooltip title="Approve">
-                          <IconButton size="small">
-                            <ApprovalIcon sx={{ color: "gray" }} />
-                          </IconButton>
-                        </Tooltip>
-                      ) : null,
-                    onClick: (row) => handleApproval(row),
-                  },
-                ]
-              : undefined
-          }
+          // rowActions={
+          //   canApprove
+          //     ? [
+          //         {
+          //           label: "Approve",
+          //           icon: (row) =>
+          //             row.requestStatus === WorkflowRequestStatus.PENDING &&
+          //             user?. === Roles.SUPER_ADMIN ? (
+          //               <Tooltip title="Approve">
+          //                 <IconButton size="small">
+          //                   <ApprovalIcon sx={{ color: "gray" }} />
+          //                 </IconButton>
+          //               </Tooltip>
+          //             ) : null,
+          //           onClick: (row) => handleApproval(row),
+          //         },
+          //       ]
+          //     : undefined
+          // }
 
           //   toolbarExtras={
           //     <Badge

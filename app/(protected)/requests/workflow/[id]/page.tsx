@@ -86,7 +86,7 @@ export default function Page() {
         Items
       </Typography>
 
-      <Stack spacing={2}>
+      {/* <Stack spacing={2}>
         {payload ? payload[0].map((item, index) => (
           <Paper key={item.id} sx={{ p: 2 }}>
             <Typography variant="subtitle1" fontWeight={600}>
@@ -107,7 +107,6 @@ export default function Page() {
               </Grid>
             </Grid>
 
-            {/* 🔹 Damages */}
             <Divider sx={{ my: 1 }} />
             <Typography fontWeight={500}>Damages</Typography>
 
@@ -123,7 +122,7 @@ export default function Page() {
             </Stack>
           </Paper>
         )) : []}
-      </Stack>
+      </Stack> */}
     </Box>
   );
 }

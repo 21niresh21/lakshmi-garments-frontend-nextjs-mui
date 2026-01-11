@@ -4,11 +4,11 @@ import * as React from "react";
 import { Avatar, IconButton, Menu, MenuItem, Divider } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useRouter } from "next/navigation";
-import { User } from "@/app/_types/User";
+import { AuthUser } from "@/app/_types/User";
 
 export default function UserMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<AuthUser | null>(null);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -18,13 +18,14 @@ export default function UserMenu() {
     }
   }, []);
 
-const logout = () => {
+  const logout = () => {
     // 1. Clear user data from local storage
     localStorage.removeItem("user");
 
     // 2. Clear the ACTUAL cookie being used (token)
     // Note: Use the same path used when setting the cookie (usually '/')
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict";
+    document.cookie =
+      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict";
 
     // 3. Redirect to login
     router.push("/login");
