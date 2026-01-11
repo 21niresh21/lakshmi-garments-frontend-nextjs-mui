@@ -20,6 +20,7 @@ import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { createJobwork } from "@/app/api/jobworkApi";
 import { fetchJobworkPdf } from "@/app/api/pdfApi";
 import ItemJobForm from "./ItemJobForm";
+import { fetchBatchItems } from "@/app/api/BatchItemApi";
 
 export type BatchSerialCode = {
   id: number;
@@ -33,6 +34,8 @@ interface Props {
   setJobwork: Dispatch<SetStateAction<JobworkForm>>;
   jobwork: JobworkForm;
   availableQty: number;
+  refresh: Dispatch<SetStateAction<boolean>>;
+  refreshState: boolean;
 }
 
 export default function AssignmentForm({
@@ -42,13 +45,19 @@ export default function AssignmentForm({
   jobwork,
   employees,
   availableQty,
+  refresh,
+  refreshState,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
+  const [batchItems, setBatchItems] = useState();
+
   const { user } = useUser();
   const { notify } = useNotification();
+
+  console.log(user);
 
   /* ================= PREVIEW ================= */
 
@@ -61,13 +70,16 @@ export default function AssignmentForm({
       }
 
       const payload = {
+        ...jobwork, // ✅ move this up
         employeeName: jobwork.employee?.name,
         employeeId: jobwork.employee?.id,
         batchSerialCode: jobwork.serialCode,
-        assignedBy: user?.id,
-        jobworkType: "CUTTING",
-        quantities: [jobwork.quantity],
-        jobworkNumber: jobwork.jobworkNumber,
+        assignedBy: user?.id, // ✅ now cannot be overridden
+        quantities:
+          jobwork.jobworkType === "CUTTING"
+            ? [jobwork.quantity]
+            : jobwork.items.map((i) => i.quantity ?? 0),
+        itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
         remarks: jobwork.remarks,
       };
 
@@ -90,13 +102,16 @@ export default function AssignmentForm({
       }
 
       const payload = {
+        ...jobwork, // ✅ move this up
         employeeName: jobwork.employee?.name,
         employeeId: jobwork.employee?.id,
         batchSerialCode: jobwork.serialCode,
-        assignedBy: user?.id,
-        jobworkType: "CUTTING",
-        quantities: [jobwork.quantity],
-        jobworkNumber: jobwork.jobworkNumber,
+        assignedBy: user?.id, // ✅ now cannot be overridden
+        quantities:
+          jobwork.jobworkType === "CUTTING"
+            ? [jobwork.quantity]
+            : jobwork.items.map((i) => i.quantity ?? 0),
+        itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
         remarks: jobwork.remarks,
       };
 
@@ -111,15 +126,18 @@ export default function AssignmentForm({
 
   /* ================= SUBMIT ================= */
 
-  const submitJobworkForCutting = () => {
+  const submitJobwork = () => {
     const payload = {
+      ...jobwork, // ✅ move this up
       employeeName: jobwork.employee?.name,
       employeeId: jobwork.employee?.id,
       batchSerialCode: jobwork.serialCode,
-      assignedBy: user?.id,
-      jobworkType: "CUTTING",
-      quantities: [jobwork.quantity],
-      jobworkNumber: jobwork.jobworkNumber,
+      assignedBy: user?.id, // ✅ now cannot be overridden
+      quantities:
+        jobwork.jobworkType === "CUTTING"
+          ? [jobwork.quantity]
+          : jobwork.items.map((i) => i.quantity ?? 0),
+      itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
       remarks: jobwork.remarks,
     };
 
@@ -128,6 +146,7 @@ export default function AssignmentForm({
       .then(() => {
         setJobwork(INITIAL_JOBWORK);
         notify("Jobwork created", "success");
+        refresh(!refreshState);
       })
       .catch(() => notify("Error creating jobwork", "error"))
       .finally(() => setLoading(false));
@@ -141,10 +160,20 @@ export default function AssignmentForm({
     };
   }, [pdfUrl]);
 
+  useEffect(() => {
+    if (jobwork.jobworkType === "STITCHING" && jobwork.serialCode) {
+      fetchBatchItems(jobwork.serialCode)
+        .then((res) => setBatchItems(res))
+        .catch((err) => {
+          notify("Error fetching batch items", "error");
+        });
+    }
+  }, [jobwork.serialCode, jobwork.jobworkType]);
+
   /* ================= UI ================= */
 
   return (
-    <Paper sx={{ p: 2, height: "100%" }} elevation={2}>
+    <Paper sx={{ p: 2, height: "100%" }} elevation={0}>
       <Typography fontWeight={600}>Assign Batch</Typography>
       <Divider sx={{ my: 2 }} />
 
@@ -184,13 +213,14 @@ export default function AssignmentForm({
         <Grid size={4}>
           <Autocomplete
             fullWidth
-            options={employees}
+            options={employees ?? []}
             getOptionLabel={(e) => e.name}
             value={jobwork.employee}
             onChange={(_, value) =>
               setJobwork((p) => ({ ...p, employee: value }))
             }
             renderInput={(params) => <TextField {...params} label="Employee" />}
+            disabled={!jobwork.serialCode || !jobwork.jobworkType}
           />
         </Grid>
 
@@ -217,45 +247,79 @@ export default function AssignmentForm({
               />
             </Grid>
           </>
-        ) : jobwork.jobworkType && (
-          <Grid size={12}>
-            <ItemJobForm
-              items={[{ id: 1, name: "apple" }]}
-              jobwork={jobwork}
-              setJobwork={setJobwork}
-            />
-          </Grid>
+        ) : (
+          jobwork.jobworkType && (
+            <Grid size={12}>
+              <ItemJobForm
+                batchItems={batchItems ?? []}
+                jobwork={jobwork}
+                setJobwork={setJobwork}
+              />
+            </Grid>
+          )
         )}
 
-        <Grid size={12} display="flex" justifyContent="flex-end" gap={2}>
-          <Button
-            variant="contained"
-            onClick={submitJobworkForCutting}
-            disabled={
-              loading ||
-              !jobwork.quantity ||
-              !jobwork.employee ||
-              !jobwork.jobworkType ||
-              !jobwork.serialCode
-            }
-          >
-            Assign
-          </Button>
+        {jobwork.jobworkType === "CUTTING" ? (
+          <Grid size={12} display="flex" justifyContent="flex-end" gap={2}>
+            <Button
+              variant="contained"
+              onClick={submitJobwork}
+              disabled={
+                loading ||
+                !jobwork.quantity ||
+                !jobwork.employee ||
+                !jobwork.jobworkType ||
+                !jobwork.serialCode
+              }
+            >
+              Assign
+            </Button>
 
-          <Button
-            variant="outlined"
-            disabled={
-              loading ||
-              !jobwork.quantity ||
-              !jobwork.employee ||
-              !jobwork.jobworkType ||
-              !jobwork.serialCode
-            }
-            onClick={openPreview}
-          >
-            Preview
-          </Button>
-        </Grid>
+            <Button
+              variant="outlined"
+              disabled={
+                loading ||
+                !jobwork.quantity ||
+                !jobwork.employee ||
+                !jobwork.jobworkType ||
+                !jobwork.serialCode
+              }
+              onClick={openPreview}
+            >
+              Preview
+            </Button>
+          </Grid>
+        ) : (
+          <Grid size={12} display="flex" justifyContent="flex-end" gap={2}>
+            <Button
+              variant="contained"
+              onClick={submitJobwork}
+              disabled={
+                loading ||
+                !jobwork.items[0]?.item ||
+                !jobwork.employee ||
+                !jobwork.jobworkType ||
+                !jobwork.serialCode
+              }
+            >
+              Assign
+            </Button>
+
+            <Button
+              variant="outlined"
+              disabled={
+                loading ||
+                !jobwork.items[0]?.item ||
+                !jobwork.employee ||
+                !jobwork.jobworkType ||
+                !jobwork.serialCode
+              }
+              onClick={openPreview}
+            >
+              Preview
+            </Button>
+          </Grid>
+        )}
       </Grid>
 
       {/* ================= PDF PREVIEW ================= */}
@@ -275,9 +339,7 @@ export default function AssignmentForm({
               height="100%"
               style={{ border: "none", minHeight: "90vh" }}
             />
-            
           )}
-      
         </Box>
       </Drawer>
     </Paper>

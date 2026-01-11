@@ -2,6 +2,7 @@ import { Employee } from "@/app/_types/Employee";
 import { Item } from "@/app/_types/Item";
 
 export type ItemEntry = {
+  rowId: string;  
   item: Item | null;
   quantity?: number;
 };

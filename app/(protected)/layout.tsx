@@ -25,13 +25,13 @@ export default function ProtectedLayout({
 
   return (
     // <ThemeProvider theme={theme}>
-      <UserProvider user={user}>
-        <NotificationProvider>
-          <ConfirmationProvider>
-            <AppShell>{children}</AppShell>;
-          </ConfirmationProvider>
-        </NotificationProvider>
-      </UserProvider>
+    <UserProvider user={user}>
+      <NotificationProvider>
+        <ConfirmationProvider>
+          <AppShell>{children}</AppShell>;
+        </ConfirmationProvider>
+      </NotificationProvider>
+    </UserProvider>
     // </ThemeProvider>
   );
 }

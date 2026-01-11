@@ -7,6 +7,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { useServerInsertedHTML } from "next/navigation";
 import theme from "./themes/theme";
+import erpDesign from "./themes/erp/erpDesign";
 
 export default function ThemeRegistry({
   children,

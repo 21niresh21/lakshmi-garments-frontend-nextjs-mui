@@ -12,7 +12,6 @@ interface Props {
 export default function CuttingForm({ setJobwork, jobwork, maxQty }: Props) {
   return (
     <Grid>
-      <Grid></Grid>
       <TextField
         id="quantity"
         type="number"

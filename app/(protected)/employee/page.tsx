@@ -39,8 +39,8 @@ export default function Page() {
 
   const loadEmployees = async () => {
     try {
-      const data = await fetchEmployees(search);
-      setRows(data);
+      const data : any = await fetchEmployees();
+      setRows(data.content);
     } catch (err) {
       notify("Error fetching employees", "error");
     }
@@ -97,7 +97,7 @@ export default function Page() {
       <Grid size={12}>
         <GenericTable<Employee>
           title="Employees"
-          rows={rows}
+          rows={rows ?? []}
           pagination={false}
           totalCount={rows.length}
           searchPlacedHolder="Search Employees..."

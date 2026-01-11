@@ -21,6 +21,8 @@ import { DamageType } from "@/app/_types/DamageType";
 import { useUser } from "@/app/context/UserContext";
 import { createJobworkReceipt } from "@/app/api/jobworkReceipt";
 import { JobworkStatus } from "@/app/_types/JobworkStatus";
+import { createWorflowRequest } from "@/app/api/workflowRequestApi";
+import { WorkflowRequestType } from "@/app/_types/WorkflowRequestType";
 
 interface JobworkItemsTableProps {
   allItems: Item[];
@@ -33,12 +35,23 @@ const toNumber = (v: number | "") => (v === "" ? 0 : v);
 export default function JobworkItemsTable({
   allItems,
   jobwork,
-  setJobwork
+  setJobwork,
 }: JobworkItemsTableProps) {
   const assignedQuantity = jobwork.jobworkItems.reduce(
     (sum: number, item: any) => sum + item.quantity,
     0
   );
+
+  const receivedQuantity = jobwork.jobworkReceiptItems.reduce(
+    (sum: number, item: any) =>
+      sum +
+      (item.returnedQuantity ?? 0) +
+      (item.damagedQuantity ?? 0) +
+      (item.purchasedQuantity ?? 0),
+    0
+  );
+
+  const pendingQuantity = assignedQuantity - receivedQuantity;
 
   const { notify } = useNotification();
   const { user } = useUser();
@@ -96,15 +109,21 @@ export default function JobworkItemsTable({
   }, [rows]);
 
   const totalExceeded =
-    totalEntered > assignedQuantity ||
+    totalEntered > pendingQuantity ||
     jobwork.jobworkStatus === JobworkStatus.COMPLETED;
-  const remainingQty = assignedQuantity - totalEntered;
+  const remainingQty = pendingQuantity - totalEntered;
 
   const canSubmit =
-    totalEntered === assignedQuantity &&
+    totalEntered === pendingQuantity &&
     jobwork.jobworkStatus !== JobworkStatus.COMPLETED &&
     rows.length > 0 &&
     !!rows[0].item;
+
+  const canRaiseRequest =
+    rows.length > 0 &&
+    rows.every((r) => r.item) &&
+    totalEntered !== pendingQuantity &&
+    jobwork.jobworkStatus !== JobworkStatus.COMPLETED;
 
   // ✅ Submit handler
   const handleSubmit = () => {
@@ -113,6 +132,7 @@ export default function JobworkItemsTable({
       return;
     }
     const payload = {
+      batchSerialCode: jobwork.batchSerialCode,
       jobworkNumber: jobwork.jobworkNumber,
       receivedById: user?.id,
       jobworkReceiptItems: rows,
@@ -120,8 +140,8 @@ export default function JobworkItemsTable({
     createJobworkReceipt(payload)
       .then((res) => {
         notify("Jobwork accepted!", "success");
-        setRows([])
-        setJobwork(null)
+        setRows([]);
+        setJobwork(null);
       })
       .catch((err) => {
         notify("An error occured", "error");
@@ -130,70 +150,101 @@ export default function JobworkItemsTable({
     console.log("Submitting rows:", rows);
   };
 
+  const raiseRequest = () => {
+    const rowsWithJobworkNumber = rows.map((row) => ({
+      ...row,
+      jobworkNumber: jobwork.jobworkNumber,
+    }));
+
+    const payload = {
+      requestType: WorkflowRequestType.JOBWORK_RECEIPT,
+      payload: JSON.stringify(rowsWithJobworkNumber),
+      systemComments: "Quantity mismatch in Cutting jobwork",
+    };
+
+    createWorflowRequest(payload)
+      .then((res) => {
+        notify("Request raised to admin", "success");
+        setRows([]);
+        setJobwork(null);
+      })
+      .catch((err) => {
+        notify("An error occured when submitting request", "error");
+      });
+  };
+
   return (
     <>
       <Typography sx={{ my: 2 }}>
-        Assigned Qty: <b>{assignedQuantity}</b> | Remaining:{" "}
+        Assigned Qty: <b>{pendingQuantity}</b> | Remaining:{" "}
         <b style={{ color: remainingQty < 0 ? "red" : "inherit" }}>
-          {JobworkStatus.COMPLETED === jobwork.jobworkStatus
-            ? 0
-            : remainingQty}
+          {JobworkStatus.COMPLETED === jobwork.jobworkStatus ? 0 : remainingQty}
         </b>
       </Typography>
 
-      <TableContainer component={Paper} sx={{ mt: 2, width: "100%" }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Item</TableCell>
-              <TableCell>Returned</TableCell>
-              <TableCell>Wage</TableCell>
-              <TableCell>Sales Cost</TableCell>
-              <TableCell>Sales Qty</TableCell>
-              <TableCell>Supplier Damage</TableCell>
-              <TableCell>Repairable</TableCell>
-              <TableCell>Unrepairable</TableCell>
-              <TableCell>Remove</TableCell>
-            </TableRow>
-          </TableHead>
+      {pendingQuantity > 0 && (
+        <>
+          <TableContainer component={Paper} sx={{ mt: 2, width: "100%" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Item</TableCell>
+                  <TableCell>Returned</TableCell>
+                  <TableCell>Wage</TableCell>
+                  <TableCell>Sales Cost</TableCell>
+                  <TableCell>Sales Qty</TableCell>
+                  <TableCell>Supplier Damage</TableCell>
+                  <TableCell>Repairable</TableCell>
+                  <TableCell>Unrepairable</TableCell>
+                  <TableCell>Remove</TableCell>
+                </TableRow>
+              </TableHead>
 
-          <TableBody>
-            {rows.map((row) => (
-              <JobworkItemRow
-                key={row.id}
-                row={row}
-                availableItems={allItems.filter(
-                  (item) =>
-                    !selectedItemIds.includes(item.id) || item.id === row.itemId
-                )}
-                onChange={(updated) => handleRowChange(row.id, updated)}
-                onRemove={() => handleRemoveRow(row.id)}
-                totalExceeded={totalExceeded} // ✅ pass down
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              <TableBody>
+                {rows.map((row) => (
+                  <JobworkItemRow
+                    key={row.id}
+                    row={row}
+                    availableItems={allItems.filter(
+                      (item) =>
+                        !selectedItemIds.includes(item.id) ||
+                        item.id === row.itemId
+                    )}
+                    onChange={(updated) => handleRowChange(row.id, updated)}
+                    onRemove={() => handleRemoveRow(row.id)}
+                    totalExceeded={totalExceeded} // ✅ pass down
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-      {/* Add + Submit buttons */}
-      <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-        <Button
-          variant="contained"
-          onClick={handleAddRow}
-          // disabled={rows.length >= allItems.length}
-        >
-          Add Item
-        </Button>
-
-        <Button
-          variant="contained"
-          color="success"
-          onClick={handleSubmit}
-          disabled={canSubmit} // can't submit empty
-        >
-          Submit
-        </Button>
-      </Stack>
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleAddRow}
+              // disabled={rows.length >= allItems.length}
+            >
+              Add Item
+            </Button>
+            <Button
+              variant="contained"
+              onClick={raiseRequest}
+              disabled={!canRaiseRequest}
+            >
+              Raise Request
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleSubmit}
+              disabled={!canSubmit} // can't submit empty
+            >
+              Submit
+            </Button>
+          </Stack>
+        </>
+      )}
     </>
   );
 }

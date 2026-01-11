@@ -1,14 +1,15 @@
 import { Employee } from "../_types/Employee";
 import axiosInstance from "../config/axiosConfig";
+import { EmployeeParams } from "./_types/EmployeeParams";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const baseUrl = API_BASE_URL + "/employees";
 
 export const fetchEmployees = async (
-  search: string = ""
+  params?: EmployeeParams
 ): Promise<Employee[]> => {
   try {
-    const response = await axiosInstance.get(`${baseUrl}?search=${search}`);
+    const response = await axiosInstance.get(`${baseUrl}`, { params });
     return response.data;
   } catch (error) {
     console.error("Error fetching employees:", error);

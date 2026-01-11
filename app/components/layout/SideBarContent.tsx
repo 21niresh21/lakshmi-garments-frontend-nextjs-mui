@@ -17,13 +17,13 @@ export default function SideBarContent({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
-  console.log(user);
+  const userRole = user?.roles?.[0] ?? "GUEST";
 
   return (
     <Box sx={{ mt: 1 }}>
       {sidebarGroups.map(
         (group) =>
-          group.allowFor?.includes(user?.role.name ?? "") && (
+          group.allowFor?.includes(userRole ?? "") && (
             <Box key={group.title} sx={{ mb: 1 }}>
               {/* Group Title */}
               {!collapsed && (
@@ -49,9 +49,16 @@ export default function SideBarContent({ collapsed }: { collapsed: boolean }) {
                         my: 0.5,
                         borderRadius: 1,
                         whiteSpace: "nowrap",
+                        justifyContent: collapsed ? "center" : "flex-start",
+                        px: collapsed ? 1 : 2,
                       }}
                     >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: collapsed ? "auto" : 40,
+                          justifyContent: "center",
+                        }}
+                      >
                         {item.icon}
                       </ListItemIcon>
 

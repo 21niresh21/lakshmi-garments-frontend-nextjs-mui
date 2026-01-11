@@ -18,9 +18,15 @@ export default function UserMenu() {
     }
   }, []);
 
-  const logout = () => {
+const logout = () => {
+    // 1. Clear user data from local storage
     localStorage.removeItem("user");
-    document.cookie = "auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    // 2. Clear the ACTUAL cookie being used (token)
+    // Note: Use the same path used when setting the cookie (usually '/')
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict";
+
+    // 3. Redirect to login
     router.push("/login");
   };
 
@@ -28,7 +34,7 @@ export default function UserMenu() {
     <>
       <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
         <Avatar sx={{ bgcolor: "primary.main", height: 35, width: 35 }}>
-          {user?.name?.[0]?.toUpperCase() || "U"}
+          {user?.username?.[0]?.toUpperCase() || "U"}
         </Avatar>
       </IconButton>
 
@@ -38,7 +44,7 @@ export default function UserMenu() {
         onClose={() => setAnchorEl(null)}
       >
         <MenuItem disabled>
-          {`${user?.name} (${user?.role.name})` || "User"}
+          {`${user?.username} (${user?.username})` || "User"}
         </MenuItem>
         <Divider />
         <MenuItem onClick={logout}>

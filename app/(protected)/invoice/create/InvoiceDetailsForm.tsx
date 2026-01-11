@@ -31,6 +31,7 @@ import TransportFormModal, {
   TransportFormData,
 } from "@/app/components/shared/TransportFormModal";
 import { addTransport } from "@/app/api/transport";
+import { sanitizeNumberInput } from "@/app/utils/number";
 
 interface Props {
   value: InvoiceDetails;
@@ -97,22 +98,24 @@ export default function InvoiceDetailsForm({
           Invoice Details
         </Typography>
 
-        <Grid container spacing={2}>
+        <Grid container spacing={2} size={12}>
           {/* Invoice Number */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               id="invoice-number"
               fullWidth
               label="Invoice Number"
+              required
               value={value.invoiceNumber}
               onChange={(e) => onChange({ invoiceNumber: e.target.value })}
+              onBlur={(e) => onChange({ invoiceNumber: e.target.value.trim() })}
               error={!!errors.invoiceNumber}
               helperText={errors.invoiceNumber}
             />
           </Grid>
 
           {/* Invoice Date */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <DatePicker
                 label="Invoice Date"
@@ -132,6 +135,7 @@ export default function InvoiceDetailsForm({
                   textField: {
                     id: "invoice-date",
                     fullWidth: true,
+                    required: true,
                     error: Boolean(errors.invoiceDate),
                     helperText: errors.invoiceDate,
                   },
@@ -141,7 +145,7 @@ export default function InvoiceDetailsForm({
           </Grid>
 
           {/* Received Date */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <DatePicker
                 label="Received Date"
@@ -156,11 +160,18 @@ export default function InvoiceDetailsForm({
                     receivedDate: date ? date.format("DD-MM-YYYY") : "",
                   })
                 }
+                minDate={
+                  value.invoiceDate
+                    ? dayjs(value.invoiceDate, "DD-MM-YYYY", true)
+                    : undefined
+                }
                 maxDate={dayjs()}
                 slotProps={{
                   textField: {
+                    
                     id: "received-date",
                     fullWidth: true,
+                    required: true,
                     error: Boolean(errors.receivedDate),
                     helperText: errors.receivedDate,
                   },
@@ -170,9 +181,10 @@ export default function InvoiceDetailsForm({
           </Grid>
 
           {/* Supplier */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <GenericAutocomplete<Supplier>
               label="Supplier"
+              loading={true}
               options={suppliers}
               value={suppliers.find((s) => s.id === value.supplierID) || null}
               onChange={(supplier) => onChange({ supplierID: supplier?.id })}
@@ -197,7 +209,7 @@ export default function InvoiceDetailsForm({
           </Grid>
 
           {/* Transport */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <GenericAutocomplete<Transport>
               label="Transport"
               options={transports}
@@ -224,7 +236,7 @@ export default function InvoiceDetailsForm({
           </Grid>
 
           {/* Transport Cost */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               id="transport-cost"
               type="number"
@@ -234,8 +246,16 @@ export default function InvoiceDetailsForm({
               onChange={(e) => {
                 const raw = e.target.value;
                 onChange({
-                  transportCost: raw === "" ? undefined : Number(raw),
+                  transportCost:
+                    raw === "" ? undefined : Number(sanitizeNumberInput(raw)),
                 });
+              }}
+              slotProps={{
+                input: {
+                  inputProps: {
+                    pattern: "[0-9]*",
+                  },
+                },
               }}
               error={!!errors.transportCost}
               helperText={errors.transportCost}

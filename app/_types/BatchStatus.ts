@@ -13,3 +13,5 @@ export const BatchStatusColorMap = {
   DISCARDED: "error",
   COMPLETED: "info"
 } as const;
+
+export const BATCH_STATUS_ARRAY = Object.values(BatchStatus) as BatchStatus[];

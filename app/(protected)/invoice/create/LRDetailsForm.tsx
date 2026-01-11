@@ -110,6 +110,7 @@ export default function LRDetailsForm({
               <ToggleButton value="transport">Transport</ToggleButton>
               <ToggleButton value="self">Self</ToggleButton>
             </ToggleButtonGroup>
+            
 
             {/* ✅ FIXED: Explicit ID */}
             <TextField
@@ -128,6 +129,7 @@ export default function LRDetailsForm({
                   submitButtonRef.current?.click();
                 }
               }}
+              onBlur={(e)=>setLrNumber(e.target.value.trim())}
               onChange={(e) => setLrNumber(e.target.value)}
             />
 

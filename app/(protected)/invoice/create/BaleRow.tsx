@@ -81,6 +81,7 @@ export default function BaleRow({
         size="small"
         value={bale.baleNumber}
         onChange={(e) => onChange({ baleNumber: e.target.value })}
+        onBlur={(e) => onChange({ baleNumber: e.target.value.trim() })}
         error={!!errors?.baleNumber}
         helperText={errors?.baleNumber}
         sx={{ flex: 3 }}
@@ -124,6 +125,7 @@ export default function BaleRow({
         size="small"
         value={bale.quality ?? ""}
         onChange={(e) => onChange({ quality: e.target.value })}
+        onBlur={(e) => onChange({ quality: e.target.value.trim() })}
         error={!!errors?.quality}
         helperText={errors?.quality}
         sx={{ flex: 2 }}

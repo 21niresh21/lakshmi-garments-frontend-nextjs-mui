@@ -67,7 +67,7 @@ export default function JobworkSummary({ jobwork }: Props) {
 
   return (
     <>
-      <Typography variant="h6" mb={3}>
+      <Typography variant="h5" mb={3} fontWeight={600}>
         {jobwork?.jobworkNumber}
       </Typography>
       <Grid container spacing={1}>

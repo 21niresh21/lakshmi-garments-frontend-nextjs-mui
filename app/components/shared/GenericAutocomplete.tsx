@@ -22,6 +22,8 @@ type GenericAutocompleteProps<T extends object> = {
   size?: "small" | "medium";
   sx?: any;
 
+  loading? : boolean;
+
   error?: string;
 };
 
@@ -39,12 +41,15 @@ export function GenericAutocomplete<T extends object>({
   size,
   sx,
   error,
+  loading = false
 }: GenericAutocompleteProps<T>) {
   return (
     <Autocomplete<AutocompleteOption<T>, false, false, false>
       id={label}
       sx={sx}
       autoHighlight
+      loading={loading}
+      openOnFocus
       options={options as AutocompleteOption<T>[]}
       value={value as AutocompleteOption<T> | null}
       filterOptions={(opts, params) => {

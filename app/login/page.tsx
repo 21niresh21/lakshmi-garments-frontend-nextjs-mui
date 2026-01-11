@@ -16,6 +16,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import FaceIcon from "@mui/icons-material/Face";
 import LockIcon from "@mui/icons-material/Lock";
+import axios from "axios";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,14 +41,39 @@ export default function LoginPage() {
     if (!username || !password) return;
 
     try {
-      const response = await login(username, password);
+      const response: any = await login(username, password);
 
-      // Set cookie to expire in 20 seconds
-      document.cookie = `auth=true; path=/; max-age=43200`;
-      localStorage.setItem("user", JSON.stringify(response));
+      // 1. Extract the token from your production-grade response
+      const token = response.token; // 2. Set the cookie with the ACTUAL token instead of "true"
+
+      // max-age=43200 is 12 hours.
+      document.cookie = `token=${token}; path=/; max-age=43200; SameSite=Strict`;
+
+      // 3. Store user details (username, roles) for the UI
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          username: response.username,
+          roles: response.roles,
+        })
+      );
+
       router.push("/invoice/create");
-    } catch (err) {
-      setError("Invalid username or password");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const message = err.response?.data?.message;
+
+        if (status === 403) {
+          setError(message || "Your account is inactive");
+        } else if (status === 401) {
+          setError(message || "Invalid username or password");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+      } else {
+        setError("Unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }

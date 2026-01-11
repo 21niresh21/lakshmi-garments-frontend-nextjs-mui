@@ -34,6 +34,7 @@ export type Column<T> = {
 
 export type RowAction<T> = {
   label: string;
+  shouldShow?: (row: T) => void;
   onClick: (row: T, event: React.MouseEvent<HTMLElement>) => void;
   icon?: (row: T) => React.ReactNode;
 };
@@ -114,7 +115,7 @@ export default function GenericTable<T extends { id?: string | number }>({
       {/* Toolbar */}
       <Toolbar sx={{ gap: 2 }}>
         {title && (
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 600 }}>
             {title}
           </Typography>
         )}

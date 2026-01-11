@@ -14,6 +14,7 @@ import {
   Stack,
   Box,
   CircularProgress,
+  Badge,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -34,6 +35,12 @@ import ExpandCircleDownIcon from "@mui/icons-material/ExpandCircleDown";
 import { SubCategory } from "@/app/_types/SubCategory";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useRouter } from "next/navigation";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import BatchFilterPanel from "./BatchFilter";
+import { Category } from "@/app/_types/Category";
+import { BatchFilter } from "./_types/BatchFilter";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import { fetchCategories } from "@/app/api/category";
 
 type Employee = {
   id: number;
@@ -59,7 +66,7 @@ const BatchStatusIconMap = {
   ASSIGNED: PrecisionManufacturingIcon,
   CLOSED: CheckCircleIcon,
   DISCARDED: RecyclingIcon,
-  COMPLETED: NewReleasesIcon,
+  COMPLETED: PendingActionsIcon,
 } as const;
 
 interface BatchRow {
@@ -78,7 +85,6 @@ const HEADERS = [
   {
     id: "serialCode",
     label: "Serial Code",
-    sortable: true,
   },
   {
     id: "categoryName",
@@ -166,6 +172,51 @@ export default function Page() {
     []
   );
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [filters, setFilters] = useState<BatchFilter>({
+    categoryNames: [],
+    batchStatus: [],
+    isUrgent: [],
+    startDate: "",
+    endDate: "",
+  });
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
+    null
+  );
+
+  const activeFilterCount =
+    (filters.categoryNames?.length || 0) +
+    (filters.batchStatus?.length || 0) +
+    (filters.isUrgent?.length || 0) +
+    (filters.startDate || filters.endDate ? 1 : 0);
+
+  const openFilter = Boolean(filterAnchorEl);
+
+  const handleOpenFilter = (e: React.MouseEvent<HTMLElement>) => {
+    setFilterAnchorEl(e.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setFilterAnchorEl(null);
+  };
+
+  const handleApplyFilter = () => {
+    setPage(0);
+    handleCloseFilter();
+  };
+
+  const handleResetFilter = () => {
+    setFilters({
+      categoryNames: [],
+      batchStatus: [],
+      isUrgent: [],
+      startDate: "",
+      endDate: "",
+    });
+    setPage(0);
+    handleCloseFilter();
+  };
+
   // ✅ Handlers
   const handleOpenDetails = (
     event: React.MouseEvent<HTMLElement>,
@@ -216,6 +267,7 @@ export default function Page() {
         sortBy,
         sortOrder,
         search,
+        ...filters
         // batchStatusNames: batchStatusFilter,
         // categoryNames: categoryFilter,
         // isUrgent: isUrgentFilter,
@@ -237,11 +289,14 @@ export default function Page() {
     search,
     sortBy,
     sortOrder,
-    // batchStatusFilter,
-    // categoryFilter,
-    // isUrgentFilter,
-    // dateRange,
+    filters
   ]);
+
+    useEffect(() => {
+      fetchCategories()
+        .then((res)=>setCategories(res))
+        .catch(() => notify("Error fetching suppliers", "error"));
+    }, []);
 
   return (
     <Grid container>
@@ -266,6 +321,18 @@ export default function Page() {
           }}
           onRowClick={(row) => router.push(`/batch/${row.id}`)}
           columns={HEADERS}
+          toolbarExtras={
+            <Badge
+              badgeContent={activeFilterCount}
+              color="primary"
+              overlap="circular"
+              invisible={activeFilterCount === 0} // hide badge when no filters active
+            >
+              <IconButton onClick={handleOpenFilter}>
+                <FilterAltIcon />
+              </IconButton>
+            </Badge>
+          }
           rowActions={[
             {
               label: "Details",
@@ -293,6 +360,17 @@ export default function Page() {
           ]}
         />
       </Grid>
+
+      <BatchFilterPanel
+        anchorEl={filterAnchorEl}
+        open={openFilter}
+        filters={filters}
+        categories={categories}
+        onChange={setFilters}
+        onApply={handleApplyFilter}
+        onReset={handleResetFilter}
+        onClose={handleCloseFilter}
+      />
 
       {/* ✅ POPPER (render ONCE, outside table) */}
       <Popper

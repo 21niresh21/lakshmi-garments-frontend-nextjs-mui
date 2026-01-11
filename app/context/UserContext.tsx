@@ -2,10 +2,10 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { User } from "../_types/User";
+import { AuthUser } from "../_types/User";
 
 interface UserContextValue {
-  user: User | null;
+  user: AuthUser | null;
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined);
@@ -14,7 +14,7 @@ export function UserProvider({
   user,
   children,
 }: {
-  user: User | null;
+  user: AuthUser | null;
   children: React.ReactNode;
 }) {
   return (

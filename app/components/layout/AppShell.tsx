@@ -66,6 +66,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                py : 2
               }}
             >
               <Typography fontWeight={600}>Lakshmi Garments</Typography>

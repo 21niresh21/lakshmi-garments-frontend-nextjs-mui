@@ -1,8 +1,8 @@
-export interface BatchFilters {
+export interface BatchFilter {
   categoryNames: string[];
-  batchStatusNames: string[];
+  batchStatus: string[];
   isUrgent: boolean[];
-  createdBy?: string;
+  // createdBy?: string;
   startDate?: string; // yyyy-MM-dd
   endDate?: string;   // yyyy-MM-dd
 }

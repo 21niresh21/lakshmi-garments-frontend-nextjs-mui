@@ -30,7 +30,7 @@ export const getUnfinishedUrgentBatches = async () => {
     const response = await axiosInstance.get(baseUrl, {
       params: {
         isUrgent: true,
-        batchStatusNames: [BatchStatus.CREATED],
+        batchStatus: BatchStatus.CREATED,
       },
     });
 
@@ -70,6 +70,31 @@ export const recycleBatch = async (batchId: number) => {
     return response.data;
   } catch (error) {
     console.error("Error recycling batch:", error);
+    throw error;
+  }
+};
+
+export const fetchTimeline = async (batchId: number) => {
+  try {
+    const response = await axiosInstance.get(`${baseUrl}/timeline/${batchId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching timeline for batch:", error);
+    throw error;
+  }
+};
+
+export const fetchAvailableQuantity = async (
+  serialCode: string,
+  jobworkType: string
+) => {
+  try {
+    const response = await axiosInstance.get(
+      `${baseUrl}/${serialCode}/${jobworkType}/availableQuantity`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching quantity for batch:", error);
     throw error;
   }
 };

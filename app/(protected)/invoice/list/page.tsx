@@ -1,37 +1,10 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import {
-  Grid,
-  Chip,
-  Button,
-  IconButton,
-  Popper,
-  ClickAwayListener,
-  Paper,
-  Typography,
-  Divider,
-  Stack,
-  Box,
-  CircularProgress,
-  Badge,
-} from "@mui/material";
+import { Grid, Chip, IconButton, Badge, Stack, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import React, { useEffect, useState } from "react";
-import { People } from "@mui/icons-material";
 import { fetchSuppliers } from "@/app/api/supplier";
-import { fetchBatches, recycleBatch } from "@/app/api/batchApi";
-import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
-import LowPriorityIcon from "@mui/icons-material/LowPriority";
-import { formatToShortDate } from "@/app/utils/date";
-import BadgeIcon from "@mui/icons-material/Badge";
-import NewReleasesIcon from "@mui/icons-material/NewReleases";
-import { BatchStatus, BatchStatusColorMap } from "@/app/_types/BatchStatus";
-import RecyclingIcon from "@mui/icons-material/Recycling";
-import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
-import ExpandCircleDownIcon from "@mui/icons-material/ExpandCircleDown";
-import { SubCategory } from "@/app/_types/SubCategory";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { fetchInvoices, updateInvoice } from "@/app/api/invoiceApi";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -46,38 +19,26 @@ import { useRouter } from "next/navigation";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import InvoiceFilter, { InvoiceFilterType } from "./InvoiceFilter";
 import { Transport } from "../_types/transport";
-
-type SubCategoryWithQuantity = {
-  id: number;
-  subCategoryName: string;
-  quantity: number;
-};
-
-interface BatchRow {
-  id: number;
-  serialCode: string;
-  categoryName: string;
-  remarks: string;
-  createdAt: string;
-  createdBy: string;
-  batchStatus: BatchStatus;
-  isUrgent: boolean;
-  subCategories: SubCategoryWithQuantity[];
-}
+import { formatToShortDate } from "@/app/utils/date";
+import AddIcon from "@mui/icons-material/Add";
 
 const HEADERS = [
   {
     id: "invoiceNumber",
     label: "Invoice Number",
-    // sortable: true,
+    sortable: true,
   },
   {
     id: "invoiceDate",
     label: "Invoice Date",
+    sortable: true,
+    render: (row: any) => formatToShortDate(row.invoiceDate),
   },
   {
     id: "receivedDate",
     label: "Received Date",
+    sortable: true,
+    render: (row: any) => formatToShortDate(row.receivedDate),
   },
   {
     id: "supplierName",
@@ -108,29 +69,18 @@ const HEADERS = [
       />
     ),
   },
-  {
-    id: "createdAt",
-    label: "Created At",
-    // sortable: true,
-    render: (row: any) => formatToShortDate(row.createdAt),
-  },
-  {
-    id: "createdBy",
-    label: "Created By",
-    render: (row: any) => (
-      <Chip
-        size="small"
-        // sx={{bgcolor : "transparent"}}
-        icon={<BadgeIcon />}
-        label={row.createdBy}
-      />
-    ),
-  },
 ];
+
+const toBackendDate = (date: string) => {
+  if (!date) return "";
+  const [dd, mm, yyyy] = date.split("-");
+  return `${yyyy}-${mm}-${dd}`; // yyyy-MM-dd
+};
 
 export default function Page() {
   const { notify } = useNotification();
   const router = useRouter();
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
@@ -138,7 +88,7 @@ export default function Page() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [totalCount, setTotalCount] = useState(0);
 
-  const [rows, setRows] = useState<BatchRow[]>([]);
+  const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [transports, setTransports] = useState<Transport[]>([]);
   const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
@@ -161,19 +111,14 @@ export default function Page() {
   const [selectedInvoice, setSelectedInvoice] =
     useState<InvoiceDetails>(INITIAL_INVOICE);
 
-  // ✅ Popper state
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [subCategories, setSubCategories] = useState<SubCategoryWithQuantity[]>(
-    []
-  );
 
-// Count active filters
-const activeFilterCount =
-  (filters.supplierNames?.length || 0) +
-  (filters.transportNames?.length || 0) +
-  (filters.isPaid?.length || 0) +
-  ((filters.invoiceStartDate || filters.invoiceEndDate) ? 1 : 0);
-
+  // Count active filters
+  const activeFilterCount =
+    (filters.supplierNames?.length || 0) +
+    (filters.transportNames?.length || 0) +
+    (filters.isPaid?.length || 0) +
+    (filters.invoiceStartDate || filters.invoiceEndDate ? 1 : 0);
 
   const handleOpenFilter = (e: React.MouseEvent<HTMLElement>) => {
     setFilterAnchorEl(e.currentTarget);
@@ -185,14 +130,7 @@ const activeFilterCount =
 
   const handleApplyFilter = () => {
     setPage(0);
-    loadInvoices(); // optional but clear
     handleCloseFilter();
-  };
-
-  const toBackendDate = (date: string) => {
-    if (!date) return "";
-    const [dd, mm, yyyy] = date.split("-");
-    return `${yyyy}-${mm}-${dd}`; // yyyy-MM-dd
   };
 
   const handleResetFilter = () => {
@@ -232,7 +170,6 @@ const activeFilterCount =
   };
 
   const validateInvoice = (invoice: InvoiceDetails): boolean => {
-    console.log("validation", invoice);
     const errors: InvoiceErrors = {};
     if (!invoice.invoiceNumber.trim())
       errors.invoiceNumber = "Invoice number is required";
@@ -292,7 +229,6 @@ const activeFilterCount =
       await updateInvoice(data.id, payload);
       notify("Invoice updated successfully", "success");
       setOpenModal(false);
-      // setSelectedInvoice(null);
       loadInvoices();
     } catch (err: any) {
       notify(err?.response?.data?.message ?? "Error saving invoice", "error");
@@ -302,7 +238,6 @@ const activeFilterCount =
   const handleCloseDetails = () => {
     setAnchorEl(null);
     setOpenModal(false);
-    setSubCategories([]);
     setInvoiceErrors({});
   };
 
@@ -313,7 +248,7 @@ const activeFilterCount =
       const data = await fetchInvoices({
         pageNo: page,
         pageSize: rowsPerPage,
-        sortBy,
+        sortBy: sortBy ?? "invoiceDate",
         sortOrder,
         search,
         ...otherFilters, // supplierNames, transportNames, isPaid
@@ -334,18 +269,7 @@ const activeFilterCount =
 
   useEffect(() => {
     loadInvoices();
-  }, [
-    page,
-    rowsPerPage,
-    search,
-    sortBy,
-    sortOrder,
-    filters,
-    // batchStatusFilter,
-    // categoryFilter,
-    // isUrgentFilter,
-    // dateRange,
-  ]);
+  }, [page, rowsPerPage, search, sortBy, sortOrder, filters]);
 
   useEffect(() => {
     fetchSuppliers()
@@ -360,7 +284,7 @@ const activeFilterCount =
   return (
     <Grid container>
       <Grid size={12}>
-        <GenericTable<BatchRow>
+        <GenericTable<InvoiceRow>
           title="Invoices"
           rows={rows}
           pagination={true}
@@ -392,16 +316,26 @@ const activeFilterCount =
             },
           ]}
           toolbarExtras={
-            <Badge
-              badgeContent={activeFilterCount}
-              color="primary"
-              overlap="circular"
-              invisible={activeFilterCount === 0} // hide badge when no filters active
-            >
-              <IconButton onClick={handleOpenFilter}>
-                <FilterAltIcon />
-              </IconButton>
-            </Badge>
+            <Stack direction="row" alignItems="center">
+              <Tooltip title="Filter">
+                <Badge
+                  badgeContent={activeFilterCount}
+                  color="primary"
+                  overlap="circular"
+                  invisible={activeFilterCount === 0} // hide badge when no filters active
+                >
+                  <IconButton onClick={handleOpenFilter}>
+                    <FilterAltIcon />
+                  </IconButton>
+                </Badge>
+              </Tooltip>
+
+              <Tooltip title="Add Invoice">
+                <IconButton onClick={() => router.push(`/invoice/create`)}>
+                  <AddIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
           }
         />
       </Grid>

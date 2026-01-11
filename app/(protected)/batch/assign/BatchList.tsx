@@ -18,6 +18,7 @@ import CommentIcon from "@mui/icons-material/Comment";
 import { Batch } from "@/app/_types/Batch";
 import { formatToShortDate } from "@/app/utils/date";
 import { useState } from "react";
+import { GiCardboardBox } from "react-icons/gi";
 
 interface Props {
   batchList: Batch[];
@@ -47,7 +48,7 @@ export default function BatchList({ batchList }: Props) {
         display: "flex",
         flexDirection: "column",
       }}
-      elevation={2}
+      elevation={0}
     >
       <Typography fontWeight={600} mb={1}>
         Priority Batches (Date)
@@ -56,34 +57,54 @@ export default function BatchList({ batchList }: Props) {
 
       {/* Scrollable list */}
       <Box sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>
-        <List>
-          {batchList.map((batch) => (
-            <ListItem
-              key={batch.id}
-              disableGutters
-              secondaryAction={
-                <IconButton onClick={(e) => handleClick(e, batch)} size="small">
-                  <CommentIcon fontSize="small" />
-                </IconButton>
-              }
-            >
-              <ListItemText
-                primary={
-                  <Stack direction="row" alignItems="center" columnGap={1}>
-                    <Typography display="flex" alignItems="center" gap={1}>
-                      {batch.serialCode}
-                    </Typography>
-                    <Chip
-                      label={formatToShortDate(batch.createdAt)}
-                      size="small"
-                      sx={{ fontSize: 10, height : 12, p : 1.3 }}
-                    />
-                  </Stack>
+        {batchList.length > 0 ? (
+          <List>
+            {batchList.map((batch) => (
+              <ListItem
+                key={batch.id}
+                disableGutters
+                secondaryAction={
+                  <IconButton
+                    onClick={(e) => handleClick(e, batch)}
+                    size="small"
+                  >
+                    <CommentIcon fontSize="small" />
+                  </IconButton>
                 }
-              />
-            </ListItem>
-          ))}
-        </List>
+              >
+                <ListItemText
+                  primary={
+                    <Stack direction="row" alignItems="center" columnGap={1}>
+                      <Typography display="flex" alignItems="center" gap={1}>
+                        {batch.serialCode}
+                      </Typography>
+                      <Chip
+                        label={formatToShortDate(batch.createdAt)}
+                        size="small"
+                        sx={{ fontSize: 10, height: 12, p: 1.3 }}
+                      />
+                    </Stack>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+        ) : (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              my: 10,
+              flexDirection: "column",
+            }}
+          >
+            <GiCardboardBox size={70} />
+            <Typography variant="body2" fontSize={15} mt={1}>
+              No Urgent Batches
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Remarks Popper */}

@@ -1,12 +1,13 @@
 "use client";
 
 import {
+  fetchAvailableQuantity,
   fetchBatches,
   getJobworkTypes,
   getUnfinishedBatches,
   getUnfinishedUrgentBatches,
 } from "@/app/api/batchApi";
-import { Grid } from "@mui/material";
+import { Divider, Grid } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import BatchList from "./BatchList";
 import AssignmentForm from "./AssignmentForm";
@@ -16,6 +17,7 @@ import EmployeeStats from "./EmployeeStats";
 import { INITIAL_JOBWORK, JobworkForm } from "./_types/jobwork.types";
 import CuttingForm from "./CuttingForm";
 import { fetchNextJobworkNumber } from "@/app/api/jobworkApi";
+import BatchStats from "./BatchStats";
 
 export default function Page() {
   const [urgentBatches, setUrgentBatches] = useState([]);
@@ -25,6 +27,7 @@ export default function Page() {
   const [employeeStats, setEmployeeStats] = useState({});
   const [jobwork, setJobwork] = useState<JobworkForm>(INITIAL_JOBWORK);
   const [availableQty, setAvailableQty] = useState<number>();
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   useEffect(() => {
     getUnfinishedUrgentBatches().then((res) => {
@@ -43,7 +46,7 @@ export default function Page() {
     //   setEmployeeStats(res);
     //   console.log(res);
     // });
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     console.log("changed", jobwork.serialCode);
@@ -56,35 +59,46 @@ export default function Page() {
       setJobwork((prev) => ({
         ...prev,
         jobworkType: "",
+        employee: null,
       }));
     }
 
-    fetchBatches({ search: jobwork.serialCode }).then((res) => {
-      setAvailableQty(res.content[0].availableQuantity);
-    });
+    if (jobwork.serialCode) {
+      fetchAvailableQuantity(jobwork.serialCode, "CUTTING").then((res) => {
+        setAvailableQty(res);
+      });
+    }
   }, [jobwork.serialCode]);
 
   useEffect(() => {
-    console.log(jobwork.jobworkType);
     if (jobwork.jobworkType && jobwork.serialCode.trim() !== "") {
-      fetchEmployees()
-        .then((res) => {
-          setEmployees(res);
+      fetchEmployees({ skillNames: [jobwork.jobworkType] })
+        .then((res: any) => {
+          setEmployees(res.content);
         })
         .catch((err) => console.log("error fetching emp"));
+    } else {
+      setJobwork((prev) => ({
+        ...prev,
+        jobworkType: "",
+      }));
     }
+    setJobwork((prev) => ({
+      ...prev,
+      employee: null,
+    }));
   }, [jobwork.jobworkType]);
 
   return (
     <Grid
       container
-      sx={{ height: "calc(100vh - 130px)", overflow: "hidden" }}
+      sx={{ height: "calc(100vh - 130px)", overflow: "auto" }}
       spacing={2}
     >
       <Grid
         container
         direction="column"
-        size={8}
+        size={7.5}
         spacing={2}
         sx={{ minHeight: 0 }}
       >
@@ -95,9 +109,12 @@ export default function Page() {
             employees={employees}
             setJobwork={setJobwork}
             jobwork={jobwork}
-            availableQty={availableQty?? 0}
+            availableQty={availableQty ?? 0}
+            refreshState={refresh}
+            refresh={setRefresh}
           />
         </Grid>
+
         {/* <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
           <Grid size={6} sx={{ minHeight: 0 }}>
             <BatchList batchList={urgentBatches} />
@@ -108,7 +125,12 @@ export default function Page() {
           </Grid>
         </Grid> */}
       </Grid>
-      <Grid size={4}>gg</Grid>
+      <Grid size={1}>
+        <Divider orientation="vertical" sx={{ mx: 1 }} />
+      </Grid>
+      <Grid size={3.5}>
+        <BatchList batchList={urgentBatches} />
+      </Grid>
     </Grid>
   );
 }

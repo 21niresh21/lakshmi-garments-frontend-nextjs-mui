@@ -50,10 +50,13 @@ function page() {
 
   const validateInvoice = (): boolean => {
     const errors: InvoiceErrors = {};
-    if (!invoice.invoiceNumber)
+    console.log(invoice.invoiceDate);
+    if (!invoice.invoiceNumber.trim())
       errors.invoiceNumber = "Invoice number is required";
 
     if (!invoice.invoiceDate) errors.invoiceDate = "Invoice date is required";
+    else if (invoice.invoiceDate === "Invalid Date")
+      errors.invoiceDate = "Invalid Date";
     else if (
       dayjs(invoice.invoiceDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
     ) {
@@ -62,6 +65,8 @@ function page() {
 
     if (!invoice.receivedDate)
       errors.receivedDate = "Received date is required";
+    else if (invoice.receivedDate === "Invalid Date")
+      errors.receivedDate = "Invalid Date";
     else if (
       dayjs(invoice.receivedDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
     ) {
@@ -100,13 +105,15 @@ function page() {
 
       lr.bales.forEach((bale) => {
         const baleErrors: BaleErrors = {};
-        if (!bale.baleNumber.trim()) baleErrors.baleNumber = "Bale number is required";
+        if (!bale.baleNumber.trim())
+          baleErrors.baleNumber = "Bale number is required";
         if (!bale.price) baleErrors.price = "Bale price is required";
         if (bale.price && bale.price < 0) {
           baleErrors.price = "Price must be > 0";
         }
         if (!bale.quantity) baleErrors.quantity = "Bale quantity is required";
-        if (!bale.quality?.trim()) baleErrors.quality = "Bale quality is required";
+        if (!bale.quality?.trim())
+          baleErrors.quality = "Bale quality is required";
         if (!bale.length) baleErrors.length = "Bale length is required";
         if (bale.length && bale.length < 0) {
           baleErrors.length = "Length must be > 0";

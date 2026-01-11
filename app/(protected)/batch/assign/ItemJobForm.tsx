@@ -10,60 +10,103 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import React, { Dispatch, SetStateAction } from "react";
 import { JobworkForm, ItemEntry } from "./_types/jobwork.types";
+import { BatchItem } from "@/app/_types/BatchItem";
 import { Item } from "@/app/_types/Item";
 
 interface Props {
-  items: Item[]; // master items list
+  batchItems: BatchItem[];
   jobwork: JobworkForm;
   setJobwork: Dispatch<SetStateAction<JobworkForm>>;
 }
 
-export default function ItemJobForm({ items, jobwork, setJobwork }: Props) {
+export default function ItemJobForm({
+  batchItems,
+  jobwork,
+  setJobwork,
+}: Props) {
+  /* -------------------- helpers -------------------- */
+
   const selectedItemIds = jobwork.items
     .map((row) => row.item?.id)
-    .filter(Boolean);
+    .filter((id): id is number => id !== undefined);
 
   const addRow = () => {
     setJobwork((prev) => ({
       ...prev,
-      items: [...prev.items, { item: null, quantity: undefined }],
+      items: [
+        ...prev.items,
+        {
+          rowId: crypto.randomUUID(),
+          item: null,
+          quantity: undefined,
+        },
+      ],
     }));
   };
 
-  const removeRow = (index: number) => {
+  const removeRow = (rowId: string) => {
     setJobwork((prev) => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== index),
+      items: prev.items.filter((row) => row.rowId !== rowId),
     }));
   };
 
-  const updateRow = (index: number, updated: Partial<ItemEntry>) => {
-    setJobwork((prev) => {
-      const copy = [...prev.items];
-      copy[index] = { ...copy[index], ...updated };
-      return { ...prev, items: copy };
-    });
+  const updateRow = (rowId: string, updated: Partial<ItemEntry>) => {
+    setJobwork((prev) => ({
+      ...prev,
+      items: prev.items.map((row) =>
+        row.rowId === rowId ? { ...row, ...updated } : row
+      ),
+    }));
   };
 
+  const getAvailableQty = (itemId?: number) => {
+    if (!itemId) return 0;
+    return (
+      batchItems.find((bi) => bi.id === itemId)?.availableQuantity ?? 0
+    );
+  };
+
+  /* -------------------- render -------------------- */
+
   return (
-    <Grid container spacing={2} >
-      {jobwork.items.map((row, index) => {
-        const availableItems = items.filter(
-          (i) => !selectedItemIds.includes(i.id) || i.id === row.item?.id
+    <Grid container spacing={2}>
+      {jobwork.items.map((row) => {
+        const availableItems = batchItems.filter(
+          (bi) =>
+            !selectedItemIds.includes(bi.id) || bi.id === row.item?.id
         );
 
+        const maxQty = getAvailableQty(row.item?.id);
+
         return (
-          <Grid container size={12} spacing={2} key={index}>
+          <Grid container size={12} spacing={2} key={row.rowId}>
             {/* ITEM */}
             <Grid size={5}>
               <Autocomplete
                 fullWidth
                 options={availableItems}
-                getOptionLabel={(i) => i.name}
-                value={row.item}
-                onChange={(_, value) =>
-                  updateRow(index, { item: value })
+                getOptionLabel={(bi) => bi.name}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                value={
+                  row.item
+                    ? availableItems.find((bi) => bi.id === row.item!.id) ??
+                      null
+                    : null
                 }
+                onChange={(_, batchItem) => {
+                  const selectedItem: Item | null = batchItem
+                    ? {
+                        id: batchItem.id,
+                        name: batchItem.name,
+                      }
+                    : null;
+
+                  updateRow(row.rowId, {
+                    item: selectedItem,
+                    quantity: undefined,
+                  });
+                }}
                 renderInput={(params) => (
                   <TextField {...params} label="Item" />
                 )}
@@ -77,13 +120,26 @@ export default function ItemJobForm({ items, jobwork, setJobwork }: Props) {
                 type="number"
                 label="Quantity"
                 value={row.quantity ?? ""}
-                onChange={(e) =>
-                  updateRow(index, {
-                    quantity:
-                      e.target.value === ""
-                        ? undefined
-                        : Number(e.target.value),
-                  })
+                disabled={!row.item}
+                inputProps={{
+                  min: 0,
+                  max: maxQty,
+                }}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  let value =
+                    raw === "" ? undefined : Number(raw);
+
+                  if (value !== undefined && value > maxQty) {
+                    value = maxQty;
+                  }
+
+                  updateRow(row.rowId, { quantity: value });
+                }}
+                helperText={
+                  row.item
+                    ? `Available quantity ${maxQty}`
+                    : "Select an item first"
                 }
               />
             </Grid>
@@ -95,7 +151,10 @@ export default function ItemJobForm({ items, jobwork, setJobwork }: Props) {
               alignItems="center"
               justifyContent="center"
             >
-              <IconButton onClick={() => removeRow(index)} color="error">
+              <IconButton
+                onClick={() => removeRow(row.rowId)}
+                color="error"
+              >
                 <DeleteIcon />
               </IconButton>
             </Grid>
@@ -108,7 +167,7 @@ export default function ItemJobForm({ items, jobwork, setJobwork }: Props) {
         <Button
           variant="outlined"
           onClick={addRow}
-          disabled={jobwork.items.length >= items.length}
+          disabled={selectedItemIds.length >= batchItems.length}
         >
           Add Item
         </Button>

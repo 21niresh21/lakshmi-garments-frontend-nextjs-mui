@@ -13,7 +13,10 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { Roles } from "@/app/_types/RoleType";
-import WarehouseIcon from '@mui/icons-material/Warehouse';
+import WarehouseIcon from "@mui/icons-material/Warehouse";
+import BackHandIcon from "@mui/icons-material/BackHand";
+import MoneyIcon from "@mui/icons-material/Money";
+import GroupIcon from '@mui/icons-material/Group';
 
 export type SidebarItem = {
   label: string;
@@ -28,6 +31,17 @@ export type SidebarGroup = {
 };
 
 export const sidebarGroups: SidebarGroup[] = [
+  {
+    title: "Requests",
+    items: [
+      {
+        label: "Workflow Requests",
+        href: "/requests/workflow",
+        icon: <BackHandIcon />,
+      },
+    ],
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
+  },
   {
     title: "Invoice",
     items: [
@@ -72,6 +86,16 @@ export const sidebarGroups: SidebarGroup[] = [
       { label: "Out Pass", href: "/batch/assign", icon: <AssignmentAddIcon /> },
     ],
     allowFor: [Roles.PRODUCTION_ADMIN, Roles.SUPER_ADMIN],
+  },
+  {
+    title: "Payday",
+    items: [{ label: "Payday Summary", href: "/payday", icon: <MoneyIcon /> }],
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.PRODUCTION_ADMIN, Roles.SUPER_ADMIN],
+  },
+  {
+    title: "User Management",
+    items: [{ label: "Users", href: "/users", icon: <GroupIcon /> }],
+    allowFor: [Roles.SUPER_ADMIN],
   },
   {
     title: "Masters",
