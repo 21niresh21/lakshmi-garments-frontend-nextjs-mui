@@ -66,7 +66,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                py : 2
+                py : 2,
+                mt : 1
               }}
             >
               <Typography fontWeight={600}>Lakshmi Garments</Typography>
@@ -77,11 +78,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           )}
 
           {collapsed && !logoHover && (
-            <Typography fontWeight={600}>LG</Typography>
+            <Typography sx={{mt : 2}} fontWeight={600}>LG</Typography>
           )}
 
           {collapsed && logoHover && (
-            <IconButton size="small" onClick={() => setCollapsed(false)}>
+            <IconButton sx={{mt : 2}} size="small" onClick={() => setCollapsed(false)}>
               <ChevronRightIcon />
             </IconButton>
           )}

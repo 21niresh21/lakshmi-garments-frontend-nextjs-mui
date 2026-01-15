@@ -87,7 +87,7 @@ export default function Page() {
         </Grid>
         <Grid size={0.5}>{jobwork && <Divider orientation="vertical" />}</Grid>
         <Grid size={3.5}>
-          {jobwork?.jobworkType === "CUTTING" && (
+          {jobwork?.jobworkType && (
             <>
               <JobworkSummary jobwork={jobwork} />
             </>

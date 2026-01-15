@@ -168,7 +168,6 @@ export default function InvoiceDetailsForm({
                 maxDate={dayjs()}
                 slotProps={{
                   textField: {
-                    
                     id: "received-date",
                     fullWidth: true,
                     required: true,

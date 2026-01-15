@@ -1,4 +1,5 @@
 import { Autocomplete, TextField, createFilterOptions } from "@mui/material";
+import { useState } from "react";
 
 type CreateOption = {
   inputValue: string;
@@ -22,7 +23,7 @@ type GenericAutocompleteProps<T extends object> = {
   size?: "small" | "medium";
   sx?: any;
 
-  loading? : boolean;
+  loading?: boolean;
 
   error?: string;
 };
@@ -41,10 +42,14 @@ export function GenericAutocomplete<T extends object>({
   size,
   sx,
   error,
-  loading = false
+  loading = false,
 }: GenericAutocompleteProps<T>) {
+  const [open, setOpen] = useState(false);
   return (
     <Autocomplete<AutocompleteOption<T>, false, false, false>
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
       id={label}
       sx={sx}
       autoHighlight
@@ -86,11 +91,13 @@ export function GenericAutocomplete<T extends object>({
       }
       onChange={(_, newValue) => {
         if (newValue && "isCreate" in newValue) {
+          setOpen(false);
           onCreateClick?.(newValue.inputValue);
           return;
         }
         onChange(newValue as T | null);
       }}
+      disablePortal
       renderInput={(params) => (
         <TextField
           {...params}
@@ -100,7 +107,7 @@ export function GenericAutocomplete<T extends object>({
           helperText={error}
         />
       )}
-      
+
     />
   );
 }

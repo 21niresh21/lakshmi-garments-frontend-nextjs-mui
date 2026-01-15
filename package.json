@@ -19,6 +19,7 @@
     "base-ui-components": "^3.1.2",
     "dayjs": "^1.11.19",
     "file-saver": "^2.0.5",
+    "framer-motion": "^12.26.2",
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1",

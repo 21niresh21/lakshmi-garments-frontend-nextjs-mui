@@ -17,8 +17,10 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import FaceIcon from "@mui/icons-material/Face";
 import LockIcon from "@mui/icons-material/Lock";
 import axios from "axios";
+import { useAuth } from "../context/AuthProvider";
 
 export default function LoginPage() {
+  const { setHasToken } = useAuth();
   const router = useRouter();
   const [credentials, setCredentials] = useState({
     username: "",
@@ -48,6 +50,7 @@ export default function LoginPage() {
 
       // max-age=43200 is 12 hours.
       document.cookie = `token=${token}; path=/; max-age=43200; SameSite=Strict`;
+      setHasToken(true);
 
       // 3. Store user details (username, roles) for the UI
       localStorage.setItem(

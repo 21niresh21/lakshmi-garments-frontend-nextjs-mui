@@ -17,6 +17,7 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import BackHandIcon from "@mui/icons-material/BackHand";
 import MoneyIcon from "@mui/icons-material/Money";
 import GroupIcon from '@mui/icons-material/Group';
+import PolicyIcon from '@mui/icons-material/Policy';
 
 export type SidebarItem = {
   label: string;
@@ -111,6 +112,13 @@ export const sidebarGroups: SidebarGroup[] = [
         icon: <AccountTreeIcon />,
       },
       { label: "Skills", href: "/skill", icon: <PsychologyIcon /> },
+    ],
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.PRODUCTION_ADMIN, Roles.SUPER_ADMIN],
+  },
+  {
+    title: "Dcouments",
+    items: [
+      { label: "Rules & Policies", href: "/rules", icon: <PolicyIcon /> },
     ],
     allowFor: [Roles.ACCOUNT_ADMIN, Roles.PRODUCTION_ADMIN, Roles.SUPER_ADMIN],
   },

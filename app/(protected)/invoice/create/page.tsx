@@ -230,7 +230,7 @@ function page() {
         notify("Invoice has been saved", "success");
         setInvoice(INITIAL_INVOICE);
         setLr(INITIAL_LR);
-        localStorage.removeItem("invoiceDraft");
+        // localStorage.removeItem("invoiceDraft");
       } catch {
         notify("An error occured during submission", "error");
       } finally {

@@ -161,7 +161,7 @@ export default function AssignmentForm({
   }, [pdfUrl]);
 
   useEffect(() => {
-    if (jobwork.jobworkType === "STITCHING" && jobwork.serialCode) {
+    if (jobwork.jobworkType !== "CUTTING" && jobwork.serialCode) {
       fetchBatchItems(jobwork.serialCode)
         .then((res) => setBatchItems(res))
         .catch((err) => {

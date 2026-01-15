@@ -1,11 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { TableRow, TableCell, TextField, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { GenericAutocomplete } from "@/app/components/shared/GenericAutocomplete";
 import { Item } from "@/app/_types/Item";
 import { JobworkItemRowData } from "./_types/jobwork";
+import ItemFormModal, {
+  ItemFormData,
+} from "@/app/components/shared/ItemFormModal";
+import { addItem } from "@/app/api/itemApi";
+import { useNotification } from "@/app/components/shared/NotificationProvider";
 
 interface JobworkItemRowProps {
   row: JobworkItemRowData;
@@ -48,6 +53,8 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
 }) => {
   const noItemSelected = row.itemId === null;
   const emptyRow = isRowEmpty(row);
+  const [items, setItems] = useState(availableItems);
+  const { notify } = useNotification();
 
   const handleNumberChange = (
     field: keyof JobworkItemRowData,
@@ -71,13 +78,40 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
   // ✅ Row error flag for UI
   const rowError = totalExceeded || noItemSelected || emptyRow;
 
+  type CreateEntityType = "item" | null;
+
+  const [createDialog, setCreateDialog] = useState<{
+    type: CreateEntityType;
+    prefillName: string;
+  }>({
+    type: null,
+    prefillName: "",
+  });
+
+  const createItem = async (data: ItemFormData) => {
+    try {
+      const createdItem = await addItem(data);
+      setCreateDialog({ type: null, prefillName: "" });
+      setItems((prev) => [...prev, createdItem]);
+      onChange({
+        ...row,
+        item: createdItem,
+        itemId: createdItem.id,
+        itemName: createdItem.name,
+      });
+      notify("Item created successfully", "success");
+    } catch (err: any) {
+      notify(err?.response?.data ?? "Error saving item", "error");
+    }
+  };
+
   return (
     <TableRow>
       {/* Item */}
       <TableCell>
         <GenericAutocomplete<Item>
           label="Item"
-          options={availableItems}
+          options={items}
           value={row.item ?? null}
           getOptionLabel={(i) => i.name}
           isOptionEqualToValue={(a, b) => a.id === b.id}
@@ -91,6 +125,17 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
           }
           size="small"
           sx={{ width: 180 }}
+          allowCreate
+          onCreateClick={(name) =>
+            setCreateDialog({ type: "item", prefillName: name })
+          }
+        />
+        <ItemFormModal
+          open={createDialog.type === "item"}
+          mode="create"
+          onSubmit={createItem}
+          onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+          initialData={{ name: createDialog.prefillName }}
         />
         {noItemSelected && (
           <span style={{ color: "red", fontSize: 12 }}>Select an item</span>
@@ -117,7 +162,7 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
           value={row.wage ?? ""}
           onChange={(e) => handleNumberChange("wage", e.target.value)}
           inputProps={{ min: 0 }}
-          sx={{width : 65}}
+          sx={{ width: 65 }}
         />
       </TableCell>
 

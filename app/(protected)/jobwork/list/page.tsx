@@ -51,6 +51,7 @@ import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import EmployeeReassignModal from "./EmployeeReassignModal";
 import { Employee } from "@/app/_types/Employee";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import { FaClock, FaUserClock } from "react-icons/fa";
 
 type SubCategoryWithQuantity = {
   id: number;
@@ -82,7 +83,7 @@ const getJobworkStats = (status: JobworkStatus) => {
     case JobworkStatus.IN_PROGRESS:
       return {
         label: "In Progress",
-        icon: <AutorenewIcon color="primary" />,
+        icon: <FaClock color="primary" />,
         color: "primary" as const,
       };
 
@@ -99,6 +100,13 @@ const getJobworkStats = (status: JobworkStatus) => {
         label: "Re Assigned",
         icon: <SwapHorizIcon color="info" />,
         color: "info" as const,
+      };
+
+    case JobworkStatus.AWAITING_CLOSE:
+      return {
+        label: "Awaiting Close",
+        icon: <FaUserClock color="warning" />,
+        color: "warning" as const,
       };
   }
 };
