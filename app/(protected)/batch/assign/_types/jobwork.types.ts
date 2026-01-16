@@ -9,10 +9,10 @@ export type ItemEntry = {
 
 export type JobworkForm = {
   jobworkNumber : string,
-  serialCode: string;
+  batchSerialCode: string;
   jobworkType: string;
-  assignedBy?: number;
-  employee: Employee | null;
+  assignedTo : string;
+  // employee: Employee | null;
   quantity? : number 
   remarks?: string;
   quantities?: number[],
@@ -22,10 +22,10 @@ export type JobworkForm = {
 
 export const INITIAL_JOBWORK: JobworkForm = {
   jobworkNumber : "",
-  serialCode: "",
+  batchSerialCode: "",
   jobworkType: "",
-  assignedBy: undefined,
-  employee: null,
+  assignedTo : "",
+  // employee: null,
   quantity : undefined,
   remarks : "",
   items: []

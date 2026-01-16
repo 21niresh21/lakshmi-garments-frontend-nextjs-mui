@@ -72,12 +72,36 @@ export const fetchNextJobworkNumber = async (): Promise<any> => {
 export const reAssignJobwork = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(
-      `${baseUrl}/reassign/${data.jobworkNumber}`,
-      data.employeeId
+      `${baseUrl}/${data.jobworkNumber}/reassign`,
+      { employeeName: data.employeeName }
     );
     return response.data;
   } catch (error) {
     console.error("Error re assigning jobwork:", error);
+    throw error;
+  }
+};
+
+export const closeJobwork = async (jobworkNumber: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(
+      `${baseUrl}/${jobworkNumber}/close`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error closing jobwork:", error);
+    throw error;
+  }
+};
+
+export const reopenJobwork = async (jobworkNumber: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(
+      `${baseUrl}/${jobworkNumber}/reopen`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error reopening jobwork:", error);
     throw error;
   }
 };

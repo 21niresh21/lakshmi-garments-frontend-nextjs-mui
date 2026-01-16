@@ -14,6 +14,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Button,
 } from "@mui/material";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { JSX } from "@emotion/react/jsx-runtime";
@@ -582,6 +583,8 @@ export default function RulesPage(): JSX.Element {
               sx={{
                 width: "100%",
                 maxWidth: 700,
+                maxHeight: "90vh", // 👈 key
+                overflowY: "auto", // 👈 key
                 p: { xs: 2, sm: 4 },
                 borderRadius: 3,
               }}
@@ -600,13 +603,14 @@ export default function RulesPage(): JSX.Element {
               {activeRule.description}
 
               <Box mt={4} textAlign="right">
-                <Typography
+                <Button
                   sx={{ cursor: "pointer" }}
                   color="primary"
                   onClick={() => setActiveRule(null)}
+                  variant="contained"
                 >
                   Close
-                </Typography>
+                </Button>
               </Box>
             </Card>
           </motion.div>

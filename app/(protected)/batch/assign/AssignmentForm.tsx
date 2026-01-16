@@ -24,11 +24,11 @@ import { fetchBatchItems } from "@/app/api/BatchItemApi";
 
 export type BatchSerialCode = {
   id: number;
-  serialCode: string;
+  batchSerialCode: string;
 };
 
 interface Props {
-  pendingBatches: BatchSerialCode[];
+  pendingBatches: string[];
   jobworkTypes: string[];
   employees: Employee[];
   setJobwork: Dispatch<SetStateAction<JobworkForm>>;
@@ -71,9 +71,9 @@ export default function AssignmentForm({
 
       const payload = {
         ...jobwork, // ✅ move this up
-        employeeName: jobwork.employee?.name,
-        employeeId: jobwork.employee?.id,
-        batchSerialCode: jobwork.serialCode,
+        employeeName: jobwork.assignedTo,
+        // employeeId: jobwork.employee?.id,
+        batchSerialCode: jobwork.batchSerialCode,
         assignedBy: user?.id, // ✅ now cannot be overridden
         quantities:
           jobwork.jobworkType === "CUTTING"
@@ -93,53 +93,50 @@ export default function AssignmentForm({
     }
   };
 
-  const printJobwork = async () => {
-    try {
-      // cleanup old blob
-      if (pdfUrl) {
-        URL.revokeObjectURL(pdfUrl);
-        setPdfUrl(null);
-      }
+  // const printJobwork = async () => {
+  //   try {
+  //     // cleanup old blob
+  //     if (pdfUrl) {
+  //       URL.revokeObjectURL(pdfUrl);
+  //       setPdfUrl(null);
+  //     }
 
-      const payload = {
-        ...jobwork, // ✅ move this up
-        employeeName: jobwork.employee?.name,
-        employeeId: jobwork.employee?.id,
-        batchSerialCode: jobwork.serialCode,
-        assignedBy: user?.id, // ✅ now cannot be overridden
-        quantities:
-          jobwork.jobworkType === "CUTTING"
-            ? [jobwork.quantity]
-            : jobwork.items.map((i) => i.quantity ?? 0),
-        itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
-        remarks: jobwork.remarks,
-      };
+  //     const payload = {
+  //       ...jobwork, // ✅ move this up
+  //       employeeName: jobwork.employee?.name,
+  //       employeeId: jobwork.employee?.id,
+  //       batchSerialCode: jobwork.batchSerialCode,
+  //       assignedBy: user?.id, // ✅ now cannot be overridden
+  //       quantities:
+  //         jobwork.jobworkType === "CUTTING"
+  //           ? [jobwork.quantity]
+  //           : jobwork.items.map((i) => i.quantity ?? 0),
+  //       itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
+  //       remarks: jobwork.remarks,
+  //     };
 
-      const res = await fetchJobworkPdf(payload);
-      const url = URL.createObjectURL(res);
+  //     const res = await fetchJobworkPdf(payload);
+  //     const url = URL.createObjectURL(res);
 
-      setPdfUrl(url);
-    } catch (e) {
-      notify("Failed to load PDF preview", "error");
-    }
-  };
+  //     setPdfUrl(url);
+  //   } catch (e) {
+  //     notify("Failed to load PDF preview", "error");
+  //   }
+  // };
 
   /* ================= SUBMIT ================= */
 
-  const submitJobwork = () => {
+  const submitCuttingJobwork = () => {
+    const { quantities, itemNames, items, ...cuttingPayload } = jobwork;
     const payload = {
-      ...jobwork, // ✅ move this up
-      employeeName: jobwork.employee?.name,
-      employeeId: jobwork.employee?.id,
-      batchSerialCode: jobwork.serialCode,
-      assignedBy: user?.id, // ✅ now cannot be overridden
-      quantities:
+      ...cuttingPayload,
+
+      quantity:
         jobwork.jobworkType === "CUTTING"
-          ? [jobwork.quantity]
+          ? jobwork.quantity
           : jobwork.items.map((i) => i.quantity ?? 0),
-      itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
-      remarks: jobwork.remarks,
     };
+    console.log(payload);
 
     setLoading(true);
     createJobwork(payload)
@@ -152,6 +149,25 @@ export default function AssignmentForm({
       .finally(() => setLoading(false));
   };
 
+  const submitItemBasedJobwork = () => {
+    const { quantities, itemNames, items, quantity, ...itemBasedPayload } =
+      jobwork;
+    const payload = {
+      ...itemBasedPayload,
+      itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
+      quantities: jobwork.items.map((i) => i.quantity ?? 0),
+    };
+    console.log(payload);
+    setLoading(true);
+    createJobwork(payload)
+      .then(() => {
+        setJobwork(INITIAL_JOBWORK);
+        notify("Jobwork created", "success");
+        refresh(!refreshState);
+      })
+      .catch(() => notify("Error creating jobwork", "error"))
+      .finally(() => setLoading(false));
+  };
   /* ================= CLEANUP ================= */
 
   useEffect(() => {
@@ -161,14 +177,18 @@ export default function AssignmentForm({
   }, [pdfUrl]);
 
   useEffect(() => {
-    if (jobwork.jobworkType !== "CUTTING" && jobwork.serialCode) {
-      fetchBatchItems(jobwork.serialCode)
+    if (
+      jobwork.batchSerialCode &&
+      jobwork.jobworkType &&
+      jobwork.jobworkType !== "CUTTING"
+    ) {
+      fetchBatchItems(jobwork.batchSerialCode, jobwork.jobworkType)
         .then((res) => setBatchItems(res))
         .catch((err) => {
           notify("Error fetching batch items", "error");
         });
     }
-  }, [jobwork.serialCode, jobwork.jobworkType]);
+  }, [jobwork.batchSerialCode, jobwork.jobworkType]);
 
   /* ================= UI ================= */
 
@@ -185,10 +205,10 @@ export default function AssignmentForm({
         <Grid size={4}>
           <Autocomplete
             fullWidth
-            options={pendingBatches.map((b) => b.serialCode)}
-            value={jobwork.serialCode}
+            options={pendingBatches}
+            value={jobwork.batchSerialCode}
             onChange={(_, value) =>
-              setJobwork((p) => ({ ...p, serialCode: value || "" }))
+              setJobwork((p) => ({ ...p, batchSerialCode: value || "" }))
             }
             renderInput={(params) => (
               <TextField {...params} label="Batch Serial Code" />
@@ -213,14 +233,14 @@ export default function AssignmentForm({
         <Grid size={4}>
           <Autocomplete
             fullWidth
-            options={employees ?? []}
-            getOptionLabel={(e) => e.name}
-            value={jobwork.employee}
+            options={employees.map((e) => e.name)}
+            // getOptionLabel={(e) => e.name}
+            value={jobwork.assignedTo}
             onChange={(_, value) =>
-              setJobwork((p) => ({ ...p, employee: value }))
+              setJobwork((p) => ({ ...p, assignedTo: value ?? "" }))
             }
             renderInput={(params) => <TextField {...params} label="Employee" />}
-            disabled={!jobwork.serialCode || !jobwork.jobworkType}
+            disabled={!jobwork.batchSerialCode || !jobwork.jobworkType}
           />
         </Grid>
 
@@ -231,19 +251,6 @@ export default function AssignmentForm({
                 maxQty={availableQty}
                 jobwork={jobwork}
                 setJobwork={setJobwork}
-              />
-            </Grid>
-
-            <Grid size={12}>
-              <TextField
-                label="Remarks"
-                fullWidth
-                multiline
-                rows={3}
-                value={jobwork.remarks}
-                onChange={(e) =>
-                  setJobwork((p) => ({ ...p, remarks: e.target.value }))
-                }
               />
             </Grid>
           </>
@@ -258,18 +265,30 @@ export default function AssignmentForm({
             </Grid>
           )
         )}
+        <Grid size={12}>
+          <TextField
+            label="Remarks"
+            fullWidth
+            multiline
+            rows={3}
+            value={jobwork.remarks}
+            onChange={(e) =>
+              setJobwork((p) => ({ ...p, remarks: e.target.value }))
+            }
+          />
+        </Grid>
 
         {jobwork.jobworkType === "CUTTING" ? (
           <Grid size={12} display="flex" justifyContent="flex-end" gap={2}>
             <Button
               variant="contained"
-              onClick={submitJobwork}
+              onClick={submitCuttingJobwork}
               disabled={
                 loading ||
                 !jobwork.quantity ||
-                !jobwork.employee ||
+                !jobwork.assignedTo ||
                 !jobwork.jobworkType ||
-                !jobwork.serialCode
+                !jobwork.batchSerialCode
               }
             >
               Assign
@@ -280,9 +299,9 @@ export default function AssignmentForm({
               disabled={
                 loading ||
                 !jobwork.quantity ||
-                !jobwork.employee ||
+                !jobwork.assignedTo ||
                 !jobwork.jobworkType ||
-                !jobwork.serialCode
+                !jobwork.batchSerialCode
               }
               onClick={openPreview}
             >
@@ -293,13 +312,13 @@ export default function AssignmentForm({
           <Grid size={12} display="flex" justifyContent="flex-end" gap={2}>
             <Button
               variant="contained"
-              onClick={submitJobwork}
+              onClick={submitItemBasedJobwork}
               disabled={
                 loading ||
                 !jobwork.items[0]?.item ||
-                !jobwork.employee ||
+                !jobwork.assignedTo ||
                 !jobwork.jobworkType ||
-                !jobwork.serialCode
+                !jobwork.batchSerialCode
               }
             >
               Assign
@@ -310,9 +329,9 @@ export default function AssignmentForm({
               disabled={
                 loading ||
                 !jobwork.items[0]?.item ||
-                !jobwork.employee ||
+                !jobwork.assignedTo ||
                 !jobwork.jobworkType ||
-                !jobwork.serialCode
+                !jobwork.batchSerialCode
               }
               onClick={openPreview}
             >

@@ -82,6 +82,7 @@ export default function Page() {
               setJobwork={setJobwork}
               jobwork={jobwork}
               allItems={items}
+              setJobworkNumber={setJobworkNumber}
             />
           )}
         </Grid>

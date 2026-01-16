@@ -5,6 +5,7 @@ import ContentCutIcon from "@mui/icons-material/ContentCut";
 import BusinessIcon from "@mui/icons-material/Business";
 import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { label } from "framer-motion/client";
 
 interface Props {
   jobwork: any | null;
@@ -63,6 +64,10 @@ export default function JobworkSummary({ jobwork }: Props) {
         <Chip icon={<PersonIcon />} label={jobwork.assignedTo} size="small" />
       ),
     },
+    {
+      label : "Remarks",
+      value : jobwork.remarks
+    }
   ];
 
   return (

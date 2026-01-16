@@ -43,7 +43,7 @@ export const getUnfinishedUrgentBatches = async () => {
 
 export const getUnfinishedBatches = async () => {
   try {
-    const response = await axiosInstance.get(`${baseUrl}/pending`);
+    const response = await axiosInstance.get(`${baseUrl}/available-for-jobwork`);
     return response.data;
   } catch (error) {
     console.error("Error getting unfinished batchs:", error);
@@ -51,10 +51,10 @@ export const getUnfinishedBatches = async () => {
   }
 };
 
-export const getJobworkTypes = async (serialCode: string) => {
+export const getAllowedJobworkTypes = async (serialCode: string) => {
   try {
     const response = await axiosInstance.get(
-      `${baseUrl}/jobwork-types/${serialCode}`
+      `${baseUrl}/${serialCode}/jobwork-types`
     );
     console.log(response);
     return response.data;
@@ -90,7 +90,7 @@ export const fetchAvailableQuantity = async (
 ) => {
   try {
     const response = await axiosInstance.get(
-      `${baseUrl}/${serialCode}/${jobworkType}/availableQuantity`
+      `${baseUrl}/${serialCode}/${jobworkType}/available-quantity`
     );
     return response.data;
   } catch (error) {

@@ -3,7 +3,7 @@
 import {
   fetchAvailableQuantity,
   fetchBatches,
-  getJobworkTypes,
+  getAllowedJobworkTypes,
   getUnfinishedBatches,
   getUnfinishedUrgentBatches,
 } from "@/app/api/batchApi";
@@ -21,7 +21,7 @@ import BatchStats from "./BatchStats";
 
 export default function Page() {
   const [urgentBatches, setUrgentBatches] = useState([]);
-  const [pendingBatches, setPendingBatches] = useState([]);
+  const [pendingBatches, setPendingBatches] = useState<string[]>([]);
   const [jobworkTypes, setJobworkTypes] = useState([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeStats, setEmployeeStats] = useState({});
@@ -49,9 +49,9 @@ export default function Page() {
   }, [refresh]);
 
   useEffect(() => {
-    console.log("changed", jobwork.serialCode);
-    if (jobwork.serialCode && jobwork.serialCode.trim() !== "") {
-      getJobworkTypes(jobwork.serialCode).then((res) => {
+    console.log("changed", jobwork.batchSerialCode);
+    if (jobwork.batchSerialCode && jobwork.batchSerialCode.trim() !== "") {
+      getAllowedJobworkTypes(jobwork.batchSerialCode).then((res) => {
         setJobworkTypes(res);
       });
     } else {
@@ -59,19 +59,19 @@ export default function Page() {
       setJobwork((prev) => ({
         ...prev,
         jobworkType: "",
-        employee: null,
+        assignedTo: "",
       }));
     }
 
-    if (jobwork.serialCode) {
-      fetchAvailableQuantity(jobwork.serialCode, "CUTTING").then((res) => {
+    if (jobwork.batchSerialCode) {
+      fetchAvailableQuantity(jobwork.batchSerialCode, "cutting").then((res) => {
         setAvailableQty(res);
       });
     }
-  }, [jobwork.serialCode]);
+  }, [jobwork.batchSerialCode]);
 
   useEffect(() => {
-    if (jobwork.jobworkType && jobwork.serialCode.trim() !== "") {
+    if (jobwork.jobworkType && jobwork.batchSerialCode.trim() !== "") {
       fetchEmployees({ skillNames: [jobwork.jobworkType] })
         .then((res: any) => {
           setEmployees(res.content);
@@ -85,7 +85,7 @@ export default function Page() {
     }
     setJobwork((prev) => ({
       ...prev,
-      employee: null,
+      assignedTo: "",
     }));
   }, [jobwork.jobworkType]);
 

@@ -10,6 +10,7 @@ import {
   TextField,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import { JobworkRow } from "./page";
 
 type EmployeeReassignForm = {
   open: boolean;
@@ -18,6 +19,7 @@ type EmployeeReassignForm = {
   onClose: () => void;
   onSubmit: () => void;
   currentEmployee?: string;
+  jobwork?: JobworkRow;
 };
 
 export default function EmployeeReassignModal({
@@ -27,6 +29,7 @@ export default function EmployeeReassignModal({
   setSelectedEmployee,
   onSubmit,
   currentEmployee,
+  jobwork,
 }: EmployeeReassignForm) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const filteredEmployees = currentEmployee
@@ -34,8 +37,15 @@ export default function EmployeeReassignModal({
     : employees;
 
   useEffect(() => {
-    fetchEmployees().then((res) => setEmployees(res));
-  }, []);
+    if (jobwork) {
+      fetchEmployees({ skillNames: [jobwork?.jobworkType ?? ""] })
+        .then((res: any) => {
+          setEmployees(res.content);
+          console.log(res.content)
+        })
+        .catch((err) => console.log("Error fetching Employee"));
+    }
+  }, [jobwork]);
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Re-Assign Jobwork</DialogTitle>

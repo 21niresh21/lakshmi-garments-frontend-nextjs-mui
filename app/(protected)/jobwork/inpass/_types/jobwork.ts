@@ -7,11 +7,11 @@ export interface JobworkItemRowData {
   item?: Item;
   itemId: number | null;   // ✅ FIXED
   itemName: string;
-  wage: number | "";
+  wagePerItem: number | "";
 
-  purchasedQuantity: number | "";
-  purchaseCost: number | "";
-  returnedQuantity: number | "";
+  salesQuantity: number | "";
+  salesPrice: number | "";
+  acceptedQuantity: number | "";
 
   damages: Damage[];
 }

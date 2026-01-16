@@ -28,6 +28,7 @@ interface JobworkItemsTableProps {
   allItems: Item[];
   jobwork: any; // ✅ jobwork assigned qty
   setJobwork: React.Dispatch<React.SetStateAction<any | null>>;
+  setJobworkNumber: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const toNumber = (v: number | "") => (v === "" ? 0 : v);
@@ -36,7 +37,9 @@ export default function JobworkItemsTable({
   allItems,
   jobwork,
   setJobwork,
+  setJobworkNumber,
 }: JobworkItemsTableProps) {
+  console.log(jobwork);
   const assignedQuantity = jobwork.jobworkItems.reduce(
     (sum: number, item: any) => sum + item.quantity,
     0
@@ -45,9 +48,9 @@ export default function JobworkItemsTable({
   const receivedQuantity = jobwork.jobworkReceiptItems.reduce(
     (sum: number, item: any) =>
       sum +
-      (item.returnedQuantity ?? 0) +
+      (item.acceptedQuantity ?? 0) +
       (item.damagedQuantity ?? 0) +
-      (item.purchasedQuantity ?? 0),
+      (item.salesQuantity ?? 0),
     0
   );
 
@@ -65,11 +68,11 @@ export default function JobworkItemsTable({
         item: undefined,
         itemId: null,
         itemName: "",
-        wage: 0,
+        wagePerItem: 0,
 
-        purchasedQuantity: 0,
-        purchaseCost: 0,
-        returnedQuantity: "",
+        salesQuantity: 0,
+        salesPrice: 0,
+        acceptedQuantity: "",
 
         damages: [
           { type: DamageType.SUPPLIER_DAMAGE, quantity: 0 },
@@ -101,8 +104,8 @@ export default function JobworkItemsTable({
       );
       return (
         sum +
-        toNumber(row.purchasedQuantity) +
-        toNumber(row.returnedQuantity) +
+        toNumber(row.salesQuantity) +
+        toNumber(row.acceptedQuantity) +
         damageTotal
       );
     }, 0);
@@ -110,12 +113,12 @@ export default function JobworkItemsTable({
 
   const totalExceeded =
     totalEntered > pendingQuantity ||
-    jobwork.jobworkStatus === JobworkStatus.COMPLETED;
+    jobwork.jobworkStatus === JobworkStatus.CLOSED;
   const remainingQty = pendingQuantity - totalEntered;
 
   const canSubmit =
     totalEntered === pendingQuantity &&
-    jobwork.jobworkStatus !== JobworkStatus.COMPLETED &&
+    jobwork.jobworkStatus !== JobworkStatus.CLOSED &&
     rows.length > 0 &&
     !!rows[0].item;
 
@@ -123,7 +126,7 @@ export default function JobworkItemsTable({
     rows.length > 0 &&
     rows.every((r) => r.item) &&
     totalEntered !== pendingQuantity &&
-    jobwork.jobworkStatus !== JobworkStatus.COMPLETED;
+    jobwork.jobworkStatus !== JobworkStatus.CLOSED;
 
   // ✅ Submit handler
   const handleSubmit = () => {
@@ -132,16 +135,19 @@ export default function JobworkItemsTable({
       return;
     }
     const payload = {
-      batchSerialCode: jobwork.batchSerialCode,
+      // batchSerialCode: jobwork.batchSerialCode,
       jobworkNumber: jobwork.jobworkNumber,
-      receivedById: user?.id,
+      // receivedById: user?.id,
       jobworkReceiptItems: rows,
     };
+    console.log(payload);
+    // return
     createJobworkReceipt(payload)
       .then((res) => {
         notify("Jobwork accepted!", "success");
         setRows([]);
         setJobwork(null);
+        setJobworkNumber("");
       })
       .catch((err) => {
         notify("An error occured", "error");
@@ -178,11 +184,11 @@ export default function JobworkItemsTable({
       <Typography sx={{ my: 2 }}>
         Assigned Qty: <b>{pendingQuantity}</b> | Remaining:{" "}
         <b style={{ color: remainingQty < 0 ? "red" : "inherit" }}>
-          {JobworkStatus.COMPLETED === jobwork.jobworkStatus ? 0 : remainingQty}
+          {JobworkStatus.CLOSED === jobwork.jobworkStatus ? 0 : remainingQty}
         </b>
       </Typography>
 
-      {pendingQuantity > 0 && (
+      {
         <>
           <TableContainer component={Paper} sx={{ mt: 2, width: "100%" }}>
             <Table size="small">
@@ -244,7 +250,7 @@ export default function JobworkItemsTable({
             </Button>
           </Stack>
         </>
-      )}
+      }
     </>
   );
 }

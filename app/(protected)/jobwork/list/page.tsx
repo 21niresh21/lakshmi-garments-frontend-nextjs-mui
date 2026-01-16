@@ -14,6 +14,7 @@ import {
   Stack,
   Box,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -44,7 +45,12 @@ import {
   InvoiceErrors,
 } from "../../invoice/create/invoice.types";
 import { InvoiceDetails } from "../../invoice/_types/invoiceDetails";
-import { fetchJobworks, reAssignJobwork } from "@/app/api/jobworkApi";
+import {
+  closeJobwork,
+  fetchJobworks,
+  reAssignJobwork,
+  reopenJobwork,
+} from "@/app/api/jobworkApi";
 import { JobworkStatus } from "@/app/_types/JobworkStatus";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
@@ -52,6 +58,8 @@ import EmployeeReassignModal from "./EmployeeReassignModal";
 import { Employee } from "@/app/_types/Employee";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { FaClock, FaUserClock } from "react-icons/fa";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import { GoIssueClosed, GoIssueReopened } from "react-icons/go";
 
 type SubCategoryWithQuantity = {
   id: number;
@@ -59,7 +67,7 @@ type SubCategoryWithQuantity = {
   quantity: number;
 };
 
-interface JobworkRow {
+export interface JobworkRow {
   id: number;
   batchSerialCode: string;
   jobworkNumber: string;
@@ -73,9 +81,9 @@ interface JobworkRow {
 
 const getJobworkStats = (status: JobworkStatus) => {
   switch (status) {
-    case JobworkStatus.COMPLETED:
+    case JobworkStatus.CLOSED:
       return {
-        label: "Completed",
+        label: "Closed",
         icon: <CheckCircleIcon color="success" />,
         color: "success" as const,
       };
@@ -189,7 +197,7 @@ export default function Page() {
   const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee>();
-  const [selectedJobworkNumber, setSelectedJobworkNumber] = useState<string>();
+  const [selectedJobwork, setSelectedJobwork] = useState<JobworkRow>();
   const [currentAssignedEmployee, setCurrentAssignedEmployee] = useState<
     string | null
   >(null);
@@ -228,18 +236,18 @@ export default function Page() {
     setOpenModal(true);
   };
 
-  const handleReAssignJob = (row: any) => {
+  const handleReAssignJob = (row: JobworkRow) => {
     setCurrentAssignedEmployee(row.assignedTo);
-    setSelectedJobworkNumber(row.jobworkNumber);
+    setSelectedJobwork(row);
     setOpenModal(true);
   };
 
   const reassignJob = async () => {
-    if (!selectedJobworkNumber || !selectedEmployee) return;
+    if (!selectedJobwork || !selectedEmployee) return;
 
     const payload = {
-      jobworkNumber: selectedJobworkNumber,
-      employeeId: selectedEmployee.id,
+      jobworkNumber: selectedJobwork.jobworkNumber,
+      employeeName: selectedEmployee.name,
     };
 
     try {
@@ -352,6 +360,28 @@ export default function Page() {
     }
   };
 
+  const handleCloseJobwork = (data: JobworkRow) => {
+    closeJobwork(data.jobworkNumber)
+      .then((res) => {
+        notify("Jobwork has been closed", "success");
+        loadJobworks();
+      })
+      .catch((err) => {
+        notify("Error closing jobwork", "error");
+      });
+  };
+
+  const handleReopenJobwork = (data: JobworkRow) => {
+    reopenJobwork(data.jobworkNumber)
+      .then((res) => {
+        notify("Jobwork has been reopened", "success");
+        loadJobworks();
+      })
+      .catch((err) => {
+        notify("Error closing reopened", "error");
+      });
+  };
+
   useEffect(() => {
     loadJobworks();
   }, [
@@ -406,8 +436,31 @@ export default function Page() {
           columns={HEADERS}
           rowActions={[
             {
+              label: "Close Jobwork",
+              icon: (row: JobworkRow) =>
+                row.status === JobworkStatus.AWAITING_CLOSE ? (
+                  <Tooltip title="Close Jobwork">
+                    <IconButton size="small">
+                      <VerifiedIcon />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  row.status === JobworkStatus.CLOSED && (
+                    <Tooltip title="Reopen Jobwork">
+                      <IconButton size="small">
+                        <AutorenewIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )
+                ),
+              onClick: (row) =>
+                row.status === JobworkStatus.AWAITING_CLOSE
+                  ? handleCloseJobwork(row)
+                  : handleReopenJobwork(row),
+            },
+            {
               label: "Re Assign",
-              icon: () => (
+              icon: (row: JobworkRow) =>  row.status === JobworkStatus.IN_PROGRESS && (
                 <IconButton size="small">
                   <SwapHorizIcon sx={{ color: "gray" }} />
                 </IconButton>
@@ -419,6 +472,7 @@ export default function Page() {
       </Grid>
 
       <EmployeeReassignModal
+        jobwork={selectedJobwork}
         currentEmployee={currentAssignedEmployee ?? undefined}
         selectedEmployee={selectedEmployee}
         open={openModal}

@@ -8,29 +8,23 @@ const erpDesign = createTheme(baseTheme, {
     ...componentOverrides,
 
     // keep your existing overrides here
-    MuiTableCell: {
-      styleOverrides: {
-        head: {
-          backgroundColor: baseTheme.palette.primary.main,
-          color: baseTheme.palette.primary.contrastText,
-          fontWeight: "bold",
-        },
-      },
+    MuiOutlinedInput: {
+  styleOverrides: {
+    root: {
+      height: 40,
+      fontWeight: 500,
     },
+    notchedOutline: {
+      borderWidth: 2,
+    },
+  },
+},
 
-    MuiTableSortLabel: {
+    MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: baseTheme.palette.primary.contrastText,
-          "&:hover": {
-            color: baseTheme.palette.primary.contrastText,
-          },
-          "&.Mui-active": {
-            color: baseTheme.palette.primary.contrastText,
-          },
-        },
-        icon: {
-          color: baseTheme.palette.primary.contrastText + " !important",
+          fontSize: "0.75rem",
+          color: "#667085",
         },
       },
     },

@@ -38,8 +38,8 @@ const sanitizeNumber = (value: string): number | "" => {
  */
 export const isRowEmpty = (row: JobworkItemRowData) => {
   const sum =
-    (row.purchasedQuantity ? row.purchasedQuantity : 0) +
-    (row.returnedQuantity ? row.returnedQuantity : 0) +
+    (row.salesQuantity ? row.salesQuantity : 0) +
+    (row.acceptedQuantity ? row.acceptedQuantity : 0) +
     row.damages.reduce((sum, d) => sum + (d.quantity ? d.quantity : 0), 0);
   return sum === 0;
 };
@@ -147,11 +147,11 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
         <TextField
           size="small"
           type="number"
-          value={row.returnedQuantity}
+          value={row.acceptedQuantity}
           onChange={(e) =>
-            handleNumberChange("returnedQuantity", e.target.value)
+            handleNumberChange("acceptedQuantity", e.target.value)
           }
-          error={row.returnedQuantity === 0 && emptyRow}
+          error={row.acceptedQuantity === 0 && emptyRow}
           inputProps={{ min: 0 }}
         />
       </TableCell>
@@ -159,8 +159,8 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
         <TextField
           size="small"
           type="number"
-          value={row.wage ?? ""}
-          onChange={(e) => handleNumberChange("wage", e.target.value)}
+          value={row.wagePerItem ?? ""}
+          onChange={(e) => handleNumberChange("wagePerItem", e.target.value)}
           inputProps={{ min: 0 }}
           sx={{ width: 65 }}
         />
@@ -171,8 +171,8 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
         <TextField
           size="small"
           type="number"
-          value={row.purchaseCost}
-          onChange={(e) => handleNumberChange("purchaseCost", e.target.value)}
+          value={row.salesPrice}
+          onChange={(e) => handleNumberChange("salesPrice", e.target.value)}
           inputProps={{ min: 0 }}
           sx={{ width: 70 }}
         />
@@ -183,11 +183,11 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
         <TextField
           size="small"
           type="number"
-          value={row.purchasedQuantity}
+          value={row.salesQuantity}
           onChange={(e) =>
-            handleNumberChange("purchasedQuantity", e.target.value)
+            handleNumberChange("salesQuantity", e.target.value)
           }
-          error={row.purchasedQuantity === 0 && emptyRow}
+          error={row.salesQuantity === 0 && emptyRow}
           inputProps={{ min: 0 }}
           sx={{ width: 70 }}
         />
