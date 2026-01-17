@@ -6,8 +6,12 @@ import { ConfirmationProvider } from "../components/shared/ConfirmationProvider"
 import { NotificationProvider } from "../components/shared/NotificationProvider";
 import { AuthUser } from "../_types/User";
 import { UserProvider } from "../context/UserContext";
-import { ThemeProvider } from "@mui/material";
+import { Box, LinearProgress, ThemeProvider } from "@mui/material";
 import theme from "../themes/theme";
+import {
+  LoadingProvider,
+  useGlobalLoading,
+} from "../components/layout/LoadingProvider";
 
 export default function ProtectedLayout({
   children,
@@ -25,13 +29,26 @@ export default function ProtectedLayout({
 
   return (
     // <ThemeProvider theme={theme}>
-    <UserProvider user={user}>
-      <NotificationProvider>
-        <ConfirmationProvider>
-          <AppShell>{children}</AppShell>;
-        </ConfirmationProvider>
-      </NotificationProvider>
-    </UserProvider>
+    <LoadingProvider>
+      <GlobalLinearLoading />
+      <UserProvider user={user}>
+        <NotificationProvider>
+          <ConfirmationProvider>
+            <AppShell>{children}</AppShell>;
+          </ConfirmationProvider>
+        </NotificationProvider>
+      </UserProvider>
+    </LoadingProvider>
     // </ThemeProvider>
+  );
+}
+
+function GlobalLinearLoading() {
+  const { loading } = useGlobalLoading();
+
+  return (
+    <Box sx={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 1200 }}>
+      {loading && <LinearProgress />}
+    </Box>
   );
 }

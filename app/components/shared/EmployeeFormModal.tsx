@@ -11,8 +11,10 @@ import {
   TextField,
   Stack,
   Autocomplete,
+  DialogProps,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useGlobalLoading } from "../layout/LoadingProvider";
 
 export type EmployeeFormData = {
   name: string;
@@ -23,7 +25,6 @@ type EmployeeFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: EmployeeFormData;
-  loading?: boolean;
   onClose: () => void;
   onSubmit: (data: EmployeeFormData) => void;
 };
@@ -32,18 +33,20 @@ export default function EmployeeFormModal({
   open,
   mode,
   initialData,
-  loading = false,
   onClose,
   onSubmit,
 }: EmployeeFormModalProps) {
+  const { loading } = useGlobalLoading();
+
   const [skills, setSkills] = useState<Skill[]>([]);
   const [form, setForm] = useState<EmployeeFormData>({
     name: "",
     skills: [],
   });
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [touched, setTouched] = useState(false);
 
-  // Populate data when editing
+  const nameRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (open) {
       setForm(
@@ -52,92 +55,104 @@ export default function EmployeeFormModal({
           skills: [],
         }
       );
+      setTouched(false);
     }
   }, [open, initialData]);
 
-  const handleChange =
-    (field: keyof EmployeeFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    };
-
-  const handleSubmit = () => {
-    onSubmit(form);
-  };
-
   useEffect(() => {
-    fetchSkills("").then((res) => setSkills(res));
+    fetchSkills("").then(setSkills);
   }, []);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setForm((prev) => ({ ...prev, name: value }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim();
+    setForm((prev) => ({ ...prev, name: value }));
+    setTouched(true);
+  };
+
+  const nameError = touched && !form.name ? "Employee name is required" : "";
+
+  const isSubmitDisabled = loading || !form.name.trim();
+
+  const selectedSkills = useMemo(
+    () => skills.filter((s) => form.skills?.includes(s.id)),
+    [skills, form.skills]
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitDisabled) return;
+
+    onSubmit({
+      name: form.name.trim(),
+      skills: form.skills ?? [],
+    });
+  };
+
   return (
-<Dialog
-  open={open}
-  onClose={onClose}
-  fullWidth
-  maxWidth="sm"
-  TransitionProps={{
-    onEntered: () => {
-      nameInputRef.current?.focus();
-    },
-  }}
->
-  <form
-    onSubmit={(e) => {
-      e.preventDefault();
-      handleSubmit();
-    }}
-  >
-    <DialogTitle>
-      {mode === "create" ? "Add Employee" : "Edit Employee"}
-    </DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      TransitionProps={{
+        onEntered: () => {
+          nameRef.current?.focus();
+        },
+      }}
+    >
+      <DialogTitle>
+        {mode === "create" ? "Add Employee" : "Edit Employee"}
+      </DialogTitle>
 
-    <DialogContent>
-      <Stack spacing={2} mt={1}>
-        <TextField
-          inputRef={nameInputRef}
-          label="Employee Name"
-          value={form.name}
-          onChange={handleChange("name")}
-          fullWidth
-          required
-        />
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              inputRef={nameRef}
+              label="Employee Name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!nameError}
+              helperText={nameError}
+              fullWidth
+              required
+              autoComplete="name"
+            />
 
-        <Autocomplete
-          multiple
-          openOnFocus
-          id="skills-autocomplete"
-          disablePortal
-          autoHighlight
-          options={skills}
-          getOptionLabel={(option) => option.name}
-          value={skills.filter((skill) =>
-            form.skills?.includes(skill.id)
-          )}
-          onChange={(_, selectedOptions) => {
-            const ids = selectedOptions.map((opt) => opt.id);
-            setForm((prev) => ({ ...prev, skills: ids }));
-          }}
-          renderInput={(params) => (
-            <TextField {...params} label="Skills" />
-          )}
-        />
-      </Stack>
-    </DialogContent>
+            <Autocomplete
+              multiple
+              openOnFocus
+              autoHighlight
+              options={skills}
+              getOptionLabel={(option) => option.name}
+              value={selectedSkills}
+              onChange={(_, selectedOptions) => {
+                setForm((prev) => ({
+                  ...prev,
+                  skills: selectedOptions.map((s) => s.id),
+                }));
+              }}
+              renderInput={(params) => <TextField {...params} label="Skills" />}
+            />
+          </Stack>
+        </DialogContent>
 
-    <DialogActions>
-      <Button onClick={onClose} disabled={loading}>
-        Cancel
-      </Button>
-      <Button
-        type="submit"                 // ✅ key change
-        variant="contained"
-        disabled={loading || !form.name}
-      >
-        {mode === "create" ? "Create" : "Save"}
-      </Button>
-    </DialogActions>
-  </form>
-</Dialog>
-
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmitDisabled}>
+            {mode === "create" ? "Create" : "Save"}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 }

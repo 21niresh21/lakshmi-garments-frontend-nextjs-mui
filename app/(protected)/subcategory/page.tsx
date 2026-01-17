@@ -3,9 +3,9 @@
 import GenericTable from "@/app/components/shared/GenericTable";
 import { Grid, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { useEffect, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-import AirportShuttleIcon from "@mui/icons-material/AirportShuttle";
 import { SubCategory } from "@/app/_types/SubCategory";
 import SubCategoryFormModal, {
   SubCategoryFormData,
@@ -15,10 +15,25 @@ import {
   fetchSubCategories,
   updateSubCategory,
 } from "@/app/api/subCategory";
-import AddIcon from '@mui/icons-material/Add';
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+
+/* ---------------- Error Normalizer ---------------- */
+
+function normalizeError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as any).response?.data === "string"
+  ) {
+    return (error as any).response.data;
+  }
+  return "Something went wrong. Please try again.";
+}
 
 export default function Page() {
   const { notify } = useNotification();
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<SubCategory[]>([]);
@@ -27,59 +42,115 @@ export default function Page() {
   const [selectedSubCategory, setSelectedSubCategory] =
     useState<SubCategory | null>(null);
 
-  /* ---------------- Fetch Transports ---------------- */
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const loadSubCategories = async () => {
-    try {
-      const data = await fetchSubCategories(search);
-      setRows(data);
-    } catch (err) {
-      notify("Error fetching sub categories", "error");
-    }
-  };
+  /* ---------------- Fetch SubCategories ---------------- */
+
+  const loadSubCategories = useCallback(
+    async (query: string) => {
+      showLoading();
+      try {
+        const data = await fetchSubCategories(query);
+        setRows(data ?? []);
+      } catch (err) {
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
+      }
+    },
+    [notify, showLoading, hideLoading]
+  );
 
   useEffect(() => {
-    loadSubCategories();
-  }, [search]);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
-  /* ---------------- Add / Edit Handlers ---------------- */
+    searchTimeoutRef.current = setTimeout(() => loadSubCategories(search), 400);
 
-  const handleAddSubCategory = () => {
-    setSelectedSubCategory(null); // IMPORTANT
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [search, loadSubCategories]);
+
+  /* ---------------- Add / Edit ---------------- */
+
+  const handleAddSubCategory = useCallback(() => {
+    setSelectedSubCategory(null);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleEditSubCategory = (subCategory: SubCategory) => {
+  const handleEditSubCategory = useCallback((subCategory: SubCategory) => {
     setSelectedSubCategory(subCategory);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleSubCategorySubmit = async (data: SubCategoryFormData) => {
-    try {
-      if (selectedSubCategory) {
-        // EDIT
-        await updateSubCategory(selectedSubCategory.id, data);
-        notify("SubCategory updated successfully", "success");
-      } else {
-        // CREATE
-        await addSubCategory(data);
-        notify("SubCategory created successfully", "success");
+  const handleSubCategorySubmit = useCallback(
+    async (data: SubCategoryFormData) => {
+      showLoading();
+      try {
+        if (selectedSubCategory) {
+          await updateSubCategory(selectedSubCategory.id, data);
+          notify("SubCategory updated successfully", "success");
+        } else {
+          await addSubCategory(data);
+          notify("SubCategory created successfully", "success");
+        }
+
+        setOpenModal(false);
+        loadSubCategories(search);
+      } catch (err) {
+        console.error(err);
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
       }
+    },
+    [
+      selectedSubCategory,
+      notify,
+      loadSubCategories,
+      search,
+      showLoading,
+      hideLoading,
+    ]
+  );
 
-      setOpenModal(false);
-      setSelectedSubCategory(null);
-      loadSubCategories();
-    } catch (err: any) {
-      console.error(err);
-      notify(err?.response?.data ?? "Error saving sub category", "error");
-    }
-  };
+  /* ---------------- Memoized Table Config ---------------- */
 
-  useEffect(() => {
-    if (!openModal) {
-      setSelectedSubCategory(null);
-    }
-  }, [openModal]);
+  const columns = useMemo(
+    () => [
+      { id: "id", label: "ID", sortable: false },
+      { id: "name", label: "Sub Category Name", sortable: false },
+    ],
+    []
+  );
+
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "Edit",
+        icon: () => (
+          <IconButton size="small">
+            <EditIcon sx={{ color: "gray" }} />
+          </IconButton>
+        ),
+        onClick: (row: SubCategory) => handleEditSubCategory(row),
+      },
+    ],
+    [handleEditSubCategory]
+  );
+
+  const toolbarExtras = useMemo(
+    () => [
+      <IconButton
+        key="add-subcategory"
+        onClick={handleAddSubCategory}
+        title="Add SubCategory"
+      >
+        <AddIcon />
+      </IconButton>,
+    ],
+    [handleAddSubCategory]
+  );
 
   /* ---------------- Render ---------------- */
 
@@ -94,30 +165,9 @@ export default function Page() {
           searchPlacedHolder="Search Sub Categories..."
           searchValue={search}
           onSearchChange={setSearch}
-          columns={[
-            { id: "id", label: "ID", sortable: false },
-            { id: "name", label: "Sub Category Name", sortable: false },
-          ]}
-          rowActions={[
-            {
-              label: "Edit",
-              icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
-              onClick: (row: SubCategory) => handleEditSubCategory(row),
-            },
-          ]}
-          toolbarExtras={[
-            <IconButton
-              key="add-subcategory"
-              onClick={handleAddSubCategory}
-              title="Add SubCategory"
-            >
-              <AddIcon />
-            </IconButton>,
-          ]}
+          columns={columns}
+          rowActions={rowActions}
+          toolbarExtras={toolbarExtras}
         />
       </Grid>
 
@@ -127,15 +177,9 @@ export default function Page() {
         open={openModal}
         mode={selectedSubCategory ? "edit" : "create"}
         initialData={
-          selectedSubCategory
-            ? {
-                name: selectedSubCategory.name,
-              }
-            : undefined
+          selectedSubCategory ? { name: selectedSubCategory.name } : undefined
         }
-        onClose={() => {
-          setOpenModal(false);
-        }}
+        onClose={() => setOpenModal(false)}
         onSubmit={handleSubCategorySubmit}
       />
     </Grid>

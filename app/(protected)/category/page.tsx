@@ -3,12 +3,9 @@
 import GenericTable from "@/app/components/shared/GenericTable";
 import { Grid, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
-import { useEffect, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-import SupplierFormModal, {
-  SupplierFormData,
-} from "@/app/components/shared/SupplierFormModal";
 import CategoryFormModal, {
   CategoryFormData,
 } from "@/app/components/shared/CategoryFormModal";
@@ -18,10 +15,25 @@ import {
   updateCategory,
 } from "@/app/api/category";
 import { Category } from "@/app/_types/Category";
-import AddIcon from "@mui/icons-material/Add";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+
+/* ---------------- Error Normalizer ---------------- */
+
+function normalizeError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as any).response?.data === "string"
+  ) {
+    return (error as any).response.data;
+  }
+  return "Something went wrong. Please try again.";
+}
 
 export default function Page() {
   const { notify } = useNotification();
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Category[]>([]);
@@ -31,59 +43,109 @@ export default function Page() {
     null
   );
 
-  /* ---------------- Fetch Suppliers ---------------- */
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const loadCategories = async () => {
-    try {
-      const data = await fetchCategories(search);
-      setRows(data);
-    } catch (err) {
-      notify("Error fetching categories", "error");
-    }
-  };
+  /* ---------------- Fetch Categories ---------------- */
+
+  const loadCategories = useCallback(
+    async (query: string) => {
+      showLoading();
+      try {
+        const data = await fetchCategories(query);
+        setRows(data ?? []);
+      } catch (err) {
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
+      }
+    },
+    [notify, showLoading, hideLoading]
+  );
 
   useEffect(() => {
-    loadCategories();
-  }, [search]);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
-  /* ---------------- Add / Edit Handlers ---------------- */
+    searchTimeoutRef.current = setTimeout(() => loadCategories(search), 400);
 
-  const handleAddCategory = () => {
-    setSelectedCategory(null); // IMPORTANT
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [search, loadCategories]);
+
+  /* ---------------- Add / Edit ---------------- */
+
+  const handleAddCategory = useCallback(() => {
+    setSelectedCategory(null);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleEditCategory = (category: Category) => {
+  const handleEditCategory = useCallback((category: Category) => {
     setSelectedCategory(category);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleCategorySubmit = async (data: CategoryFormData) => {
-    try {
-      if (selectedCategory) {
-        // EDIT
-        await updateCategory(selectedCategory.id, data);
-        notify("Category updated successfully", "success");
-      } else {
-        // CREATE
-        await addCategory(data);
-        notify("Category created successfully", "success");
+  const handleCategorySubmit = useCallback(
+    async (data: CategoryFormData) => {
+      showLoading();
+      try {
+        if (selectedCategory) {
+          await updateCategory(selectedCategory.id, data);
+          notify("Category updated successfully", "success");
+        } else {
+          await addCategory(data);
+          notify("Category created successfully", "success");
+        }
+
+        setOpenModal(false);
+        loadCategories(search);
+      } catch (err) {
+        console.error(err);
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
       }
+    },
+    [selectedCategory, notify, loadCategories, search, showLoading, hideLoading]
+  );
 
-      setOpenModal(false);
-      setSelectedCategory(null);
-      loadCategories();
-    } catch (err: any) {
-      console.error(err);
-      notify(err?.response?.data ?? "Error saving supplier", "error");
-    }
-  };
+  /* ---------------- Memoized Table Config ---------------- */
 
-  useEffect(() => {
-    if (!openModal) {
-      setSelectedCategory(null);
-    }
-  }, [openModal]);
+  const columns = useMemo(
+    () => [
+      { id: "id", label: "ID", sortable: false },
+      { id: "name", label: "Category Name", sortable: false },
+      { id: "code", label: "Code", sortable: false },
+    ],
+    []
+  );
+
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "Edit",
+        icon: () => (
+          <IconButton size="small">
+            <EditIcon sx={{ color: "gray" }} />
+          </IconButton>
+        ),
+        onClick: (row: Category) => handleEditCategory(row),
+      },
+    ],
+    [handleEditCategory]
+  );
+
+  const toolbarExtras = useMemo(
+    () => [
+      <IconButton
+        key="add-category"
+        onClick={handleAddCategory}
+        title="Add Category"
+      >
+        <AddIcon />
+      </IconButton>,
+    ],
+    [handleAddCategory]
+  );
 
   /* ---------------- Render ---------------- */
 
@@ -98,31 +160,9 @@ export default function Page() {
           searchPlacedHolder="Search Categories..."
           searchValue={search}
           onSearchChange={setSearch}
-          columns={[
-            { id: "id", label: "ID", sortable: false },
-            { id: "name", label: "Category Name", sortable: false },
-            { id: "code", label: "Code", sortable: false },
-          ]}
-          rowActions={[
-            {
-              label: "Edit",
-              icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
-              onClick: (row: Category) => handleEditCategory(row),
-            },
-          ]}
-          toolbarExtras={[
-            <IconButton
-              key="add-category"
-              onClick={handleAddCategory}
-              title="Add Category"
-            >
-              <AddIcon />
-            </IconButton>,
-          ]}
+          columns={columns}
+          rowActions={rowActions}
+          toolbarExtras={toolbarExtras}
         />
       </Grid>
 
@@ -139,9 +179,7 @@ export default function Page() {
               }
             : undefined
         }
-        onClose={() => {
-          setOpenModal(false);
-        }}
+        onClose={() => setOpenModal(false)}
         onSubmit={handleCategorySubmit}
       />
     </Grid>

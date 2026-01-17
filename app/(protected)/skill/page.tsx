@@ -3,15 +3,33 @@
 import GenericTable from "@/app/components/shared/GenericTable";
 import { Grid, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { useEffect, useState } from "react";
-import { useNotification } from "@/app/components/shared/NotificationProvider";
 import AddIcon from "@mui/icons-material/Add";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { Skill } from "@/app/_types/Skill";
 import { addSkill, fetchSkills, updateSkill } from "@/app/api/skillApi";
-import SkillFormModal, { SkillFormData } from "@/app/components/shared/SkillFormModal";
+import SkillFormModal, {
+  SkillFormData,
+} from "@/app/components/shared/SkillFormModal";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+
+/* ---------------- Error Normalizer ---------------- */
+
+function normalizeError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as any).response?.data === "string"
+  ) {
+    return (error as any).response.data;
+  }
+  return "Something went wrong. Please try again.";
+}
 
 export default function Page() {
   const { notify } = useNotification();
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Skill[]>([]);
@@ -19,59 +37,104 @@ export default function Page() {
   const [openModal, setOpenModal] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
 
-  /* ---------------- Fetch Transports ---------------- */
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const loadSkills = async () => {
-    try {
-      const data = await fetchSkills( search );
-      setRows(data);
-    } catch (err) {
-      notify("Error fetching skills", "error");
-    }
-  };
+  /* ---------------- Fetch Skills ---------------- */
 
-  useEffect(() => {
-    loadSkills();
-  }, [search]);
-
-  /* ---------------- Add / Edit Handlers ---------------- */
-
-  const handleAddSkill = () => {
-    setSelectedSkill(null); // IMPORTANT
-    setOpenModal(true);
-  };
-
-  const handleEditSkill = (item: Skill) => {
-    setSelectedSkill(item);
-    setOpenModal(true);
-  };
-
-  const handleItemSubmit = async (data: SkillFormData) => {
-    try {
-      if (selectedSkill) {
-        // EDIT
-        await updateSkill(selectedSkill.id, data);
-        notify("Item updated successfully", "success");
-      } else {
-        // CREATE
-        await addSkill(data);
-        notify("Item created successfully", "success");
+  const loadSkills = useCallback(
+    async (query: string) => {
+      showLoading();
+      try {
+        const data = await fetchSkills(query);
+        setRows(data ?? []);
+      } catch (err) {
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
       }
-
-      setOpenModal(false);
-      setSelectedSkill(null);
-      loadSkills();
-    } catch (err: any) {
-      console.error(err);
-      notify(err?.response?.data ?? "Error saving skill", "error");
-    }
-  };
+    },
+    [notify, showLoading, hideLoading]
+  );
 
   useEffect(() => {
-    if (!openModal) {
-      setSelectedSkill(null);
-    }
-  }, [openModal]);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    searchTimeoutRef.current = setTimeout(() => loadSkills(search), 400);
+
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [search, loadSkills]);
+
+  /* ---------------- Add / Edit ---------------- */
+
+  const handleAddSkill = useCallback(() => {
+    setSelectedSkill(null);
+    setOpenModal(true);
+  }, []);
+
+  const handleEditSkill = useCallback((skill: Skill) => {
+    setSelectedSkill(skill);
+    setOpenModal(true);
+  }, []);
+
+  const handleSkillSubmit = useCallback(
+    async (data: SkillFormData) => {
+      showLoading();
+      try {
+        if (selectedSkill) {
+          await updateSkill(selectedSkill.id, data);
+          notify("Skill updated successfully", "success");
+        } else {
+          await addSkill(data);
+          notify("Skill created successfully", "success");
+        }
+
+        setOpenModal(false);
+        loadSkills(search);
+      } catch (err) {
+        console.error(err);
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
+      }
+    },
+    [selectedSkill, notify, loadSkills, search, showLoading, hideLoading]
+  );
+
+  /* ---------------- Memoized Table Config ---------------- */
+
+  const columns = useMemo(
+    () => [
+      { id: "id", label: "ID", sortable: false },
+      { id: "name", label: "Skill Name", sortable: false },
+    ],
+    []
+  );
+
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "Edit",
+        icon: () => (
+          <IconButton size="small">
+            <EditIcon sx={{ color: "gray" }} />
+          </IconButton>
+        ),
+        onClick: (row: Skill) => handleEditSkill(row),
+      },
+    ],
+    [handleEditSkill]
+  );
+
+  const toolbarExtras = useMemo(
+    () => [
+      <IconButton key="add-skill" onClick={handleAddSkill} title="Add Skill">
+        <AddIcon />
+      </IconButton>,
+    ],
+    [handleAddSkill]
+  );
 
   /* ---------------- Render ---------------- */
 
@@ -86,45 +149,20 @@ export default function Page() {
           searchPlacedHolder="Search Skills..."
           searchValue={search}
           onSearchChange={setSearch}
-          columns={[
-            { id: "id", label: "ID", sortable: false },
-            { id: "name", label: "Skill Name", sortable: false },
-          ]}
-          rowActions={[
-            {
-              label: "Edit",
-              icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
-              onClick: (row: Skill) => handleEditSkill(row),
-            },
-          ]}
-          toolbarExtras={[
-            <IconButton key="add-skill" onClick={handleAddSkill} title="Add Skill">
-              <AddIcon />
-            </IconButton>,
-          ]}
+          columns={columns}
+          rowActions={rowActions}
+          toolbarExtras={toolbarExtras}
         />
       </Grid>
 
-      {/* -------- Item Modal (Create + Edit) -------- */}
+      {/* -------- Skill Modal (Create + Edit) -------- */}
 
       <SkillFormModal
         open={openModal}
         mode={selectedSkill ? "edit" : "create"}
-        initialData={
-          selectedSkill
-            ? {
-                name: selectedSkill.name,
-              }
-            : undefined
-        }
-        onClose={() => {
-          setOpenModal(false);
-        }}
-        onSubmit={handleItemSubmit}
+        initialData={selectedSkill ? { name: selectedSkill.name } : undefined}
+        onClose={() => setOpenModal(false)}
+        onSubmit={handleSkillSubmit}
       />
     </Grid>
   );

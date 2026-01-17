@@ -1,9 +1,5 @@
 "use client";
 
-import { InvoiceDetails } from "@/app/(protected)/invoice/_types/invoiceDetails";
-import { Supplier } from "@/app/(protected)/invoice/_types/supplier";
-import { Transport } from "@/app/(protected)/invoice/_types/transport";
-import { InvoiceErrors } from "@/app/(protected)/invoice/create/invoice.types";
 import {
   Dialog,
   DialogTitle,
@@ -20,17 +16,12 @@ import {
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
-
-// export type InvoiceFormData = {
-//   invoiceNumber: string;
-//   invoiceDate: string | null;
-//   receivedDate: string | null;
-//   supplierName: string;
-//   transportName: string;
-//   transportCost: number | "";
-//   isTransportPaid: boolean;
-// };
+import { useCallback, useMemo } from "react";
+import { InvoiceDetails } from "@/app/(protected)/invoice/_types/invoiceDetails";
+import { Supplier } from "@/app/(protected)/invoice/_types/supplier";
+import { Transport } from "@/app/(protected)/invoice/_types/transport";
+import { InvoiceErrors } from "@/app/(protected)/invoice/create/invoice.types";
+import { LoadingButton } from "@mui/lab";
 
 type InvoiceFormModalProps = {
   open: boolean;
@@ -57,62 +48,58 @@ export default function InvoiceFormModal({
   errors,
   onChange,
 }: InvoiceFormModalProps) {
-  console.log(initialData);
-  // const [form, setForm] = useState<InvoiceFormData>({
-  //   invoiceNumber: "",
-  //   invoiceDate: null,
-  //   receivedDate: "",
-  //   supplierName: "",
-  //   transportName: "",
-  //   transportCost: "",
-  //   isTransportPaid: false,
-  // });
+  /* ---------------- Memoized Values ---------------- */
 
-  // useEffect(() => {
-  //   if (open) {
-  //     setForm(
-  //       initialData ?? {
-  //         invoiceNumber: "",
-  //         invoiceDate: null,
-  //         receivedDate: null,
-  //         supplierName: "",
-  //         transportName: "",
-  //         transportCost: "",
-  //         isTransportPaid: false,
-  //       }
-  //     );
-  //   }
-  // }, [open, initialData]);
+  const supplierOptions = useMemo(
+    () => suppliers.map((s) => s.name),
+    [suppliers]
+  );
 
-  // const handleChange =
-  //   (field: keyof InvoiceFormData) =>
-  //   (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     let value: any;
+  const transportOptions = useMemo(
+    () => transports.map((t) => t.name),
+    [transports]
+  );
 
-  //     if (field === "transportCost") {
-  //       value = e.target.value === "" ? "" : Number(e.target.value);
-  //     } else if (field === "isTransportPaid") {
-  //       value = e.target.checked; // Switch has checked property
-  //     } else {
-  //       value = e.target.value;
-  //     }
+  /* ---------------- Handlers ---------------- */
 
-  //     setForm((prev) => ({ ...prev, [field]: value }));
-  //     set((prev) => {
-  //       const next = { ...prev };
-  //       Object.keys(patch).forEach(
-  //         (key) => delete next[key as keyof InvoiceErrors]
-  //       );
-  //       return next;
-  //     });
-  //   };
+  const handleTextChange = useCallback(
+    (field: keyof InvoiceDetails) =>
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        onChange({ [field]: e.target.value });
+      },
+    [onChange]
+  );
 
-  console.log("date", initialData?.invoiceDate);
+  const handleNumberChange = useCallback(
+    (field: keyof InvoiceDetails) =>
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value;
+        onChange({
+          [field]: raw === "" ? undefined : Number(raw),
+        });
+      },
+    [onChange]
+  );
+
+  const handleDateChange = useCallback(
+    (field: keyof InvoiceDetails) => (date: dayjs.Dayjs | null) => {
+      onChange({
+        [field]: date ? date.format("DD-MM-YYYY") : "",
+      });
+    },
+    [onChange]
+  );
+
+  const handleSubmit = useCallback(() => {
+    onSubmit(initialData);
+  }, [onSubmit, initialData]);
+
+  /* ---------------- Render ---------------- */
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-        <DialogTitle>
+        <DialogTitle mb={2}>
           {mode === "create" ? "Add Invoice" : "Edit Invoice"}
         </DialogTitle>
 
@@ -121,11 +108,12 @@ export default function InvoiceFormModal({
             <TextField
               label="Invoice Number"
               value={initialData.invoiceNumber}
-              onChange={(e) => onChange({ invoiceNumber: e.target.value })}
+              onChange={handleTextChange("invoiceNumber")}
               fullWidth
               required
               error={!!errors.invoiceNumber}
               helperText={errors.invoiceNumber}
+              autoFocus
             />
 
             <FormControl fullWidth>
@@ -137,17 +125,12 @@ export default function InvoiceFormModal({
                     ? dayjs(initialData.invoiceDate, "DD-MM-YYYY", true)
                     : null
                 }
-                onAccept={(date) =>
-                  onChange({
-                    invoiceDate: date ? date.format("DD-MM-YYYY") : "",
-                  })
-                }
+                onChange={handleDateChange("invoiceDate")}
                 maxDate={dayjs()}
                 slotProps={{
                   textField: {
                     id: "invoice-date",
-                    fullWidth: true,
-                    error: Boolean(errors.invoiceDate),
+                    error: !!errors.invoiceDate,
                     helperText: errors.invoiceDate,
                   },
                 }}
@@ -163,17 +146,12 @@ export default function InvoiceFormModal({
                     ? dayjs(initialData.receivedDate, "DD-MM-YYYY", true)
                     : null
                 }
-                onAccept={(date) =>
-                  onChange({
-                    receivedDate: date ? date.format("DD-MM-YYYY") : "",
-                  })
-                }
+                onChange={handleDateChange("receivedDate")}
                 maxDate={dayjs()}
                 slotProps={{
                   textField: {
                     id: "received-date",
-                    fullWidth: true,
-                    error: Boolean(errors.receivedDate),
+                    error: !!errors.receivedDate,
                     helperText: errors.receivedDate,
                   },
                 }}
@@ -182,39 +160,29 @@ export default function InvoiceFormModal({
 
             <Autocomplete
               openOnFocus
-              id="supplier-autocomplete"
-              disablePortal
               autoHighlight
-              options={suppliers.map((s) => s.name)}
-              value={initialData.supplierName}
-              onChange={(_, supplier) =>
-                onChange({ supplierName: supplier ?? "" })
-              }
+              options={supplierOptions}
+              value={initialData.supplierName || null}
+              onChange={(_, value) => onChange({ supplierName: value ?? "" })}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  id="supplier-input"
                   label="Supplier"
                   error={!!errors.supplierName}
                   helperText={errors.supplierName}
                 />
               )}
             />
+
             <Autocomplete
               openOnFocus
-              id="transport-autocomplete"
-              disablePortal
               autoHighlight
-              options={transports.map((t) => t.name)}
-              // getOptionLabel={(option) => option.name}
-              value={initialData.transportName}
-              onChange={(_, transport) =>
-                onChange({ transportName: transport ?? "" })
-              }
+              options={transportOptions}
+              value={initialData.transportName || null}
+              onChange={(_, value) => onChange({ transportName: value ?? "" })}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  id="transport-input"
                   label="Transport"
                   error={!!errors.transportName}
                   helperText={errors.transportName}
@@ -225,43 +193,40 @@ export default function InvoiceFormModal({
             <TextField
               label="Transport Cost"
               type="number"
-              value={initialData.transportCost}
-              onChange={(e) => {
-                const raw = e.target.value;
-                onChange({
-                  transportCost: raw === "" ? undefined : Number(raw),
-                });
-              }}
+              value={initialData.transportCost ?? ""}
+              onChange={handleNumberChange("transportCost")}
               fullWidth
               error={!!errors.transportCost}
               helperText={errors.transportCost}
             />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  disabled={(initialData.transportCost ?? 0) <= 0}
+                  checked={initialData.isTransportPaid}
+                  onChange={(e) =>
+                    onChange({ isTransportPaid: e.target.checked })
+                  }
+                />
+              }
+              label="Transport Paid"
+            />
           </Stack>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={initialData.isTransportPaid}
-                onChange={(e) =>
-                  onChange({ isTransportPaid: e.target.checked })
-                }
-              />
-            }
-            label="Transport Paid"
-          />
         </DialogContent>
 
         <DialogActions>
           <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
+
+          <LoadingButton
             variant="contained"
-            onClick={() => onSubmit(initialData)}
+            onClick={handleSubmit}
             loading={loading}
-            loadingPosition="end"
           >
             {mode === "create" ? "Create" : "Save"}
-          </Button>
+          </LoadingButton>
         </DialogActions>
       </Dialog>
     </LocalizationProvider>

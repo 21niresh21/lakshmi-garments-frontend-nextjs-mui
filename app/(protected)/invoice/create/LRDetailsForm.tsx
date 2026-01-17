@@ -10,7 +10,13 @@ import {
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { LRDetails } from "../_types/LRDetails";
 import { LR } from "../_types/LR";
 import LRAccordionSection from "./LRBaleDetails";
@@ -41,43 +47,46 @@ export default function LRDetailsForm({
   setSubCategories,
 }: Props) {
   const [lrNumber, setLrNumber] = useState("");
-  const hasMounted = useRef(false);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const hasMounted = useRef(false);
 
-  // ✅ Generate SELF LR only on client AFTER mount
+  /* ---------------- Derived State ---------------- */
+
+  const isSelfTransport = value.transportType === "self";
+
+  /* ---------------- Effects ---------------- */
+
+  // Generate SELF LR only after mount (avoid hydration mismatch)
   useEffect(() => {
     if (!hasMounted.current) {
       hasMounted.current = true;
       return;
     }
 
-    if (value.transportType === "self") {
-      setLrNumber(`SELF-${Date.now()}`);
-    } else {
-      setLrNumber("");
-    }
-  }, [value.transportType]);
+    setLrNumber(isSelfTransport ? `SELF-${Date.now()}` : "");
+  }, [isSelfTransport]);
 
-  const handleTransportTypeChange = (
-    _: React.MouseEvent<HTMLElement>,
-    newTransportType: "transport" | "self" | null
-  ) => {
-    if (!newTransportType) return;
+  /* ---------------- Handlers ---------------- */
 
-    onChange({ transportType: newTransportType });
+  const handleTransportTypeChange = useCallback(
+    (
+      _: React.MouseEvent<HTMLElement>,
+      newType: "transport" | "self" | null
+    ) => {
+      if (!newType || newType === value.transportType) return;
 
-    if (newTransportType === "transport") {
-      setLrNumber("");
-    }
-  };
+      onChange({ transportType: newType });
+    },
+    [onChange, value.transportType]
+  );
 
-  const addLr = () => {
-    if (!lrNumber.trim()) return;
+  const handleAddLr = useCallback(() => {
+    const trimmedLr = lrNumber.trim();
+    if (!trimmedLr) return;
 
     const newLR: LR = {
-      // ✅ UUID generated ONLY on client interaction
       id: crypto.randomUUID(),
-      lrNumber,
+      lrNumber: trimmedLr,
       bales: [],
     };
 
@@ -85,12 +94,24 @@ export default function LRDetailsForm({
       lorryReceipts: [...value.lorryReceipts, newLR],
     });
 
-    if (value.transportType === "self") {
-      setLrNumber(`SELF-${Date.now()}`);
-    } else {
-      setLrNumber("");
-    }
-  };
+    setLrNumber(isSelfTransport ? `SELF-${Date.now()}` : "");
+  }, [lrNumber, isSelfTransport, onChange, value.lorryReceipts]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitButtonRef.current?.click();
+      }
+    },
+    []
+  );
+
+  /* ---------------- Memoized UI Flags ---------------- */
+
+  const isAddDisabled = useMemo(() => !lrNumber.trim(), [lrNumber]);
+
+  /* ---------------- Render ---------------- */
 
   return (
     <Box>
@@ -98,46 +119,42 @@ export default function LRDetailsForm({
         Lorry Receipt & Bale Details
       </Typography>
 
-      <Grid container>
+      <Grid container spacing={2}>
         <Grid size={12}>
-          <Stack direction="row" alignItems="center" columnGap={3}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            alignItems={{ md: "center" }}
+            gap={2}
+          >
             <ToggleButtonGroup
               color="primary"
               value={value.transportType}
               onChange={handleTransportTypeChange}
               exclusive
+              aria-label="Transport Type"
             >
               <ToggleButton value="transport">Transport</ToggleButton>
               <ToggleButton value="self">Self</ToggleButton>
             </ToggleButtonGroup>
-            
 
-            {/* ✅ FIXED: Explicit ID */}
             <TextField
               id="lr-number"
               label="LR Number"
               value={lrNumber}
-              disabled={value.transportType === "self"}
+              disabled={isSelfTransport}
               placeholder={
-                value.transportType === "self"
-                  ? "Auto-generated"
-                  : "Enter LR number"
+                isSelfTransport ? "Auto-generated" : "Enter LR number"
               }
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  submitButtonRef.current?.click();
-                }
-              }}
-              onBlur={(e)=>setLrNumber(e.target.value.trim())}
               onChange={(e) => setLrNumber(e.target.value)}
+              onBlur={(e) => setLrNumber(e.target.value.trim())}
+              onKeyDown={handleKeyDown}
+              inputProps={{ "aria-label": "LR Number" }}
             />
 
             <Button
-              sx={{ height: 35 }}
-              onClick={addLr}
-              disabled={!lrNumber.trim()}
-              size="medium"
+              sx={{ height: 40, minWidth: 100 }}
+              onClick={handleAddLr}
+              disabled={isAddDisabled}
               variant="contained"
               ref={submitButtonRef}
             >
@@ -146,7 +163,7 @@ export default function LRDetailsForm({
           </Stack>
         </Grid>
 
-        <Grid size={12} my={4}>
+        <Grid size={12} mt={3}>
           <LRAccordionSection
             lorryReceipts={value.lorryReceipts}
             onChange={(nextLrs) =>

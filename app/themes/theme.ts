@@ -33,6 +33,14 @@ const theme = createTheme(baseTheme, {
         },
       },
     },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          backgroundColor: baseTheme.palette.primary.main,
+          color: baseTheme.palette.primary.contrastText,
+        },
+      },
+    },
 
     MuiTableSortLabel: {
       styleOverrides: {

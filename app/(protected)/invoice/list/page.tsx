@@ -1,97 +1,76 @@
 "use client";
 
-import GenericTable from "@/app/components/shared/GenericTable";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Grid, Chip, IconButton, Badge, Stack, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import React, { useEffect, useState } from "react";
-import { fetchSuppliers } from "@/app/api/supplier";
-import { useNotification } from "@/app/components/shared/NotificationProvider";
-import { fetchInvoices, updateInvoice } from "@/app/api/invoiceApi";
+import AddIcon from "@mui/icons-material/Add";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ReportIcon from "@mui/icons-material/Report";
-import InvoiceFormModal from "@/app/components/shared/InvoiceFormModal";
-import { Supplier } from "../_types/supplier";
-import { fetchTransports } from "@/app/api/transport";
 import dayjs from "dayjs";
-import { INITIAL_INVOICE, InvoiceErrors } from "../create/invoice.types";
-import { InvoiceDetails } from "../_types/invoiceDetails";
 import { useRouter } from "next/navigation";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
+
+import GenericTable from "@/app/components/shared/GenericTable";
+import InvoiceFormModal from "@/app/components/shared/InvoiceFormModal";
 import InvoiceFilter, { InvoiceFilterType } from "./InvoiceFilter";
+
+import { fetchInvoices, updateInvoice } from "@/app/api/invoiceApi";
+import { fetchSuppliers } from "@/app/api/supplier";
+import { fetchTransports } from "@/app/api/transport";
+import { useNotification } from "@/app/components/shared/NotificationProvider";
+
+import { Supplier } from "../_types/supplier";
 import { Transport } from "../_types/transport";
+import { InvoiceDetails } from "../_types/invoiceDetails";
+import { INITIAL_INVOICE, InvoiceErrors } from "../create/invoice.types";
 import { formatToShortDate } from "@/app/utils/date";
-import AddIcon from "@mui/icons-material/Add";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
 
-const HEADERS = [
-  {
-    id: "invoiceNumber",
-    label: "Invoice Number",
-    sortable: true,
-  },
-  {
-    id: "invoiceDate",
-    label: "Invoice Date",
-    sortable: true,
-    render: (row: any) => formatToShortDate(row.invoiceDate),
-  },
-  {
-    id: "receivedDate",
-    label: "Received Date",
-    sortable: true,
-    render: (row: any) => formatToShortDate(row.receivedDate),
-  },
-  {
-    id: "supplierName",
-    label: "Supplier",
-  },
-  {
-    id: "transportName",
-    label: "Transport",
-  },
-  {
-    id: "transportCost",
-    label: "Transport Cost",
-  },
-  {
-    id: "isTransportPaid",
-    label: "Payment Status",
-    render: (row: any) => (
-      <Chip
-        size="small"
-        icon={
-          row.isTransportPaid ? (
-            <CheckCircleIcon color="success" />
-          ) : (
-            <ReportIcon color="error" />
-          )
-        }
-        label={row.isTransportPaid ? "Paid" : "Unpaid"}
-      />
-    ),
-  },
-];
+/* -------------------------------------------------------------------------- */
+/* Utils                                                                      */
+/* -------------------------------------------------------------------------- */
 
-const toBackendDate = (date: string) => {
-  if (!date) return "";
+const toISODate = (date: string) => {
   const [dd, mm, yyyy] = date.split("-");
-  return `${yyyy}-${mm}-${dd}`; // yyyy-MM-dd
+  return `${yyyy}-${mm}-${dd}`;
 };
 
+const toBackendDate = (date?: string) => (date ? toISODate(date) : undefined);
+
+/* -------------------------------------------------------------------------- */
+/* Page                                                                       */
+/* -------------------------------------------------------------------------- */
+
 export default function Page() {
-  const { notify } = useNotification();
   const router = useRouter();
+  const { notify } = useNotification();
+  const { loading, showLoading, hideLoading } = useGlobalLoading();
+
+  /* ----------------------------- Table State ----------------------------- */
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<string | undefined>();
+  const [sortBy, setSortBy] = useState<string>("invoiceDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  const [rows, setRows] = useState<InvoiceDetails[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
-  const [rows, setRows] = useState<InvoiceRow[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [transports, setTransports] = useState<Transport[]>([]);
-  const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
+  /* ----------------------------- Search (Debounced) ----------------------------- */
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  /* ----------------------------- Filters ----------------------------- */
 
   const [filters, setFilters] = useState<InvoiceFilterType>({
     supplierNames: [],
@@ -105,171 +84,113 @@ export default function Page() {
     null
   );
 
-  const openFilter = Boolean(filterAnchorEl);
+  const isFilterOpen = Boolean(filterAnchorEl);
+
+  const activeFilterCount = useMemo(() => {
+    return (
+      filters.supplierNames.length +
+      filters.transportNames.length +
+      filters.isPaid.length +
+      (filters.invoiceStartDate || filters.invoiceEndDate ? 1 : 0)
+    );
+  }, [filters]);
+
+  /* ----------------------------- Modal State ----------------------------- */
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] =
     useState<InvoiceDetails>(INITIAL_INVOICE);
+  const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
 
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  /* ----------------------------- Lookup Data ----------------------------- */
 
-  // Count active filters
-  const activeFilterCount =
-    (filters.supplierNames?.length || 0) +
-    (filters.transportNames?.length || 0) +
-    (filters.isPaid?.length || 0) +
-    (filters.invoiceStartDate || filters.invoiceEndDate ? 1 : 0);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [transports, setTransports] = useState<Transport[]>([]);
 
-  const handleOpenFilter = (e: React.MouseEvent<HTMLElement>) => {
-    setFilterAnchorEl(e.currentTarget);
-  };
+  /* -------------------------------------------------------------------------- */
+  /* Columns                                                                    */
+  /* -------------------------------------------------------------------------- */
 
-  const handleCloseFilter = () => {
-    setFilterAnchorEl(null);
-  };
+  const columns = useMemo(
+    () => [
+      {
+        id: "invoiceNumber",
+        label: "Invoice Number",
+        sortable: true,
+      },
+      {
+        id: "invoiceDate",
+        label: "Invoice Date",
+        sortable: true,
+        render: (row: InvoiceDetails) => formatToShortDate(row.invoiceDate),
+      },
+      {
+        id: "receivedDate",
+        label: "Received Date",
+        sortable: true,
+        render: (row: InvoiceDetails) => formatToShortDate(row.receivedDate),
+      },
+      { id: "supplierName", label: "Supplier" },
+      { id: "transportName", label: "Transport" },
+      { id: "transportCost", label: "Transport Cost" },
+      {
+        id: "isTransportPaid",
+        label: "Payment Status",
+        render: (row: InvoiceDetails) => (
+          <Chip
+            size="small"
+            icon={
+              row.isTransportPaid ? (
+                <CheckCircleIcon color="success" />
+              ) : (
+                <ReportIcon color="error" />
+              )
+            }
+            label={row.isTransportPaid ? "Paid" : "Unpaid"}
+          />
+        ),
+      },
+    ],
+    []
+  );
 
-  const handleApplyFilter = () => {
-    setPage(0);
-    handleCloseFilter();
-  };
+  /* -------------------------------------------------------------------------- */
+  /* Data Fetching                                                              */
+  /* -------------------------------------------------------------------------- */
 
-  const handleResetFilter = () => {
-    setFilters({
-      supplierNames: [],
-      transportNames: [],
-      isPaid: [],
-      invoiceStartDate: "",
-      invoiceEndDate: "",
-    });
-    setPage(0);
-    handleCloseFilter();
-  };
-
-  const handleInvoiceChange = (patch: Partial<InvoiceDetails>) => {
-    setSelectedInvoice((prev) => ({ ...prev, ...patch }));
-    setInvoiceErrors((prev) => {
-      const next = { ...prev };
-      Object.keys(patch).forEach(
-        (key) => delete next[key as keyof InvoiceErrors]
-      );
-      return next;
-    });
-  };
-
-  const handleEditInvoice = (invoice: any) => {
-    setSelectedInvoice({
-      ...invoice,
-      invoiceDate: invoice.invoiceDate
-        ? dayjs(invoice.invoiceDate).format("DD-MM-YYYY")
-        : "",
-      receivedDate: invoice.receivedDate
-        ? dayjs(invoice.receivedDate).format("DD-MM-YYYY")
-        : "",
-    });
-    setOpenModal(true);
-  };
-
-  const validateInvoice = (invoice: InvoiceDetails): boolean => {
-    const errors: InvoiceErrors = {};
-    if (!invoice.invoiceNumber.trim())
-      errors.invoiceNumber = "Invoice number is required";
-
-    if (!invoice.invoiceDate) errors.invoiceDate = "Invoice date is required";
-    else if (
-      dayjs(invoice.invoiceDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
-    ) {
-      errors.invoiceDate = "Cannot select a future date";
-    }
-
-    if (!invoice.supplierName) {
-      errors.supplierName = "Supplier is required";
-    }
-
-    if (!invoice.transportName) {
-      errors.transportName = "Transport is required";
-    }
-
-    if (!invoice.receivedDate)
-      errors.receivedDate = "Received date is required";
-    else if (
-      dayjs(invoice.receivedDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
-    ) {
-      errors.receivedDate = "Cannot select a future date";
-    }
-    if (invoice.transportCost === undefined) {
-      errors.transportCost = "Transport cost cannot be empty";
-    } else if (invoice.transportCost < 0) {
-      errors.transportCost = "Transport cost must be > 0";
-    }
-
-    if (!invoice.supplierName) errors.supplierName = "Supplier is required";
-
-    if (!invoice.transportName) errors.transportName = "Transport is required";
-
-    setInvoiceErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const toISODate = (date: string) => {
-    const [dd, mm, yyyy] = date.split("-");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const handleInvoiceSubmit = async (data: InvoiceDetails) => {
+  const loadInvoices = useCallback(async () => {
+    showLoading();
     try {
-      if (!validateInvoice(data)) {
-        return;
-      }
-      const payload = {
-        ...data,
-        invoiceDate: toISODate(data.invoiceDate),
-        receivedDate: toISODate(data.receivedDate),
-      };
-
-      await updateInvoice(data.id, payload);
-      notify("Invoice updated successfully", "success");
-      setOpenModal(false);
-      loadInvoices();
-    } catch (err: any) {
-      notify(err?.response?.data?.message ?? "Error saving invoice", "error");
-    }
-  };
-
-  const handleCloseDetails = () => {
-    setAnchorEl(null);
-    setOpenModal(false);
-    setInvoiceErrors({});
-  };
-
-  const loadInvoices = async () => {
-    try {
-      const { invoiceStartDate, invoiceEndDate, ...otherFilters } = filters;
-
       const data = await fetchInvoices({
         pageNo: page,
         pageSize: rowsPerPage,
-        sortBy: sortBy ?? "invoiceDate",
+        sortBy,
         sortOrder,
-        search,
-        ...otherFilters, // supplierNames, transportNames, isPaid
-        invoiceStartDate: invoiceStartDate
-          ? toBackendDate(invoiceStartDate)
-          : undefined,
-        invoiceEndDate: invoiceEndDate
-          ? toBackendDate(invoiceEndDate)
-          : undefined,
+        search: debouncedSearch,
+        supplierNames: filters.supplierNames,
+        transportNames: filters.transportNames,
+        isPaid: filters.isPaid,
+        invoiceStartDate: toBackendDate(filters.invoiceStartDate),
+        invoiceEndDate: toBackendDate(filters.invoiceEndDate),
       });
 
+      setRows(data.content);
       setTotalCount(data.totalElements);
-      setRows(data.content); // assuming backend returns { content, totalElements, etc. }
     } catch (err) {
-      console.error("Error loading invoices:", err);
+      console.error(err);
+      notify("Error loading invoices", "error");
+    } finally {
+      hideLoading();
     }
-  };
+  }, [page, rowsPerPage, sortBy, sortOrder, debouncedSearch, filters, notify]);
 
   useEffect(() => {
     loadInvoices();
-  }, [page, rowsPerPage, search, sortBy, sortOrder, filters]);
+  }, [loadInvoices]);
+
+  /* -------------------------------------------------------------------------- */
+  /* Initial Lookup Data                                                        */
+  /* -------------------------------------------------------------------------- */
 
   useEffect(() => {
     fetchSuppliers()
@@ -279,15 +200,117 @@ export default function Page() {
     fetchTransports()
       .then(setTransports)
       .catch(() => notify("Error fetching transports", "error"));
+  }, [notify]);
+
+  /* -------------------------------------------------------------------------- */
+  /* Handlers                                                                   */
+  /* -------------------------------------------------------------------------- */
+
+  const handleOpenFilter = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    setFilterAnchorEl(e.currentTarget);
   }, []);
+
+  const handleCloseFilter = useCallback(() => {
+    setFilterAnchorEl(null);
+  }, []);
+
+  const handleApplyFilter = useCallback(() => {
+    setPage(0);
+    handleCloseFilter();
+  }, [handleCloseFilter]);
+
+  const handleResetFilter = useCallback(() => {
+    setFilters({
+      supplierNames: [],
+      transportNames: [],
+      isPaid: [],
+      invoiceStartDate: "",
+      invoiceEndDate: "",
+    });
+    setPage(0);
+    handleCloseFilter();
+  }, [handleCloseFilter]);
+
+  const handleEditInvoice = useCallback((invoice: InvoiceDetails) => {
+    setSelectedInvoice({
+      ...invoice,
+      invoiceDate: dayjs(invoice.invoiceDate).format("DD-MM-YYYY"),
+      receivedDate: dayjs(invoice.receivedDate).format("DD-MM-YYYY"),
+    });
+    setInvoiceErrors({});
+    setOpenModal(true);
+  }, []);
+
+  const handleInvoiceChange = useCallback((patch: Partial<InvoiceDetails>) => {
+    setSelectedInvoice((prev) => ({
+      ...prev,
+      ...patch,
+    }));
+    setInvoiceErrors((prev) => {
+      const next = { ...prev };
+      Object.keys(patch).forEach((k) => delete next[k as keyof InvoiceErrors]);
+      return next;
+    });
+  }, []);
+
+  const validateInvoice = (invoice: InvoiceDetails) => {
+    const errors: InvoiceErrors = {};
+
+    if (!invoice.invoiceNumber.trim())
+      errors.invoiceNumber = "Invoice number is required";
+
+    if (!invoice.invoiceDate) errors.invoiceDate = "Invoice date is required";
+    else if (dayjs(invoice.invoiceDate, "DD-MM-YYYY").isAfter(dayjs(), "day"))
+      errors.invoiceDate = "Cannot select a future date";
+
+    if (!invoice.receivedDate)
+      errors.receivedDate = "Received date is required";
+    else if (dayjs(invoice.receivedDate, "DD-MM-YYYY").isAfter(dayjs(), "day"))
+      errors.receivedDate = "Cannot select a future date";
+
+    if (!invoice.supplierName) errors.supplierName = "Supplier is required";
+
+    if (!invoice.transportName) errors.transportName = "Transport is required";
+
+    if (invoice.transportCost == null || invoice.transportCost < 0)
+      errors.transportCost = "Transport cost must be ≥ 0";
+
+    setInvoiceErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleInvoiceSubmit = async (data: InvoiceDetails) => {
+    if (!validateInvoice(data)) return;
+    showLoading();
+    try {
+      await updateInvoice(data.id, {
+        ...data,
+        invoiceDate: toISODate(data.invoiceDate),
+        receivedDate: toISODate(data.receivedDate),
+      });
+
+      notify("Invoice updated successfully", "success");
+      setOpenModal(false);
+      loadInvoices();
+    } catch (err: any) {
+      notify(err?.response?.data?.message || "Error saving invoice", "error");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* Render                                                                     */
+  /* -------------------------------------------------------------------------- */
 
   return (
     <Grid container>
       <Grid size={12}>
-        <GenericTable<InvoiceRow>
+        <GenericTable<InvoiceDetails>
           title="Invoices"
           rows={rows}
-          pagination={true}
+          columns={columns}
+          pagination
           totalCount={totalCount}
           page={page}
           rowsPerPage={rowsPerPage}
@@ -303,7 +326,6 @@ export default function Page() {
             setSortOrder(order);
           }}
           onRowClick={(row) => router.push(`/invoice/${row.id}`)}
-          columns={HEADERS}
           rowActions={[
             {
               label: "Edit",
@@ -312,7 +334,7 @@ export default function Page() {
                   <EditIcon sx={{ color: "gray" }} />
                 </IconButton>
               ),
-              onClick: (row) => handleEditInvoice(row),
+              onClick: handleEditInvoice,
             },
           ]}
           toolbarExtras={
@@ -321,17 +343,19 @@ export default function Page() {
                 <Badge
                   badgeContent={activeFilterCount}
                   color="primary"
-                  overlap="circular"
-                  invisible={activeFilterCount === 0} // hide badge when no filters active
+                  invisible={activeFilterCount === 0}
                 >
-                  <IconButton onClick={handleOpenFilter}>
+                  <IconButton size="small" onClick={handleOpenFilter}>
                     <FilterAltIcon />
                   </IconButton>
                 </Badge>
               </Tooltip>
 
               <Tooltip title="Add Invoice">
-                <IconButton onClick={() => router.push(`/invoice/create`)}>
+                <IconButton
+                  size="small"
+                  onClick={() => router.push("/invoice/create")}
+                >
                   <AddIcon />
                 </IconButton>
               </Tooltip>
@@ -342,7 +366,7 @@ export default function Page() {
 
       <InvoiceFilter
         anchorEl={filterAnchorEl}
-        open={openFilter}
+        open={isFilterOpen}
         filters={filters}
         suppliers={suppliers}
         transports={transports}
@@ -352,13 +376,13 @@ export default function Page() {
         onClose={handleCloseFilter}
       />
 
-      {/* ✅ POPPER (render ONCE, outside table) */}
       <InvoiceFormModal
         open={openModal}
-        mode={selectedInvoice ? "edit" : "create"}
-        onChange={handleInvoiceChange}
+        mode="edit"
+        loading={loading}
         initialData={selectedInvoice}
-        onClose={handleCloseDetails}
+        onChange={handleInvoiceChange}
+        onClose={() => setOpenModal(false)}
         onSubmit={handleInvoiceSubmit}
         suppliers={suppliers}
         transports={transports}

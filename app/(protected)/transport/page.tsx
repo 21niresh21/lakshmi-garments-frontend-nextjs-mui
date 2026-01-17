@@ -1,9 +1,10 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton } from "@mui/material";
+import { Grid, IconButton, CircularProgress, Box } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { useEffect, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { Transport } from "../invoice/_types/transport";
 import {
@@ -14,10 +15,23 @@ import {
 import TransportFormModal, {
   TransportFormData,
 } from "@/app/components/shared/TransportFormModal";
-import AirportShuttleIcon from '@mui/icons-material/AirportShuttle';
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+
+function normalizeError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as any).response?.data === "string"
+  ) {
+    return (error as any).response.data;
+  }
+  return "Something went wrong. Please try again.";
+}
 
 export default function Page() {
   const { notify } = useNotification();
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Transport[]>([]);
@@ -27,59 +41,103 @@ export default function Page() {
     null
   );
 
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   /* ---------------- Fetch Transports ---------------- */
 
-  const loadTransports = async () => {
-    try {
-      const data = await fetchTransports({ search });
-      setRows(data);
-    } catch (err) {
-      notify("Error fetching transports", "error");
-    }
-  };
+  const loadTransports = useCallback(
+    async (query: string) => {
+      showLoading();
+      try {
+        const data = await fetchTransports({ search: query });
+        setRows(data);
+      } catch (err) {
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
+      }
+    },
+    [notify]
+  );
 
   useEffect(() => {
-    loadTransports();
-  }, [search]);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => loadTransports(search), 400);
 
-  /* ---------------- Add / Edit Handlers ---------------- */
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [search, loadTransports]);
 
-  const handleAddTransport = () => {
-    setSelectedTransport(null); // IMPORTANT
+  /* ---------------- Add / Edit ---------------- */
+
+  const handleAddTransport = useCallback(() => {
+    setSelectedTransport(null);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleEditTransport = (transport: Transport) => {
+  const handleEditTransport = useCallback((transport: Transport) => {
     setSelectedTransport(transport);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleTransportSubmit = async (data: TransportFormData) => {
-    try {
-      if (selectedTransport) {
-        // EDIT
-        await updateTransport(selectedTransport.id, data);
-        notify("Transport updated successfully", "success");
-      } else {
-        // CREATE
-        await addTransport(data);
-        notify("Transport created successfully", "success");
+  const handleTransportSubmit = useCallback(
+    async (data: TransportFormData) => {
+      try {
+        if (selectedTransport) {
+          await updateTransport(selectedTransport.id, data);
+          notify("Transport updated successfully", "success");
+        } else {
+          await addTransport(data);
+          notify("Transport created successfully", "success");
+        }
+        setOpenModal(false);
+        loadTransports(search);
+      } catch (err: any) {
+        console.error(err);
+        notify(normalizeError(err), "error");
       }
+    },
+    [selectedTransport, notify, loadTransports, search]
+  );
 
-      setOpenModal(false);
-      setSelectedTransport(null);
-      loadTransports();
-    } catch (err: any) {
-      console.error(err);
-      notify(err?.response?.data ?? "Error saving transport", "error");
-    }
-  };
+  /* ---------------- Memoized Table Config ---------------- */
 
-  useEffect(() => {
-    if (!openModal) {
-      setSelectedTransport(null);
-    }
-  }, [openModal]);
+  const columns = useMemo(
+    () => [
+      { id: "id", label: "ID", sortable: false },
+      { id: "name", label: "Transport Name", sortable: false },
+    ],
+    []
+  );
+
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "Edit",
+        icon: () => (
+          <IconButton size="small">
+            <EditIcon sx={{ color: "gray" }} />
+          </IconButton>
+        ),
+        onClick: (row: Transport) => handleEditTransport(row),
+      },
+    ],
+    [handleEditTransport]
+  );
+
+  const toolbarExtras = useMemo(
+    () => [
+      <IconButton
+        key="add-transport"
+        onClick={handleAddTransport}
+        title="Add Transport"
+      >
+        <AddIcon />
+      </IconButton>,
+    ],
+    [handleAddTransport]
+  );
 
   /* ---------------- Render ---------------- */
 
@@ -94,48 +152,20 @@ export default function Page() {
           searchPlacedHolder="Search Transports..."
           searchValue={search}
           onSearchChange={setSearch}
-          columns={[
-            { id: "id", label: "ID", sortable: false },
-            { id: "name", label: "Transport Name", sortable: false },
-          ]}
-          rowActions={[
-            {
-              label: "Edit",
-              icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
-              onClick: (row: Transport) => handleEditTransport(row),
-            },
-          ]}
-          toolbarExtras={[
-            <IconButton
-              key="add-transport"
-              onClick={handleAddTransport}
-              title="Add Transport"
-            >
-              <AirportShuttleIcon />
-            </IconButton>,
-          ]}
+          columns={columns}
+          rowActions={rowActions}
+          toolbarExtras={toolbarExtras}
         />
       </Grid>
 
       {/* -------- Transport Modal (Create + Edit) -------- */}
-
       <TransportFormModal
         open={openModal}
         mode={selectedTransport ? "edit" : "create"}
         initialData={
-          selectedTransport
-            ? {
-                name: selectedTransport.name,
-              }
-            : undefined
+          selectedTransport ? { name: selectedTransport.name } : undefined
         }
-        onClose={() => {
-          setOpenModal(false);
-        }}
+        onClose={() => setOpenModal(false)}
         onSubmit={handleTransportSubmit}
       />
     </Grid>

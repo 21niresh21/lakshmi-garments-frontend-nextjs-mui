@@ -5,11 +5,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
-  TextField,
   Stack,
+  TextField,
+  Button,
+  DialogProps,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useGlobalLoading } from "../layout/LoadingProvider";
 
 export type ItemFormData = {
   name: string;
@@ -19,7 +21,6 @@ type ItemFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: ItemFormData;
-  loading?: boolean;
   onClose: () => void;
   onSubmit: (data: ItemFormData) => void;
 };
@@ -28,33 +29,42 @@ export default function ItemFormModal({
   open,
   mode,
   initialData,
-  loading = false,
   onClose,
   onSubmit,
 }: ItemFormModalProps) {
-  const [form, setForm] = useState<ItemFormData>({
-    name: "",
-  });
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const { loading } = useGlobalLoading();
 
-  // Populate data when editing
+  const [form, setForm] = useState<ItemFormData>({ name: "" });
+  const [touched, setTouched] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (open) {
-      setForm(
-        initialData ?? {
-          name: "",
-        }
-      );
+      setForm(initialData ?? { name: "" });
+      setTouched(false);
     }
   }, [open, initialData]);
 
-  const handleChange =
-    (field: keyof ItemFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ name: e.target.value });
+  };
 
-  const handleSubmit = () => {
-    onSubmit(form);
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setForm({ name: e.target.value.trim() });
+    setTouched(true);
+  };
+
+  const error = useMemo(
+    () => (touched && !form.name ? "Item name is required" : ""),
+    [touched, form.name]
+  );
+
+  const isSubmitDisabled = loading || !form.name.trim();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitDisabled) return;
+    onSubmit({ name: form.name.trim() });
   };
 
   return (
@@ -65,29 +75,27 @@ export default function ItemFormModal({
       maxWidth="sm"
       TransitionProps={{
         onEntered: () => {
-          nameInputRef.current?.focus();
+          nameRef.current?.focus();
         },
       }}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        <DialogTitle>
-          {mode === "create" ? "Add Item" : "Edit Item"}
-        </DialogTitle>
+      <DialogTitle>{mode === "create" ? "Add Item" : "Edit Item"}</DialogTitle>
 
+      <form onSubmit={handleSubmit}>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
-              inputRef={nameInputRef}
+              inputRef={nameRef}
               label="Item Name"
+              name="name"
               value={form.name}
-              onChange={handleChange("name")}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!error}
+              helperText={error}
               fullWidth
               required
+              autoComplete="off"
             />
           </Stack>
         </DialogContent>
@@ -96,11 +104,7 @@ export default function ItemFormModal({
           <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
-            type="submit" // ✅ important
-            variant="contained"
-            disabled={loading || !form.name}
-          >
+          <Button type="submit" variant="contained" disabled={isSubmitDisabled}>
             {mode === "create" ? "Create" : "Save"}
           </Button>
         </DialogActions>

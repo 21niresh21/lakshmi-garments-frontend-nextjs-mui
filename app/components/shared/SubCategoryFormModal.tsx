@@ -5,11 +5,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
-  TextField,
   Stack,
+  TextField,
+  Button,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useGlobalLoading } from "../layout/LoadingProvider";
 
 export type SubCategoryFormData = {
   name: string;
@@ -19,7 +20,6 @@ type SubCategoryFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: SubCategoryFormData;
-  loading?: boolean;
   onClose: () => void;
   onSubmit: (data: SubCategoryFormData) => void;
 };
@@ -28,37 +28,43 @@ export default function SubCategoryFormModal({
   open,
   mode,
   initialData,
-  loading = false,
   onClose,
   onSubmit,
 }: SubCategoryFormModalProps) {
-  const [form, setForm] = useState<SubCategoryFormData>({
-    name: "",
-  });
+  const { loading } = useGlobalLoading();
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState<SubCategoryFormData>({ name: "" });
+  const [touched, setTouched] = useState(false);
 
-  // Populate data when editing
+  const nameRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (open) {
-      setForm(
-        initialData ?? {
-          name: "",
-        }
-      );
+      setForm(initialData ?? { name: "" });
+      setTouched(false);
     }
   }, [open, initialData]);
 
-  const handleChange =
-    (field: keyof SubCategoryFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ name: e.target.value });
+  };
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!form.name || loading) return;
-    onSubmit(form);
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setForm({ name: e.target.value.trim() });
+    setTouched(true);
+  };
+
+  const error = useMemo(
+    () => (touched && !form.name ? "Sub category name is required" : ""),
+    [touched, form.name]
+  );
+
+  const isSubmitDisabled = loading || !form.name.trim();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitDisabled) return;
+    onSubmit({ name: form.name.trim() });
   };
 
   return (
@@ -69,7 +75,7 @@ export default function SubCategoryFormModal({
       maxWidth="sm"
       TransitionProps={{
         onEntered: () => {
-          nameInputRef.current?.focus();
+          nameRef.current?.focus();
         },
       }}
     >
@@ -77,17 +83,21 @@ export default function SubCategoryFormModal({
         {mode === "create" ? "Add Sub Category" : "Edit Sub Category"}
       </DialogTitle>
 
-      {/* ✅ FORM WRAPPER ENABLES ENTER KEY */}
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
-              inputRef={nameInputRef}
+              inputRef={nameRef}
               label="Sub Category Name"
+              name="name"
               value={form.name}
-              onChange={handleChange("name")}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!error}
+              helperText={error}
               fullWidth
               required
+              autoComplete="off"
             />
           </Stack>
         </DialogContent>
@@ -96,11 +106,7 @@ export default function SubCategoryFormModal({
           <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading || !form.name}
-          >
+          <Button type="submit" variant="contained" disabled={isSubmitDisabled}>
             {mode === "create" ? "Create" : "Save"}
           </Button>
         </DialogActions>

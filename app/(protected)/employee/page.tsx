@@ -4,16 +4,8 @@ import GenericTable from "@/app/components/shared/GenericTable";
 import { Chip, Grid, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-// import {
-//   fetchSuppliers,
-//   updateSupplier,
-//   addSupplier,
-// } from "@/app/api/employeeApi";
-import SupplierFormModal, {
-  SupplierFormData,
-} from "@/app/components/shared/SupplierFormModal";
 import {
   createEmployee,
   fetchEmployees,
@@ -23,9 +15,25 @@ import { Employee } from "@/app/_types/Employee";
 import EmployeeFormModal, {
   EmployeeFormData,
 } from "@/app/components/shared/EmployeeFormModal";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+
+/* ---------------- Error Normalizer ---------------- */
+
+function normalizeError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as any).response?.data === "string"
+  ) {
+    return (error as any).response.data;
+  }
+  return "Something went wrong. Please try again.";
+}
 
 export default function Page() {
   const { notify } = useNotification();
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Employee[]>([]);
@@ -35,60 +43,122 @@ export default function Page() {
     null
   );
 
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   /* ---------------- Fetch Employees ---------------- */
 
-  const loadEmployees = async () => {
-    try {
-      const data : any = await fetchEmployees();
-      setRows(data.content);
-    } catch (err) {
-      notify("Error fetching employees", "error");
-    }
-  };
+  const loadEmployees = useCallback(
+    async (query: string) => {
+      showLoading();
+      try {
+        const data: any = await fetchEmployees({ search: query });
+        setRows(data?.content ?? []);
+      } catch (err) {
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
+      }
+    },
+    [notify, showLoading, hideLoading]
+  );
 
   useEffect(() => {
-    loadEmployees();
-  }, [search]);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
-  /* ---------------- Add / Edit Handlers ---------------- */
+    searchTimeoutRef.current = setTimeout(() => loadEmployees(search), 400);
 
-  const handleAddEmployee = () => {
-    setSelectedEmployee(null); // IMPORTANT
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [search, loadEmployees]);
+
+  /* ---------------- Add / Edit ---------------- */
+
+  const handleAddEmployee = useCallback(() => {
+    setSelectedEmployee(null);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleEditEmployee = (employee: Employee) => {
+  const handleEditEmployee = useCallback((employee: Employee) => {
     setSelectedEmployee(employee);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleEmployeeSubmit = async (data: EmployeeFormData) => {
-    console.log(data)
-    try {
-      if (selectedEmployee) {
-        // EDIT
-        await updateEmployee(selectedEmployee.id, data);
-        notify("Employee updated successfully", "success");
-      } else {
-        // CREATE
-        await createEmployee(data);
-        notify("Employee created successfully", "success");
+  const handleEmployeeSubmit = useCallback(
+    async (data: EmployeeFormData) => {
+      showLoading();
+      try {
+        if (selectedEmployee) {
+          await updateEmployee(selectedEmployee.id, data);
+          notify("Employee updated successfully", "success");
+        } else {
+          await createEmployee(data);
+          notify("Employee created successfully", "success");
+        }
+
+        setOpenModal(false);
+        loadEmployees(search);
+      } catch (err) {
+        console.error(err);
+        notify(normalizeError(err), "error");
+      } finally {
+        hideLoading();
       }
+    },
+    [selectedEmployee, notify, loadEmployees, search, showLoading, hideLoading]
+  );
 
-      setOpenModal(false);
-      setSelectedEmployee(null);
-      loadEmployees();
-    } catch (err: any) {
-      console.error(err);
-      notify(err?.response?.data ?? "Error saving employee", "error");
-    }
-  };
+  /* ---------------- Memoized Table Config ---------------- */
 
-  useEffect(() => {
-    if (!openModal) {
-      setSelectedEmployee(null);
-    }
-  }, [openModal]);
+  const columns = useMemo(
+    () => [
+      { id: "id", label: "ID", sortable: false },
+      { id: "name", label: "Employee Name", sortable: false },
+      {
+        id: "skills",
+        label: "Skills",
+        sortable: false,
+        render: (row: Employee) =>
+          row.skills.map((skill) => (
+            <Chip
+              key={skill.id}
+              size="small"
+              label={skill.name}
+              sx={{ mx: 0.5 }}
+            />
+          )),
+      },
+    ],
+    []
+  );
+
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "Edit",
+        icon: () => (
+          <IconButton size="small">
+            <EditIcon sx={{ color: "gray" }} />
+          </IconButton>
+        ),
+        onClick: (row: Employee) => handleEditEmployee(row),
+      },
+    ],
+    [handleEditEmployee]
+  );
+
+  const toolbarExtras = useMemo(
+    () => [
+      <IconButton
+        key="add-employee"
+        onClick={handleAddEmployee}
+        title="Add Employee"
+      >
+        <PersonAddAlt1Icon />
+      </IconButton>,
+    ],
+    [handleAddEmployee]
+  );
 
   /* ---------------- Render ---------------- */
 
@@ -97,50 +167,15 @@ export default function Page() {
       <Grid size={12}>
         <GenericTable<Employee>
           title="Employees"
-          rows={rows ?? []}
+          rows={rows}
           pagination={false}
           totalCount={rows.length}
           searchPlacedHolder="Search Employees..."
           searchValue={search}
           onSearchChange={setSearch}
-          columns={[
-            { id: "id", label: "ID", sortable: false },
-            { id: "name", label: "Employee Name", sortable: false },
-            {
-              id: "skills",
-              label: "Skills",
-              sortable: false,
-              render: (row: any) =>
-                row.skills.map((skill: any) => (
-                  <Chip
-                    size="small"
-                    key={skill.id}
-                    label={skill.name}
-                    sx={{ mx: 0.5 }}
-                  />
-                )),
-            },
-          ]}
-          rowActions={[
-            {
-              label: "Edit",
-              icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
-              onClick: (row: Employee) => handleEditEmployee(row),
-            },
-          ]}
-          toolbarExtras={[
-            <IconButton
-              key="add-employee"
-              onClick={handleAddEmployee}
-              title="Add Employee"
-            >
-              <PersonAddAlt1Icon />
-            </IconButton>,
-          ]}
+          columns={columns}
+          rowActions={rowActions}
+          toolbarExtras={toolbarExtras}
         />
       </Grid>
 
@@ -157,9 +192,7 @@ export default function Page() {
               }
             : undefined
         }
-        onClose={() => {
-          setOpenModal(false);
-        }}
+        onClose={() => setOpenModal(false)}
         onSubmit={handleEmployeeSubmit}
       />
     </Grid>

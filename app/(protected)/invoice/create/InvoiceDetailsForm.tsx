@@ -1,37 +1,44 @@
 "use client";
 
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Grid,
-  TextField,
-  Switch,
-  FormControlLabel,
-  FormControl,
   Box,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  Switch,
+  TextField,
   Typography,
-  Autocomplete,
-  createFilterOptions,
 } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
 
 import { InvoiceDetails } from "../_types/invoiceDetails";
 import { Supplier } from "../_types/supplier";
 import { Transport } from "../_types/transport";
 import { InvoiceErrors } from "./invoice.types";
+
 import { GenericAutocomplete } from "@/app/components/shared/GenericAutocomplete";
-import { useState } from "react";
 import SupplierFormModal, {
   SupplierFormData,
 } from "@/app/components/shared/SupplierFormModal";
-import { addSupplier } from "@/app/api/supplier";
-import { useNotification } from "@/app/components/shared/NotificationProvider";
 import TransportFormModal, {
   TransportFormData,
 } from "@/app/components/shared/TransportFormModal";
+
+import { addSupplier } from "@/app/api/supplier";
 import { addTransport } from "@/app/api/transport";
 import { sanitizeNumberInput } from "@/app/utils/number";
+import { useNotification } from "@/app/components/shared/NotificationProvider";
+import {
+  parseDate,
+  formatDate,
+  today,
+  DATE_DISPLAY_FORMAT,
+} from "@/app/utils/date";
+
+/* ---------------- Types ---------------- */
 
 interface Props {
   value: InvoiceDetails;
@@ -43,69 +50,102 @@ interface Props {
   setTransports: React.Dispatch<React.SetStateAction<Transport[]>>;
 }
 
-export default function InvoiceDetailsForm({
+type CreateEntityType = "supplier" | "transport" | null;
+
+/* ---------------- Component ---------------- */
+
+function InvoiceDetailsForm({
   value,
   errors,
   onChange,
   suppliers,
-  setSuppliers,
   transports,
+  setSuppliers,
   setTransports,
 }: Props) {
   const { notify } = useNotification();
-  type CreateEntityType = "supplier" | "transport" | null;
 
   const [createDialog, setCreateDialog] = useState<{
     type: CreateEntityType;
     prefillName: string;
-  }>({
-    type: null,
-    prefillName: "",
-  });
+  }>({ type: null, prefillName: "" });
 
-  const createSupplier = async (data: SupplierFormData) => {
-    try {
-      const createdSupplier = await addSupplier(data);
-      setCreateDialog({ type: null, prefillName: "" });
-      setSuppliers((prev) => [...prev, createdSupplier]);
-      onChange({ supplierID: createdSupplier.id });
-      notify("Supplier created successfully", "success");
-    } catch (err: any) {
-      notify(err?.response?.data ?? "Error saving supplier", "error");
+  /* ---------- Memoized lookups ---------- */
+
+  const selectedSupplier = useMemo(
+    () => suppliers.find((s) => s.id === value.supplierID) ?? null,
+    [suppliers, value.supplierID]
+  );
+
+  const selectedTransport = useMemo(
+    () => transports.find((t) => t.id === value.transportID) ?? null,
+    [transports, value.transportID]
+  );
+
+  /* ---------- Transport cost side effects ---------- */
+
+  const isTransportCostZero = !value.transportCost || value.transportCost <= 0;
+
+  // ✅ Auto-toggle paid when cost is zero
+  useEffect(() => {
+    if (isTransportCostZero && !value.isTransportPaid) {
+      onChange({ isTransportPaid: true });
     }
-  };
+  }, [isTransportCostZero, onChange, value.isTransportPaid]);
 
-  const createTransport = async (data: TransportFormData) => {
-    try {
-      const createdTransport = await addTransport(data);
-      console.log("created t", createdTransport);
+  /* ---------- Create handlers ---------- */
 
-      setCreateDialog({ type: null, prefillName: "" });
-      setTransports((prev) => [...prev, createdTransport]);
-      onChange({ transportID: createdTransport.id });
-      notify("Transport created successfully", "success");
-    } catch (err: any) {
-      console.log(err);
+  const closeDialog = useCallback(
+    () => setCreateDialog({ type: null, prefillName: "" }),
+    []
+  );
 
-      notify(err?.response?.data ?? "Error saving transport", "error");
-    }
-  };
+  const createSupplier = useCallback(
+    async (data: SupplierFormData) => {
+      try {
+        const supplier = await addSupplier(data);
+        setSuppliers((p) => [...p, supplier]);
+        onChange({ supplierID: supplier.id });
+        notify("Supplier created successfully", "success");
+        closeDialog();
+      } catch (err: any) {
+        notify(err?.response?.data ?? "Failed to create supplier", "error");
+      }
+    },
+    [closeDialog, notify, onChange, setSuppliers]
+  );
+
+  const createTransport = useCallback(
+    async (data: TransportFormData) => {
+      try {
+        const transport = await addTransport(data);
+        setTransports((p) => [...p, transport]);
+        onChange({ transportID: transport.id });
+        notify("Transport created successfully", "success");
+        closeDialog();
+      } catch (err: any) {
+        notify(err?.response?.data ?? "Failed to create transport", "error");
+      }
+    },
+    [closeDialog, notify, onChange, setTransports]
+  );
+
+  /* ---------- Render ---------- */
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
-        <Typography variant="h5" sx={{ mb: 2 }}>
+        <Typography variant="h5" mb={2}>
           Invoice Details
         </Typography>
 
-        <Grid container spacing={2} size={12}>
+        <Grid container spacing={2}>
           {/* Invoice Number */}
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
-              id="invoice-number"
               fullWidth
-              label="Invoice Number"
               required
+              label="Invoice Number"
               value={value.invoiceNumber}
               onChange={(e) => onChange({ invoiceNumber: e.target.value })}
               onBlur={(e) => onChange({ invoiceNumber: e.target.value.trim() })}
@@ -119,24 +159,14 @@ export default function InvoiceDetailsForm({
             <FormControl fullWidth>
               <DatePicker
                 label="Invoice Date"
-                format="DD/MM/YYYY"
-                value={
-                  value.invoiceDate
-                    ? dayjs(value.invoiceDate, "DD-MM-YYYY", true)
-                    : null
-                }
-                onAccept={(date) =>
-                  onChange({
-                    invoiceDate: date ? date.format("DD-MM-YYYY") : "",
-                  })
-                }
-                maxDate={dayjs()}
+                format={DATE_DISPLAY_FORMAT}
+                value={parseDate(value.invoiceDate)}
+                maxDate={today()}
+                onAccept={(d) => onChange({ invoiceDate: formatDate(d) })}
                 slotProps={{
                   textField: {
-                    id: "invoice-date",
-                    fullWidth: true,
                     required: true,
-                    error: Boolean(errors.invoiceDate),
+                    error: !!errors.invoiceDate,
                     helperText: errors.invoiceDate,
                   },
                 }}
@@ -149,29 +179,15 @@ export default function InvoiceDetailsForm({
             <FormControl fullWidth>
               <DatePicker
                 label="Received Date"
-                format="DD/MM/YYYY"
-                value={
-                  value.receivedDate
-                    ? dayjs(value.receivedDate, "DD-MM-YYYY", true)
-                    : null
-                }
-                onAccept={(date) =>
-                  onChange({
-                    receivedDate: date ? date.format("DD-MM-YYYY") : "",
-                  })
-                }
-                minDate={
-                  value.invoiceDate
-                    ? dayjs(value.invoiceDate, "DD-MM-YYYY", true)
-                    : undefined
-                }
-                maxDate={dayjs()}
+                format={DATE_DISPLAY_FORMAT}
+                value={parseDate(value.receivedDate)}
+                minDate={parseDate(value.invoiceDate) ?? undefined}
+                maxDate={today()}
+                onAccept={(d) => onChange({ receivedDate: formatDate(d) })}
                 slotProps={{
                   textField: {
-                    id: "received-date",
-                    fullWidth: true,
                     required: true,
-                    error: Boolean(errors.receivedDate),
+                    error: !!errors.receivedDate,
                     helperText: errors.receivedDate,
                   },
                 }}
@@ -183,26 +199,22 @@ export default function InvoiceDetailsForm({
           <Grid size={{ xs: 12, md: 4 }}>
             <GenericAutocomplete<Supplier>
               label="Supplier"
-              loading={true}
               options={suppliers}
-              value={suppliers.find((s) => s.id === value.supplierID) || null}
-              onChange={(supplier) => onChange({ supplierID: supplier?.id })}
+              value={selectedSupplier}
+              onChange={(s) => onChange({ supplierID: s?.id })}
               allowCreate
               getOptionLabel={(s) => s.name}
               isOptionEqualToValue={(a, b) => a.id === b.id}
-              onCreateClick={(name) => {
-                setCreateDialog({
-                  type: "supplier",
-                  prefillName: name,
-                });
-              }}
+              onCreateClick={(name) =>
+                setCreateDialog({ type: "supplier", prefillName: name })
+              }
               error={errors.supplierID}
             />
             <SupplierFormModal
               open={createDialog.type === "supplier"}
               mode="create"
               onSubmit={createSupplier}
-              onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+              onClose={closeDialog}
               initialData={{ name: createDialog.prefillName, location: "" }}
             />
           </Grid>
@@ -212,24 +224,21 @@ export default function InvoiceDetailsForm({
             <GenericAutocomplete<Transport>
               label="Transport"
               options={transports}
-              value={transports.find((t) => t.id === value.transportID) || null}
-              onChange={(transport) => onChange({ transportID: transport?.id })}
+              value={selectedTransport}
+              onChange={(t) => onChange({ transportID: t?.id })}
               allowCreate
               getOptionLabel={(t) => t.name}
               isOptionEqualToValue={(a, b) => a.id === b.id}
-              onCreateClick={(name) => {
-                setCreateDialog({
-                  type: "transport",
-                  prefillName: name,
-                });
-              }}
+              onCreateClick={(name) =>
+                setCreateDialog({ type: "transport", prefillName: name })
+              }
               error={errors.transportID}
             />
             <TransportFormModal
               open={createDialog.type === "transport"}
               mode="create"
               onSubmit={createTransport}
-              onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+              onClose={closeDialog}
               initialData={{ name: createDialog.prefillName }}
             />
           </Grid>
@@ -237,7 +246,6 @@ export default function InvoiceDetailsForm({
           {/* Transport Cost */}
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
-              id="transport-cost"
               type="number"
               label="Transport Cost"
               fullWidth
@@ -249,24 +257,18 @@ export default function InvoiceDetailsForm({
                     raw === "" ? undefined : Number(sanitizeNumberInput(raw)),
                 });
               }}
-              slotProps={{
-                input: {
-                  inputProps: {
-                    pattern: "[0-9]*",
-                  },
-                },
-              }}
               error={!!errors.transportCost}
               helperText={errors.transportCost}
             />
           </Grid>
 
           {/* Transport Paid */}
-          <Grid>
+          <Grid size={12}>
             <FormControlLabel
               control={
                 <Switch
                   checked={value.isTransportPaid}
+                  disabled={isTransportCostZero}
                   onChange={(e) =>
                     onChange({ isTransportPaid: e.target.checked })
                   }
@@ -280,3 +282,5 @@ export default function InvoiceDetailsForm({
     </LocalizationProvider>
   );
 }
+
+export default memo(InvoiceDetailsForm);

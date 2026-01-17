@@ -5,11 +5,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
-  TextField,
   Stack,
+  TextField,
+  DialogProps,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { LoadingButton } from "@mui/lab";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useGlobalLoading } from "../layout/LoadingProvider";
 
 export type SupplierFormData = {
   name: string;
@@ -20,7 +22,6 @@ type SupplierFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: SupplierFormData;
-  loading?: boolean;
   onClose: () => void;
   onSubmit: (data: SupplierFormData) => void;
 };
@@ -29,19 +30,23 @@ export default function SupplierFormModal({
   open,
   mode,
   initialData,
-  loading = false,
   onClose,
   onSubmit,
 }: SupplierFormModalProps) {
+  const { loading } = useGlobalLoading();
+
   const [form, setForm] = useState<SupplierFormData>({
     name: "",
     location: "",
   });
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const locationInputRef = useRef<HTMLInputElement>(null);
+  const [touched, setTouched] = useState({
+    name: false,
+    location: false,
+  });
 
-  // Populate data when editing
+  const nameRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (open) {
       setForm(
@@ -50,18 +55,39 @@ export default function SupplierFormModal({
           location: "",
         }
       );
+      setTouched({ name: false, location: false });
     }
   }, [open, initialData]);
 
-  const handleChange =
-    (field: keyof SupplierFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handleSubmit = () => {
-    if (!form.name || !form.location || loading) return;
-    onSubmit(form);
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value.trim() }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const errors = useMemo(() => {
+    return {
+      name: touched.name && !form.name ? "Supplier name is required" : "",
+      location:
+        touched.location && !form.location ? "Location is required" : "",
+    };
+  }, [form, touched]);
+
+  const isSubmitDisabled =
+    loading || !form.name.trim() || !form.location.trim();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitDisabled) return;
+    onSubmit({
+      name: form.name.trim(),
+      location: form.location.trim(),
+    });
   };
 
   return (
@@ -70,15 +96,9 @@ export default function SupplierFormModal({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          handleSubmit();
-        }
-      }}
       TransitionProps={{
         onEntered: () => {
-          nameInputRef.current?.focus();
+          nameRef.current?.focus();
         },
       }}
     >
@@ -86,46 +106,52 @@ export default function SupplierFormModal({
         {mode === "create" ? "Add Supplier" : "Edit Supplier"}
       </DialogTitle>
 
-      <DialogContent>
-        <Stack spacing={2} mt={1}>
-          <TextField
-            inputRef={nameInputRef}
-            label="Supplier Name"
-            value={form.name}
-            onChange={handleChange("name")}
-            fullWidth
-            required
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                locationInputRef.current?.focus();
-              }
-            }}
-          />
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              inputRef={nameRef}
+              label="Supplier Name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              autoComplete="organization"
+              error={!!errors.name}
+              helperText={errors.name}
+              fullWidth
+              required
+            />
 
-          <TextField
-            inputRef={locationInputRef}
-            label="Location"
-            value={form.location}
-            onChange={handleChange("location")}
-            fullWidth
-            required
-          />
-        </Stack>
-      </DialogContent>
+            <TextField
+              label="Location"
+              name="location"
+              value={form.location}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              autoComplete="address-level2"
+              error={!!errors.location}
+              helperText={errors.location}
+              fullWidth
+              required
+            />
+          </Stack>
+        </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading || !form.name || !form.location}
-        >
-          {mode === "create" ? "Create" : "Save"}
-        </Button>
-      </DialogActions>
+        <DialogActions>
+          <LoadingButton onClick={onClose} loading={loading} color="inherit">
+            Cancel
+          </LoadingButton>
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={loading}
+            disabled={isSubmitDisabled}
+          >
+            {mode === "create" ? "Create" : "Save"}
+          </LoadingButton>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

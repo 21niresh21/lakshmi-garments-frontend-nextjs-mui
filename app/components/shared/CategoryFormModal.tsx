@@ -5,11 +5,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
-  TextField,
   Stack,
+  TextField,
+  Button,
+  DialogProps,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useGlobalLoading } from "../layout/LoadingProvider";
 
 export type CategoryFormData = {
   name: string;
@@ -20,7 +22,6 @@ type CategoryFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: CategoryFormData;
-  loading?: boolean;
   onClose: () => void;
   onSubmit: (data: CategoryFormData) => void;
 };
@@ -29,18 +30,22 @@ export default function CategoryFormModal({
   open,
   mode,
   initialData,
-  loading = false,
   onClose,
   onSubmit,
 }: CategoryFormModalProps) {
+  const { loading } = useGlobalLoading();
+
   const [form, setForm] = useState<CategoryFormData>({
     name: "",
     code: "",
   });
+  const [touched, setTouched] = useState({
+    name: false,
+    code: false,
+  });
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
 
-  // Populate data when editing
   useEffect(() => {
     if (open) {
       setForm(
@@ -49,19 +54,38 @@ export default function CategoryFormModal({
           code: "",
         }
       );
+      setTouched({ name: false, code: false });
     }
   }, [open, initialData]);
 
-  const handleChange =
-    (field: keyof CategoryFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!form.name || !form.code || loading) return;
-    onSubmit(form);
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value.trim() }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const errors = useMemo(
+    () => ({
+      name: touched.name && !form.name ? "Category name is required" : "",
+      code: touched.code && !form.code ? "Code is required" : "",
+    }),
+    [form, touched]
+  );
+
+  const isSubmitDisabled = loading || !form.name.trim() || !form.code.trim();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitDisabled) return;
+    onSubmit({
+      name: form.name.trim(),
+      code: form.code.trim(),
+    });
   };
 
   return (
@@ -72,7 +96,7 @@ export default function CategoryFormModal({
       maxWidth="sm"
       TransitionProps={{
         onEntered: () => {
-          nameInputRef.current?.focus();
+          nameRef.current?.focus();
         },
       }}
     >
@@ -80,23 +104,30 @@ export default function CategoryFormModal({
         {mode === "create" ? "Add Category" : "Edit Category"}
       </DialogTitle>
 
-      {/* ✅ FORM WRAPPER */}
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
-              inputRef={nameInputRef}
+              inputRef={nameRef}
               label="Category Name"
+              name="name"
               value={form.name}
-              onChange={handleChange("name")}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.name}
+              helperText={errors.name}
               fullWidth
               required
             />
 
             <TextField
               label="Code"
+              name="code"
               value={form.code}
-              onChange={handleChange("code")}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.code}
+              helperText={errors.code}
               fullWidth
               required
             />
@@ -107,11 +138,7 @@ export default function CategoryFormModal({
           <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
-            type="submit"   // ✅ important
-            variant="contained"
-            disabled={loading || !form.name || !form.code}
-          >
+          <Button type="submit" variant="contained" disabled={isSubmitDisabled}>
             {mode === "create" ? "Create" : "Save"}
           </Button>
         </DialogActions>

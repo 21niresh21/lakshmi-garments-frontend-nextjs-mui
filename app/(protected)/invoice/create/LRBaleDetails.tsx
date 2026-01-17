@@ -162,6 +162,8 @@ export default function LRAccordionSection({
                 startIcon={<AddIcon />}
                 onClick={() => addBale(lr.id)}
                 size="small"
+                variant="contained"
+                // sx={{width : 200}}
               >
                 Add Bale
               </Button>
