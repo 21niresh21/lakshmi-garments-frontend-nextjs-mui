@@ -49,7 +49,7 @@ export default function UserFormModal({
           {mode === "create" ? "Add User" : "Edit User"}
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent dividers>
           <Stack spacing={2} mt={1}>
             <TextField
               label="First name"

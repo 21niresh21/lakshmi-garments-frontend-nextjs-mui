@@ -11,19 +11,20 @@ import {
   FormControlLabel,
   Switch,
   Autocomplete,
-  FormControl,
 } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
+import { LoadingButton } from "@mui/lab";
+import dayjs, { Dayjs } from "dayjs";
 import { useCallback, useMemo } from "react";
+
 import { InvoiceDetails } from "@/app/(protected)/invoice/_types/invoiceDetails";
 import { Supplier } from "@/app/(protected)/invoice/_types/supplier";
 import { Transport } from "@/app/(protected)/invoice/_types/transport";
 import { InvoiceErrors } from "@/app/(protected)/invoice/create/invoice.types";
-import { LoadingButton } from "@mui/lab";
+import { sanitizeNumberInput } from "@/app/utils/number";
 
-type InvoiceFormModalProps = {
+type Props = {
   open: boolean;
   mode: "create" | "edit";
   initialData: InvoiceDetails;
@@ -47,8 +48,8 @@ export default function InvoiceFormModal({
   transports,
   errors,
   onChange,
-}: InvoiceFormModalProps) {
-  /* ---------------- Memoized Values ---------------- */
+}: Props) {
+  /* ---------------- Memoized Data ---------------- */
 
   const supplierOptions = useMemo(
     () => suppliers.map((s) => s.name),
@@ -60,114 +61,157 @@ export default function InvoiceFormModal({
     [transports]
   );
 
+  const invoiceDate = useMemo<Dayjs | null>(
+    () =>
+      initialData.invoiceDate
+        ? dayjs(initialData.invoiceDate, "DD-MM-YYYY")
+        : null,
+    [initialData.invoiceDate]
+  );
+
+  const receivedDate = useMemo<Dayjs | null>(
+    () =>
+      initialData.receivedDate
+        ? dayjs(initialData.receivedDate, "DD-MM-YYYY")
+        : null,
+    [initialData.receivedDate]
+  );
+
   /* ---------------- Handlers ---------------- */
 
   const handleTextChange = useCallback(
-    (field: keyof InvoiceDetails) =>
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange({ [field]: e.target.value });
-      },
+    (field: "invoiceNumber") => (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ [field]: e.target.value }),
     [onChange]
   );
 
   const handleNumberChange = useCallback(
-    (field: keyof InvoiceDetails) =>
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.value;
-        onChange({
-          [field]: raw === "" ? undefined : Number(raw),
-        });
-      },
-    [onChange]
-  );
+    (field: "transportCost") => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const numeric = value === "" ? undefined : Number(value);
 
-  const handleDateChange = useCallback(
-    (field: keyof InvoiceDetails) => (date: dayjs.Dayjs | null) => {
       onChange({
-        [field]: date ? date.format("DD-MM-YYYY") : "",
+        [field]: numeric,
+        ...(numeric ? {} : { isTransportPaid: false }),
       });
     },
     [onChange]
   );
 
+  const handleDateChange = useCallback(
+    (field: "invoiceDate" | "receivedDate") => (date: Dayjs | null) =>
+      onChange({
+        [field]: date ? date.format("DD-MM-YYYY") : "",
+      }),
+    [onChange]
+  );
+
+  const handleSupplierChange = useCallback(
+    (_: unknown, value: string | null) =>
+      onChange({ supplierName: value ?? "" }),
+    [onChange]
+  );
+
+  const handleTransportChange = useCallback(
+    (_: unknown, value: string | null) =>
+      onChange({ transportName: value ?? "" }),
+    [onChange]
+  );
+
+  const handleTransportPaidChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ isTransportPaid: e.target.checked }),
+    [onChange]
+  );
+
   const handleSubmit = useCallback(() => {
     onSubmit(initialData);
-  }, [onSubmit, initialData]);
+  }, [initialData, onSubmit]);
+
+  const handleTrimOnBlur = useCallback(
+    (field: keyof InvoiceDetails) =>
+      (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const trimmed = e.target.value.trim();
+
+        if (trimmed !== e.target.value) {
+          onChange({ [field]: trimmed });
+        }
+      },
+    [onChange]
+  );
+
+  /* ---------------- Derived State ---------------- */
+
+  const isTransportPaidDisabled = (initialData.transportCost ?? 0) <= 0;
 
   /* ---------------- Render ---------------- */
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-        <DialogTitle mb={2}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="invoice-form-title"
+      >
+        <DialogTitle id="invoice-form-title">
           {mode === "create" ? "Add Invoice" : "Edit Invoice"}
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent dividers>
           <Stack spacing={2} mt={1}>
             <TextField
               label="Invoice Number"
               value={initialData.invoiceNumber}
               onChange={handleTextChange("invoiceNumber")}
-              fullWidth
+              onBlur={handleTrimOnBlur("invoiceNumber")}
               required
+              autoFocus
               error={!!errors.invoiceNumber}
               helperText={errors.invoiceNumber}
-              autoFocus
+              fullWidth
             />
 
-            <FormControl fullWidth>
-              <DatePicker
-                label="Invoice Date"
-                format="DD/MM/YYYY"
-                value={
-                  initialData.invoiceDate
-                    ? dayjs(initialData.invoiceDate, "DD-MM-YYYY", true)
-                    : null
-                }
-                onChange={handleDateChange("invoiceDate")}
-                maxDate={dayjs()}
-                slotProps={{
-                  textField: {
-                    id: "invoice-date",
-                    error: !!errors.invoiceDate,
-                    helperText: errors.invoiceDate,
-                  },
-                }}
-              />
-            </FormControl>
+            <DatePicker
+              label="Invoice Date"
+              value={invoiceDate}
+              onChange={handleDateChange("invoiceDate")}
+              maxDate={dayjs()}
+              format="DD/MM/YYYY"
+              slotProps={{
+                textField: {
+                  required: true,
+                  error: !!errors.invoiceDate,
+                  helperText: errors.invoiceDate,
+                },
+              }}
+            />
 
-            <FormControl fullWidth>
-              <DatePicker
-                label="Received Date"
-                format="DD/MM/YYYY"
-                value={
-                  initialData.receivedDate
-                    ? dayjs(initialData.receivedDate, "DD-MM-YYYY", true)
-                    : null
-                }
-                onChange={handleDateChange("receivedDate")}
-                maxDate={dayjs()}
-                slotProps={{
-                  textField: {
-                    id: "received-date",
-                    error: !!errors.receivedDate,
-                    helperText: errors.receivedDate,
-                  },
-                }}
-              />
-            </FormControl>
+            <DatePicker
+              label="Received Date"
+              value={receivedDate}
+              onChange={handleDateChange("receivedDate")}
+              maxDate={dayjs()}
+              format="DD/MM/YYYY"
+              slotProps={{
+                textField: {
+                  error: !!errors.receivedDate,
+                  helperText: errors.receivedDate,
+                },
+              }}
+            />
 
             <Autocomplete
-              openOnFocus
-              autoHighlight
               options={supplierOptions}
               value={initialData.supplierName || null}
-              onChange={(_, value) => onChange({ supplierName: value ?? "" })}
+              onChange={handleSupplierChange}
+              isOptionEqualToValue={(a, b) => a === b}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="Supplier"
+                  required
                   error={!!errors.supplierName}
                   helperText={errors.supplierName}
                 />
@@ -175,11 +219,10 @@ export default function InvoiceFormModal({
             />
 
             <Autocomplete
-              openOnFocus
-              autoHighlight
               options={transportOptions}
               value={initialData.transportName || null}
-              onChange={(_, value) => onChange({ transportName: value ?? "" })}
+              onChange={handleTransportChange}
+              isOptionEqualToValue={(a, b) => a === b}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -194,23 +237,27 @@ export default function InvoiceFormModal({
               label="Transport Cost"
               type="number"
               value={initialData.transportCost ?? ""}
-              onChange={handleNumberChange("transportCost")}
-              fullWidth
+              onChange={(e) => {
+                const raw = e.target.value;
+                onChange({
+                  transportCost:
+                    raw === "" ? undefined : Number(sanitizeNumberInput(raw)),
+                });
+              }}
               error={!!errors.transportCost}
               helperText={errors.transportCost}
+              fullWidth
             />
 
             <FormControlLabel
+              label="Transport Paid"
               control={
                 <Switch
-                  disabled={(initialData.transportCost ?? 0) <= 0}
                   checked={initialData.isTransportPaid}
-                  onChange={(e) =>
-                    onChange({ isTransportPaid: e.target.checked })
-                  }
+                  onChange={handleTransportPaidChange}
+                  disabled={isTransportPaidDisabled}
                 />
               }
-              label="Transport Paid"
             />
           </Stack>
         </DialogContent>
@@ -224,6 +271,7 @@ export default function InvoiceFormModal({
             variant="contained"
             onClick={handleSubmit}
             loading={loading}
+            disabled={loading}
           >
             {mode === "create" ? "Create" : "Save"}
           </LoadingButton>

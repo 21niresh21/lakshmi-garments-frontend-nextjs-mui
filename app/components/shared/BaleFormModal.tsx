@@ -1,12 +1,5 @@
 "use client";
 
-import { BaleDetails, BaleErrors } from "@/app/(protected)/invoice/[id]/bale.types";
-import { InvoiceDetails } from "@/app/(protected)/invoice/_types/invoiceDetails";
-import { Supplier } from "@/app/(protected)/invoice/_types/supplier";
-import { Transport } from "@/app/(protected)/invoice/_types/transport";
-import { InvoiceErrors } from "@/app/(protected)/invoice/create/invoice.types";
-import { Category } from "@/app/_types/Category";
-import { SubCategory } from "@/app/_types/SubCategory";
 import {
   Dialog,
   DialogTitle,
@@ -15,17 +8,21 @@ import {
   Button,
   TextField,
   Stack,
-
   Autocomplete,
-  FormControl,
 } from "@mui/material";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 
+import {
+  BaleDetails,
+  BaleErrors,
+} from "@/app/(protected)/invoice/[id]/bale.types";
+import { Category } from "@/app/_types/Category";
+import { SubCategory } from "@/app/_types/SubCategory";
+import { sanitizeNumberInput } from "@/app/utils/number";
 
-type InvoiceFormModalProps = {
+type Props = {
   open: boolean;
   mode: "create" | "edit";
   initialData: BaleDetails;
@@ -49,56 +46,65 @@ export default function BaleFormModal({
   subCategories,
   errors,
   onChange,
-}: InvoiceFormModalProps) {
-  console.log(initialData);
-  // const [form, setForm] = useState<InvoiceFormData>({
-  //   invoiceNumber: "",
-  //   invoiceDate: null,
-  //   receivedDate: "",
-  //   supplierName: "",
-  //   transportName: "",
-  //   transportCost: "",
-  //   isTransportPaid: false,
-  // });
+}: Props) {
+  /* ---------------- Memoized Options ---------------- */
 
-  // useEffect(() => {
-  //   if (open) {
-  //     setForm(
-  //       initialData ?? {
-  //         invoiceNumber: "",
-  //         invoiceDate: null,
-  //         receivedDate: null,
-  //         supplierName: "",
-  //         transportName: "",
-  //         transportCost: "",
-  //         isTransportPaid: false,
-  //       }
-  //     );
-  //   }
-  // }, [open, initialData]);
+  const categoryOptions = useMemo(
+    () => categories.map((c) => c.name),
+    [categories]
+  );
 
-  // const handleChange =
-  //   (field: keyof InvoiceFormData) =>
-  //   (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     let value: any;
+  const subCategoryOptions = useMemo(
+    () => subCategories.map((s) => s.name),
+    [subCategories]
+  );
 
-  //     if (field === "transportCost") {
-  //       value = e.target.value === "" ? "" : Number(e.target.value);
-  //     } else if (field === "isTransportPaid") {
-  //       value = e.target.checked; // Switch has checked property
-  //     } else {
-  //       value = e.target.value;
-  //     }
+  /* ---------------- Handlers ---------------- */
 
-  //     setForm((prev) => ({ ...prev, [field]: value }));
-  //     set((prev) => {
-  //       const next = { ...prev };
-  //       Object.keys(patch).forEach(
-  //         (key) => delete next[key as keyof InvoiceErrors]
-  //       );
-  //       return next;
-  //     });
-  //   };
+  const handleTextChange = useCallback(
+    (field: keyof Pick<BaleDetails, "baleNumber" | "quality">) =>
+      (e: React.ChangeEvent<HTMLInputElement>) =>
+        onChange({ [field]: e.target.value }),
+    [onChange]
+  );
+
+  const handleTrimOnBlur = useCallback(
+    (field: keyof BaleDetails) => (e: React.FocusEvent<HTMLInputElement>) => {
+      const trimmed = e.target.value.trim();
+      if (trimmed !== e.target.value) {
+        onChange({ [field]: trimmed });
+      }
+    },
+    [onChange]
+  );
+
+  const handleNumberChange = useCallback(
+    (field: keyof Pick<BaleDetails, "quantity" | "length" | "price">) =>
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value;
+        onChange({
+          [field]: raw === "" ? "" : Number(sanitizeNumberInput(raw)),
+        });
+      },
+    [onChange]
+  );
+
+  const handleCategoryChange = useCallback(
+    (_: unknown, value: string | null) => onChange({ category: value ?? "" }),
+    [onChange]
+  );
+
+  const handleSubCategoryChange = useCallback(
+    (_: unknown, value: string | null) =>
+      onChange({ subCategory: value ?? "" }),
+    [onChange]
+  );
+
+  const handleSubmit = useCallback(() => {
+    onSubmit(initialData);
+  }, [initialData, onSubmit]);
+
+  /* ---------------- Render ---------------- */
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -107,28 +113,24 @@ export default function BaleFormModal({
           {mode === "create" ? "Add Bale" : "Edit Bale"}
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent dividers>
           <Stack spacing={2} mt={1}>
             <TextField
               label="Bale Number"
               value={initialData.baleNumber}
-              onChange={(e) => onChange({ baleNumber: e.target.value })}
-              fullWidth
+              onChange={handleTextChange("baleNumber")}
+              onBlur={handleTrimOnBlur("baleNumber")}
               required
-                error={!!errors.baleNumber}
-                helperText={errors.baleNumber}
+              fullWidth
+              error={!!errors.baleNumber}
+              helperText={errors.baleNumber}
             />
 
             <TextField
               label="Quantity"
               type="number"
               value={initialData.quantity}
-              onChange={(e) => {
-                const raw = e.target.value;
-                onChange({
-                  quantity: raw === "" ? "" : Number(raw),
-                });
-              }}
+              onChange={handleNumberChange("quantity")}
               fullWidth
               error={!!errors.quantity}
               helperText={errors.quantity}
@@ -138,12 +140,7 @@ export default function BaleFormModal({
               label="Length"
               type="number"
               value={initialData.length}
-              onChange={(e) => {
-                const raw = e.target.value;
-                onChange({
-                  length: raw === "" ? "" : Number(raw),
-                });
-              }}
+              onChange={handleNumberChange("length")}
               fullWidth
               error={!!errors.length}
               helperText={errors.length}
@@ -153,12 +150,7 @@ export default function BaleFormModal({
               label="Price"
               type="number"
               value={initialData.price}
-              onChange={(e) => {
-                const raw = e.target.value;
-                onChange({
-                  price: raw === "" ? "" : Number(raw),
-                });
-              }}
+              onChange={handleNumberChange("price")}
               fullWidth
               error={!!errors.price}
               helperText={errors.price}
@@ -167,69 +159,54 @@ export default function BaleFormModal({
             <TextField
               label="Quality"
               value={initialData.quality}
-              onChange={(e) => onChange({ quality: e.target.value })}
-              fullWidth
+              onChange={handleTextChange("quality")}
+              onBlur={handleTrimOnBlur("quality")}
               required
-                error={!!errors.quality}
-                helperText={errors.quality}
+              fullWidth
+              error={!!errors.quality}
+              helperText={errors.quality}
             />
 
             <Autocomplete
-              openOnFocus
-              id="category-autocomplete"
-              disablePortal
-              autoHighlight
-              options={categories.map((s) => s.name)}
-              value={initialData.category}
-              onChange={(_, category) =>
-                onChange({ category: category ?? "" })
-              }
+              options={categoryOptions}
+              value={initialData.category || null}
+              onChange={handleCategoryChange}
+              isOptionEqualToValue={(a, b) => a === b}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  id="category-input"
                   label="Category"
+                  onBlur={handleTrimOnBlur("category")}
                   error={!!errors.category}
                   helperText={errors.category}
                 />
               )}
             />
+
             <Autocomplete
-              openOnFocus
-              id="sub-category-autocomplete"
-              disablePortal
-              autoHighlight
-              options={subCategories.map((t) => t.name)}
-              // getOptionLabel={(option) => option.name}
-              value={initialData.subCategory}
-              onChange={(_, subCat) =>
-                onChange({ subCategory: subCat ?? "" })
-              }
+              options={subCategoryOptions}
+              value={initialData.subCategory || null}
+              onChange={handleSubCategoryChange}
+              isOptionEqualToValue={(a, b) => a === b}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  id="sub-category-input"
                   label="Sub Category"
+                  onBlur={handleTrimOnBlur("subCategory")}
                   error={!!errors.subCategory}
                   helperText={errors.subCategory}
                 />
               )}
             />
-
           </Stack>
-          
         </DialogContent>
 
         <DialogActions>
           <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={() => onSubmit(initialData)}
-            loading={loading}
-            loadingPosition="end"
-          >
+
+          <Button variant="contained" onClick={handleSubmit} disabled={loading}>
             {mode === "create" ? "Create" : "Save"}
           </Button>
         </DialogActions>

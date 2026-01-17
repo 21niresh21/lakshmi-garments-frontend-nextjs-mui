@@ -50,7 +50,7 @@ export default function EmployeeReassignModal({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Re-Assign Jobwork</DialogTitle>
 
-      <DialogContent sx={{ my: 1 }}>
+      <DialogContent dividers sx={{ my: 1 }}>
         <Autocomplete
           sx={{ my: 1 }}
           openOnFocus

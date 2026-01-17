@@ -1,6 +1,10 @@
 "use client";
 
 import { fetchInvoiceDetail } from "@/app/api/invoiceApi";
+import { updateLorryReeipt } from "@/app/api/lorryReceiptApi";
+import { useNotification } from "@/app/components/shared/NotificationProvider";
+import BaleTable from "./BaleTable";
+
 import {
   Box,
   Typography,
@@ -8,86 +12,134 @@ import {
   Paper,
   Stack,
   Button,
+  Breadcrumbs,
 } from "@mui/material";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import BaleTable from "./BaleTable";
-import { updateLorryReeipt } from "@/app/api/lorryReceiptApi";
-import { useNotification } from "@/app/components/shared/NotificationProvider";
+import { useEffect, useState, useCallback } from "react";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+import Link from "next/link";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 type Invoice = any;
 
 type LorryReceipt = {
   id: number;
   lrnumber: string;
-  originalLRNumber?: string; // store original value
+  originalLRNumber?: string;
   baleDTOs: any[];
 };
 
 export default function InvoiceDetailsPage() {
+  const { loading, showLoading, hideLoading } = useGlobalLoading();
   const { notify } = useNotification();
   const params = useParams();
   const id = params.id as string;
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [lorryReceipts, setLorryReceipts] = useState<LorryReceipt[]>([]);
-  const [loading, setLoading] = useState(true);
   const [savingLR, setSavingLR] = useState<number | null>(null);
-  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [canEdit, setCanEdit] = useState(false);
 
-  // Fetch invoice details
+  /* ---------------- Fetch Invoice ---------------- */
+
   useEffect(() => {
     if (!id) return;
+
+    showLoading();
 
     fetchInvoiceDetail(id)
       .then((res) => {
         const lrs: LorryReceipt[] =
           res.lorryReceiptDTOs?.map((lr: any) => ({
             ...lr,
-            originalLRNumber: lr.lrnumber, // save original
+            originalLRNumber: lr.lrnumber,
           })) ?? [];
-        setLorryReceipts(lrs);
-        setInvoice(res);
 
+        setInvoice(res);
+        setLorryReceipts(lrs);
         setCanEdit(res.canEdit);
       })
-      .finally(() => setLoading(false));
-  }, [id]);
+      .catch(() => {
+        notify("Failed to load invoice", "error");
+      })
+      .finally(() => hideLoading());
+  }, [id, notify]);
 
-  // Update LR number in local state
-  const handleLRChange = (lrId: number, value: string) => {
+  /* ---------------- Derived Helpers ---------------- */
+
+  const isSelfLR = (lr: LorryReceipt) => lr.lrnumber?.startsWith("SELF");
+
+  const isLRChanged = (lr: LorryReceipt) =>
+    lr.lrnumber?.trim() && lr.lrnumber.trim() !== lr.originalLRNumber;
+
+  /* ---------------- Handlers ---------------- */
+
+  const handleLRChange = useCallback((lrId: number, value: string) => {
     setLorryReceipts((prev) =>
       prev.map((lr) => (lr.id === lrId ? { ...lr, lrnumber: value } : lr))
     );
-  };
+  }, []);
 
-  // Update LR number on server
-  const handleUpdateLR = async (lr: LorryReceipt) => {
-    try {
-      setSavingLR(lr.id);
-      await updateLorryReeipt(lr.id, { lrNumber: lr.lrnumber });
-      notify("LR number updated successfully", "success");
+  const handleLRBlur = useCallback((lrId: number, value: string) => {
+    const trimmed = value.trim();
 
-      // ✅ Update originalLRNumber so button disables until next change
+    if (trimmed !== value) {
       setLorryReceipts((prev) =>
-        prev.map((r) =>
-          r.id === lr.id ? { ...r, originalLRNumber: lr.lrnumber } : r
-        )
+        prev.map((lr) => (lr.id === lrId ? { ...lr, lrnumber: trimmed } : lr))
       );
-    } catch {
-      notify("Error updating LR number", "error");
-    } finally {
-      setSavingLR(null);
     }
-  };
+  }, []);
+
+  const handleUpdateLR = useCallback(
+    async (lr: LorryReceipt) => {
+      if (!isLRChanged(lr)) return;
+
+      try {
+        setSavingLR(lr.id);
+        await updateLorryReeipt(lr.id, { lrNumber: lr.lrnumber.trim() });
+
+        notify("LR number updated successfully", "success");
+
+        setLorryReceipts((prev) =>
+          prev.map((r) =>
+            r.id === lr.id ? { ...r, originalLRNumber: lr.lrnumber.trim() } : r
+          )
+        );
+      } catch {
+        notify("Error updating LR number", "error");
+      } finally {
+        setSavingLR(null);
+      }
+    },
+    [notify]
+  );
+
+  /* ---------------- Render ---------------- */
 
   if (loading) return <div>Loading invoice...</div>;
   if (!invoice) return <div>Invoice not found</div>;
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-        Invoice Details
+      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
+        <Link
+          href="/invoice/list"
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+            display: "flex",
+            alignItems: "center",
+            columnGap: 5,
+          }}
+        >
+          <ArrowBackIcon fontSize="small" />
+          Invoices
+        </Link>
+
+        <Typography color="text.primary">{invoice.invoiceNumber}</Typography>
+      </Breadcrumbs>
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, ml : 2.5 }}>
+        Invoice {invoice.invoiceNumber}
       </Typography>
 
       <Stack spacing={3}>
@@ -103,28 +155,28 @@ export default function InvoiceDetailsPage() {
               <TextField
                 label="LR Number"
                 value={lr.lrnumber}
-                onChange={(e) => handleLRChange(lr.id, e.target.value)}
                 size="small"
+                sx={{ width: 250 }}
+                disabled={isSelfLR(lr) || !canEdit}
+                onChange={(e) => handleLRChange(lr.id, e.target.value)}
+                onBlur={(e) => handleLRBlur(lr.id, e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    handleUpdateLR(lr); // trigger the same function as the button
+                    handleUpdateLR(lr);
                   }
                 }}
-                disabled={lr.lrnumber.startsWith('SELF')}
-                sx={{ width: 250 }} // narrower input
               />
-              {!lr.lrnumber.startsWith('SELF') && <Button
-                variant="contained"
-                size="small"
-                onClick={() => handleUpdateLR(lr)}
-                disabled={
-                  savingLR === lr.id ||
-                  !lr.lrnumber ||
-                  lr.lrnumber === lr.originalLRNumber
-                }
-              >
-                {savingLR === lr.id ? "Updating..." : "Update"}
-              </Button>}
+
+              {!isSelfLR(lr) && canEdit && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleUpdateLR(lr)}
+                  disabled={savingLR === lr.id || !isLRChanged(lr)}
+                >
+                  {savingLR === lr.id ? "Updating..." : "Update"}
+                </Button>
+              )}
             </Stack>
 
             {/* 🔹 Bale Table */}

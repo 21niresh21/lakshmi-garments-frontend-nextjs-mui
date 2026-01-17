@@ -107,7 +107,7 @@ export default function SupplierFormModal({
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
-        <DialogContent>
+        <DialogContent dividers>
           <Stack spacing={2} mt={1}>
             <TextField
               inputRef={nameRef}

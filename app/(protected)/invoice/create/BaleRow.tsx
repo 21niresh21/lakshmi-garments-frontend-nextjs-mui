@@ -24,6 +24,7 @@ import SubCategoryFormModal, {
 } from "@/app/components/shared/SubCategoryFormModal";
 import { addCategory } from "@/app/api/category";
 import { addSubCategory } from "@/app/api/subCategory";
+import { sanitizeNumberInput } from "@/app/utils/number";
 
 interface Props {
   bale: Bale;
@@ -74,7 +75,9 @@ export default function BaleRow({
   const handleNumberChange = useCallback(
     (field: keyof Bale) => (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      onChange({ [field]: value === "" ? undefined : Number(value) });
+      onChange({
+        [field]: value === "" ? undefined : Number(sanitizeNumberInput(value)),
+      });
     },
     [onChange]
   );

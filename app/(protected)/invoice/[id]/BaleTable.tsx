@@ -1,46 +1,11 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import {
-  Grid,
-  Chip,
-  Button,
-  IconButton,
-  Popper,
-  ClickAwayListener,
-  Paper,
-  Typography,
-  Divider,
-  Stack,
-  Box,
-  CircularProgress,
-} from "@mui/material";
+import { Grid, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import React, { useEffect, useState } from "react";
-import { People } from "@mui/icons-material";
-import { fetchSuppliers } from "@/app/api/supplier";
-import { fetchBatches, recycleBatch } from "@/app/api/batchApi";
-import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
-import LowPriorityIcon from "@mui/icons-material/LowPriority";
-import { formatToShortDate } from "@/app/utils/date";
-import BadgeIcon from "@mui/icons-material/Badge";
-import NewReleasesIcon from "@mui/icons-material/NewReleases";
-import { BatchStatus, BatchStatusColorMap } from "@/app/_types/BatchStatus";
-import RecyclingIcon from "@mui/icons-material/Recycling";
-import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
-import ExpandCircleDownIcon from "@mui/icons-material/ExpandCircleDown";
+import { useEffect, useState } from "react";
 import { SubCategory } from "@/app/_types/SubCategory";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-import { fetchInvoices, updateInvoice } from "@/app/api/invoiceApi";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ReportIcon from "@mui/icons-material/Report";
-import InvoiceFormModal from "@/app/components/shared/InvoiceFormModal";
-import { Supplier } from "../_types/supplier";
-import { fetchTransports } from "@/app/api/transport";
-import dayjs from "dayjs";
-import { INITIAL_INVOICE, InvoiceErrors } from "../create/invoice.types";
-import { InvoiceDetails } from "../_types/invoiceDetails";
 import { useRouter } from "next/navigation";
 import { Category } from "@/app/_types/Category";
 import { fetchCategories } from "@/app/api/category";
@@ -49,6 +14,7 @@ import BaleFormModal from "@/app/components/shared/BaleFormModal";
 import { BaleDetails, BaleErrors, INITIAL_BALE } from "./bale.types";
 import { updateBale } from "@/app/api/baleApi";
 import { useUser } from "@/app/context/UserContext";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
 
 interface BaleRow {
   id: number;
@@ -98,13 +64,10 @@ const HEADERS = [
 ];
 
 export default function BaleTable({ bales, canEdit }: Props) {
-  console.log(bales);
+  const { loading, showLoading, hideLoading } = useGlobalLoading();
   const { notify } = useNotification();
   const { user } = useUser();
-  const router = useRouter();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [search, setSearch] = useState("");
+
   const [sortBy, setSortBy] = useState<string | undefined>();
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [totalCount, setTotalCount] = useState(0);
@@ -183,17 +146,12 @@ export default function BaleTable({ bales, canEdit }: Props) {
     return Object.keys(errors).length === 0;
   };
 
-  const toISODate = (date: string) => {
-    const [dd, mm, yyyy] = date.split("-");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const handleBaleSubmit = async (data: BaleDetails) => {
-    console.log(data);
     try {
       if (!validateBale(data)) {
         return;
       }
+      showLoading();
       const payload = {
         ...data,
         updatedById: user?.id,
@@ -219,6 +177,8 @@ export default function BaleTable({ bales, canEdit }: Props) {
       );
     } catch (err: any) {
       notify(err?.response?.data?.message ?? "Error saving invoice", "error");
+    } finally {
+      hideLoading();
     }
   };
 
@@ -280,7 +240,6 @@ export default function BaleTable({ bales, canEdit }: Props) {
         />
       </Grid>
 
-      {/* ✅ POPPER (render ONCE, outside table) */}
       <BaleFormModal
         open={openModal}
         mode={selectedBale ? "edit" : "create"}

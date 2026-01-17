@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Grid, Chip, IconButton, Badge, Stack, Tooltip } from "@mui/material";
+import {
+  Grid,
+  Chip,
+  IconButton,
+  Badge,
+  Stack,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
@@ -42,6 +51,8 @@ const toBackendDate = (date?: string) => (date ? toISODate(date) : undefined);
 /* -------------------------------------------------------------------------- */
 
 export default function Page() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const router = useRouter();
   const { notify } = useNotification();
   const { loading, showLoading, hideLoading } = useGlobalLoading();
@@ -307,7 +318,7 @@ export default function Page() {
     <Grid container>
       <Grid size={12}>
         <GenericTable<InvoiceDetails>
-          title="Invoices"
+          title={isMobile ? "" : "Invoices"}
           rows={rows}
           columns={columns}
           pagination
