@@ -136,9 +136,11 @@ export default function InvoiceDetailsPage() {
           Invoices
         </Link>
 
-        <Typography color="text.primary">{invoice.invoiceNumber}</Typography>
+        <Typography color="#0009" variant="body2">
+          {invoice.invoiceNumber}
+        </Typography>
       </Breadcrumbs>
-      <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, ml : 2.5 }}>
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, ml: 2.5 }}>
         Invoice {invoice.invoiceNumber}
       </Typography>
 

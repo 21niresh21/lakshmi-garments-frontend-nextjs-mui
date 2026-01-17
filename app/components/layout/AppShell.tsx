@@ -51,7 +51,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          mt : isMobile ? 7 : ""
+          mt: isMobile ? 7 : "",
         }}
       >
         {!collapsed && (
@@ -182,8 +182,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             bgcolor: "#f5f5f5",
             p: 2,
           }}
+          className="safe-bottom"
         >
-          <Box sx={{ p: 2, bgcolor: "#fff", minHeight: "100%" }}>
+          <Box
+            sx={{ p: 2, bgcolor: "#fff", minHeight: "100%" }}
+            className="safe-bottom"
+          >
             {children}
           </Box>
         </Box>

@@ -6,7 +6,13 @@ import { ConfirmationProvider } from "../components/shared/ConfirmationProvider"
 import { NotificationProvider } from "../components/shared/NotificationProvider";
 import { AuthUser } from "../_types/User";
 import { UserProvider } from "../context/UserContext";
-import { Box, LinearProgress, ThemeProvider } from "@mui/material";
+import {
+  Box,
+  LinearProgress,
+  ThemeProvider,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import theme from "../themes/theme";
 import {
   LoadingProvider,
@@ -18,6 +24,7 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
+  
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
@@ -45,9 +52,11 @@ export default function ProtectedLayout({
 
 function GlobalLinearLoading() {
   const { loading } = useGlobalLoading();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Box sx={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 1200 }}>
+    <Box sx={{ position: "fixed", top: isMobile ? 56.5 : 64, left: 0, right: 0, zIndex: 1200 }}>
       {loading && <LinearProgress />}
     </Box>
   );
