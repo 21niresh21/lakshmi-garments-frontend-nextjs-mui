@@ -16,8 +16,8 @@ import {
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { Supplier } from "../../invoice/_types/supplier";
-import { Transport } from "../../invoice/_types/transport";
+import { Supplier } from "../../invoices/_types/supplier";
+import { Transport } from "../../invoices/_types/transport";
 import { BatchFilter } from "./_types/BatchFilter";
 import { Category } from "@/app/_types/Category";
 import { SubCategory } from "@/app/_types/SubCategory";
@@ -46,7 +46,7 @@ export default function BatchFilterPanel({
 }: Props) {
   const handleChange = <K extends keyof BatchFilter>(
     key: K,
-    value: BatchFilter[K]
+    value: BatchFilter[K],
   ) => {
     onChange({ ...filters, [key]: value });
   };
@@ -91,24 +91,23 @@ export default function BatchFilterPanel({
                 )}
               />
 
-              {/* Payment Status */}
-              {/* <Autocomplete
+              <Autocomplete
                 multiple
                 size="small"
                 fullWidth
                 options={[true, false]}
-                value={Array.isArray(filters.isPaid) ? filters.isPaid : []}
-                onChange={(_, value) => handleChange("isPaid", value)}
-                getOptionLabel={(option) => (option ? "Paid" : "Unpaid")}
+                value={Array.isArray(filters.isUrgent) ? filters.isUrgent : []}
+                onChange={(_, value) => handleChange("isUrgent", value)}
+                getOptionLabel={(option) => (option ? "High" : "Normal")}
                 renderInput={(params) => (
-                  <TextField {...params} label="Transport Payment Status" />
+                  <TextField {...params} label="Batch Priority" />
                 )}
-              /> */}
+              />
 
               {/* From Date */}
               <FormControl fullWidth>
                 <DatePicker
-                  label="From Date"
+                  label="From Creation Date"
                   format="DD/MM/YYYY"
                   value={
                     filters.startDate
@@ -118,7 +117,7 @@ export default function BatchFilterPanel({
                   onAccept={(date) =>
                     handleChange(
                       "startDate",
-                      date ? date.format("DD-MM-YYYY") : ""
+                      date ? date.format("DD-MM-YYYY") : "",
                     )
                   }
                   maxDate={dayjs()}
@@ -134,8 +133,13 @@ export default function BatchFilterPanel({
               {/* To Date */}
               <FormControl fullWidth>
                 <DatePicker
-                  label="To Date"
+                  label="To Creation Date"
                   format="DD/MM/YYYY"
+                  minDate={
+                    filters.startDate
+                      ? dayjs(filters.startDate, "DD-MM-YYYY")
+                      : undefined
+                  }
                   value={
                     filters.endDate
                       ? dayjs(filters.endDate, "DD-MM-YYYY", true)
@@ -144,7 +148,7 @@ export default function BatchFilterPanel({
                   onAccept={(date) =>
                     handleChange(
                       "endDate",
-                      date ? date.format("DD-MM-YYYY") : ""
+                      date ? date.format("DD-MM-YYYY") : "",
                     )
                   }
                   maxDate={dayjs()}

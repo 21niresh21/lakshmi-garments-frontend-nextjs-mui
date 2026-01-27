@@ -1,7 +1,7 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Chip, Grid, IconButton } from "@mui/material";
+import { Chip, Grid, IconButton, Stack, Typography, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,20 +16,16 @@ import EmployeeFormModal, {
   EmployeeFormData,
 } from "@/app/components/shared/EmployeeFormModal";
 import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+import { normalizeError } from "@/app/utils/error";
 
 /* ---------------- Error Normalizer ---------------- */
 
-function normalizeError(error: unknown): string {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "response" in error &&
-    typeof (error as any).response?.data === "string"
-  ) {
-    return (error as any).response.data;
-  }
-  return "Something went wrong. Please try again.";
-}
+
+
+export type EmployeeErrors = {
+  name?: string;
+  skills?: string;
+};
 
 export default function Page() {
   const { notify } = useNotification();
@@ -42,6 +38,7 @@ export default function Page() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null
   );
+  const [errors, setErrors] = useState<EmployeeErrors>({});
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -86,7 +83,6 @@ export default function Page() {
 
   const handleEmployeeSubmit = useCallback(
     async (data: EmployeeFormData) => {
-      showLoading();
       try {
         if (selectedEmployee) {
           await updateEmployee(selectedEmployee.id, data);
@@ -97,15 +93,17 @@ export default function Page() {
         }
 
         setOpenModal(false);
+        setErrors({});
         loadEmployees(search);
-      } catch (err) {
-        console.error(err);
-        notify(normalizeError(err), "error");
-      } finally {
-        hideLoading();
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err.message || normalizeError(err), "error");
+        }
       }
     },
-    [selectedEmployee, notify, loadEmployees, search, showLoading, hideLoading]
+    [selectedEmployee, notify, loadEmployees, search]
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -149,24 +147,47 @@ export default function Page() {
 
   const toolbarExtras = useMemo(
     () => [
-      <IconButton
-        key="add-employee"
-        onClick={handleAddEmployee}
-        title="Add Employee"
-      >
-        <PersonAddAlt1Icon />
-      </IconButton>,
+      <Tooltip key="add-employee" title="Add Employee">
+        <IconButton
+          onClick={handleAddEmployee}
+        >
+          <PersonAddAlt1Icon />
+        </IconButton>
+      </Tooltip>,
     ],
     [handleAddEmployee]
+  );
+
+  const employeeInitialData = useMemo(
+    () =>
+      selectedEmployee
+        ? {
+            name: selectedEmployee.name,
+            skills: selectedEmployee.skills.map((skill) => skill.id),
+          }
+        : undefined,
+    [selectedEmployee]
   );
 
   /* ---------------- Render ---------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Employees
+          </Typography>
+          <Chip 
+            label={`${rows.length}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<Employee>
-          title="Employees"
           rows={rows}
           pagination={false}
           totalCount={rows.length}
@@ -184,15 +205,13 @@ export default function Page() {
       <EmployeeFormModal
         open={openModal}
         mode={selectedEmployee ? "edit" : "create"}
-        initialData={
-          selectedEmployee
-            ? {
-                name: selectedEmployee.name,
-                skills: selectedEmployee.skills.map((skill) => skill.id),
-              }
-            : undefined
-        }
-        onClose={() => setOpenModal(false)}
+        initialData={employeeInitialData}
+        errors={errors}
+        setErrors={setErrors}
+        onClose={() => {
+          setOpenModal(false);
+          setErrors({});
+        }}
         onSubmit={handleEmployeeSubmit}
       />
     </Grid>

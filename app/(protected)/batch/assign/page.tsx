@@ -7,7 +7,7 @@ import {
   getUnfinishedBatches,
   getUnfinishedUrgentBatches,
 } from "@/app/api/batchApi";
-import { Divider, Grid } from "@mui/material";
+import { Box, Divider, Grid } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import BatchList from "./BatchList";
 import AssignmentForm from "./AssignmentForm";
@@ -39,7 +39,7 @@ export default function Page() {
     });
 
     fetchNextJobworkNumber().then((res) =>
-      setJobwork((prev) => ({ ...prev, jobworkNumber: res }))
+      setJobwork((prev) => ({ ...prev, jobworkNumber: res })),
     );
 
     // fetchEmployeeStats(1).then((res) => {
@@ -90,19 +90,10 @@ export default function Page() {
   }, [jobwork.jobworkType]);
 
   return (
-    <Grid
-      container
-      sx={{ height: "calc(100vh - 130px)", overflow: "auto" }}
-      spacing={2}
-    >
-      <Grid
-        container
-        direction="column"
-        size={7.5}
-        spacing={2}
-        sx={{ minHeight: 0 }}
-      >
-        <Grid size={12}>
+    <Box sx={{ p: { xs: 1, md: 1 } }}>
+      <Grid container spacing={3}>
+        {/* Left Section: Assignment Form */}
+        <Grid size={{ xs: 12, md: 8 }}>
           <AssignmentForm
             pendingBatches={pendingBatches}
             jobworkTypes={jobworkTypes}
@@ -115,22 +106,17 @@ export default function Page() {
           />
         </Grid>
 
-        {/* <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
-          <Grid size={6} sx={{ minHeight: 0 }}>
-            <BatchList batchList={urgentBatches} />
-          </Grid>
-
-          <Grid size={6} sx={{ minHeight: 0 }}>
-            <EmployeeStats />
-          </Grid>
-        </Grid> */}
+        {/* Right Section: Priority List */}
+        <Grid
+          size={{ xs: 12, md: 4 }}
+          sx={{
+            borderLeft: { md: "1px solid #e0e0e0" },
+            pl: { md: 3 },
+          }}
+        >
+          <BatchList batchList={urgentBatches} />
+        </Grid>
       </Grid>
-      <Grid size={1}>
-        <Divider orientation="vertical" sx={{ mx: 1 }} />
-      </Grid>
-      <Grid size={3.5}>
-        <BatchList batchList={urgentBatches} />
-      </Grid>
-    </Grid>
+    </Box>
   );
 }

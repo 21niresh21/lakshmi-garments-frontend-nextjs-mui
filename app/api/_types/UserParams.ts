@@ -1,6 +1,6 @@
 export interface UserParams {
-  pageNo?: number;
-  pageSize?: number;
+  page?: number;
+  size?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   search?: string;

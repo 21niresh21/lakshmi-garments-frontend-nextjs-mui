@@ -16,8 +16,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import FaceIcon from "@mui/icons-material/Face";
 import LockIcon from "@mui/icons-material/Lock";
-import axios from "axios";
 import { useAuth } from "../context/AuthProvider";
+import { Roles } from "../_types/RoleType";
 
 export default function LoginPage() {
   const { setHasToken } = useAuth();
@@ -48,9 +48,16 @@ export default function LoginPage() {
       // 1. Extract the token from your production-grade response
       const token = response.token; // 2. Set the cookie with the ACTUAL token instead of "true"
 
-      // max-age=43200 is 12 hours.
-      document.cookie = `token=${token}; path=/; max-age=43200; SameSite=Strict`;
-      setHasToken(true);
+      const expiresAtZonedStr = response.expiresAt;
+
+// Parse it into a Date object
+const expiresAt = new Date(expiresAtZonedStr);
+
+// Convert to UTC string for cookie
+const utcString = expiresAt.toUTCString();
+
+// Set the cookie
+document.cookie = `token=${token}; path=/; expires=${utcString}; SameSite=Strict; Secure`;
 
       // 3. Store user details (username, roles) for the UI
       localStorage.setItem(
@@ -60,22 +67,21 @@ export default function LoginPage() {
           roles: response.roles,
         })
       );
+      // Store session expiry for tracking
+      localStorage.setItem("session_expires_at", expiresAt.getTime().toString());
 
-      router.push("/invoice/create");
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const message = err.response?.data?.message;
-
-        if (status === 403) {
-          setError(message || "Your account is inactive");
-        } else if (status === 401) {
-          setError(message || "Invalid username or password");
-        } else {
-          setError("Something went wrong. Please try again.");
-        }
+      if (response.roles.includes(Roles.SUPER_ADMIN)) {
+        router.push("/users");
       } else {
-        setError("Unexpected error occurred");
+        router.push("/profile");
+      }
+    } catch (err: any) {
+      if (err.status === 403) {
+        setError(err.message || "Your account is inactive");
+      } else if (err.status === 401) {
+        setError(err.message || "Invalid username or password");
+      } else {
+        setError(err.message || "Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);

@@ -105,3 +105,15 @@ export const reopenJobwork = async (jobworkNumber: string): Promise<any> => {
     throw error;
   }
 };
+
+export const getItemsForJobwork = async (jobworkNumber: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `${baseUrl}/${jobworkNumber}/items`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting items for jobwork:", error);
+    throw error;
+  }
+};

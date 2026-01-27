@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from "react";
 import { Snackbar, Alert } from "@mui/material";
 
 type NotificationType = "success" | "error" | "info" | "warning";
@@ -20,19 +20,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState("");
   const [type, setType] = useState<NotificationType>("info");
 
-  const notify = (msg: string, notifType: NotificationType = "info") => {
+  const notify = useCallback((msg: string, notifType: NotificationType = "info") => {
     setMessage(msg);
     setType(notifType);
     setOpen(true);
-  };
+  }, []);
 
   const handleClose = (_?: any, reason?: string) => {
     if (reason === "clickaway") return;
     setOpen(false);
   };
 
+  const value = useMemo(() => ({ notify }), [notify]);
+
   return (
-    <NotificationContext.Provider value={{ notify }}>
+    <NotificationContext.Provider value={value}>
       {children}
       <Snackbar
         open={open}

@@ -6,8 +6,7 @@ import createCache from "@emotion/cache";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { useServerInsertedHTML } from "next/navigation";
-import theme from "./themes/theme";
-import erpDesign from "./themes/erp/erpDesign";
+import { ThemeCustomizationProvider } from "./context/ThemeContext";
 
 export default function ThemeRegistry({
   children,
@@ -54,10 +53,10 @@ export default function ThemeRegistry({
 
   return (
     <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>
+      <ThemeCustomizationProvider>
         <CssBaseline />
         {children}
-      </ThemeProvider>
+      </ThemeCustomizationProvider>
     </CacheProvider>
   );
 }

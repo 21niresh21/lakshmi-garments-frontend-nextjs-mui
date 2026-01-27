@@ -1,12 +1,13 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, Chip, IconButton, Badge, Stack, Tooltip } from "@mui/material";
+import { Grid, Chip, IconButton, Badge, Stack, Tooltip, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ReportIcon from "@mui/icons-material/Report";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
+import AppBreadcrumbs from "@/app/components/navigation/AppBreadcrumbs";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -57,6 +58,7 @@ export default function Page() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
@@ -124,15 +126,20 @@ export default function Page() {
       setOpenModal(false);
       loadUsers();
     } catch (err: any) {
-      notify(err?.response?.data?.message ?? "Error saving user", "error");
+      if (err.validationErrors) {
+        console.log(err.validationErrors);
+        setErrors(err.validationErrors);
+      } else {
+        notify(err.message || "Error saving user", "error");
+      }
     }
   };
 
   const loadUsers = async () => {
     const data = await fetchUsers({
-      pageNo: page,
-      pageSize: rowsPerPage,
-      search,
+      page: page,
+      size: rowsPerPage,
+      search: debouncedSearch,
     });
     setRows(data.content);
     setTotalCount(data.totalElements);
@@ -141,8 +148,16 @@ export default function Page() {
   /* ---------------- effects ---------------- */
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     loadUsers();
-  }, [page, rowsPerPage, search]);
+  }, [page, rowsPerPage, debouncedSearch]);
 
   useEffect(() => {
     fetchRoles().then(setRoles);
@@ -151,10 +166,23 @@ export default function Page() {
   /* ---------------- render ---------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Users
+          </Typography>
+          <Chip 
+            label={`${totalCount}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
+
       <Grid size={12}>
         <GenericTable<UserListItem>
-          title="Users"
           rows={rows}
           pagination
           totalCount={totalCount}

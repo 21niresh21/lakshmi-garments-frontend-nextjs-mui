@@ -2,7 +2,7 @@
 
 import { Button, Divider, Grid, Stack, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
-import { fetchJobworkDetail } from "@/app/api/jobworkApi";
+import { fetchJobworkDetail, getItemsForJobwork } from "@/app/api/jobworkApi";
 import CuttingForm from "../../batch/assign/CuttingForm";
 // import CuttingInpass from "./CuttingInpass";
 import JobworkSummary from "./JobworkSummary";
@@ -19,6 +19,7 @@ export default function Page() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [items, setItems] = useState<Item[]>([]);
+  const [itemsForJobwork, setItemsForJobWork] = useState([]);
 
   const handleFind = async () => {
     const trimmed = jobworkNumber.trim().toUpperCase();
@@ -44,6 +45,16 @@ export default function Page() {
   useEffect(() => {
     fetchItems().then((res) => setItems(res));
   }, []);
+
+  useEffect(() => {
+    if (jobwork && jobworkNumber && jobwork.jobworkType !== 'CUTTING') {
+      getItemsForJobwork(jobworkNumber)
+        .then((res) => setItemsForJobWork(res))
+        .catch(() => {
+          notify("Error fetching items given for jobwork", "error");
+        });
+    }
+  }, [jobwork]);
 
   return (
     <>
@@ -81,7 +92,7 @@ export default function Page() {
             <JobworkItemsTable
               setJobwork={setJobwork}
               jobwork={jobwork}
-              allItems={items}
+              allItems={jobwork?.jobworkType == 'CUTTING' ? items : itemsForJobwork}
               setJobworkNumber={setJobworkNumber}
             />
           )}

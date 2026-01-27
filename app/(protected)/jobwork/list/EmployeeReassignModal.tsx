@@ -9,7 +9,7 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { JobworkRow } from "./page";
 
 type EmployeeReassignForm = {
@@ -31,6 +31,7 @@ export default function EmployeeReassignModal({
   currentEmployee,
   jobwork,
 }: EmployeeReassignForm) {
+  const nameRef = useRef<HTMLInputElement>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const filteredEmployees = currentEmployee
     ? employees.filter((e) => e.name !== currentEmployee)
@@ -47,7 +48,17 @@ export default function EmployeeReassignModal({
     }
   }, [jobwork]);
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      fullWidth 
+      maxWidth="sm"
+      TransitionProps={{
+        onEntered: () => {
+          nameRef.current?.focus();
+        },
+      }}
+    >
       <DialogTitle>Re-Assign Jobwork</DialogTitle>
 
       <DialogContent dividers sx={{ my: 1 }}>
@@ -67,7 +78,7 @@ export default function EmployeeReassignModal({
             },
           }}
           onChange={(_, employee) => setSelectedEmployee(employee)}
-          renderInput={(params) => <TextField {...params} label="Employee" />}
+          renderInput={(params) => <TextField {...params} inputRef={nameRef} label="Employee" />}
         />
       </DialogContent>
 

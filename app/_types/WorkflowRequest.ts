@@ -25,6 +25,8 @@ export type WorkflowPayloadItem = {
   purchaseCost: number;
   returnedQuantity: number;
   damages: Damage[];
+  jobworkNumber?: string;
+  items?: any;
 };
 
 export type WorkflowRequestDetails = {

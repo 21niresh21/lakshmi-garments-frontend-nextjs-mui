@@ -1,12 +1,12 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton, CircularProgress, Box } from "@mui/material";
+import { Grid, IconButton, CircularProgress, Box, Stack, Typography, Chip, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-import { Transport } from "../invoice/_types/transport";
+import { Transport } from "../invoices/_types/transport";
 import {
   fetchTransports,
   updateTransport,
@@ -29,6 +29,10 @@ function normalizeError(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+export type TransportErrors = {
+  name?: string;
+};
+
 export default function Page() {
   const { notify } = useNotification();
   const { showLoading, hideLoading } = useGlobalLoading();
@@ -40,6 +44,7 @@ export default function Page() {
   const [selectedTransport, setSelectedTransport] = useState<Transport | null>(
     null
   );
+  const [errors, setErrors] = useState<TransportErrors>({});
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -57,7 +62,7 @@ export default function Page() {
         hideLoading();
       }
     },
-    [notify]
+    [notify, showLoading, hideLoading]
   );
 
   useEffect(() => {
@@ -92,10 +97,14 @@ export default function Page() {
           notify("Transport created successfully", "success");
         }
         setOpenModal(false);
+        setErrors({});
         loadTransports(search);
       } catch (err: any) {
-        console.error(err);
-        notify(normalizeError(err), "error");
+        if (err.validationErrors) {
+          setErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err.message || normalizeError(err), "error");
+        }
       }
     },
     [selectedTransport, notify, loadTransports, search]
@@ -128,21 +137,39 @@ export default function Page() {
 
   const toolbarExtras = useMemo(
     () => [
-      <IconButton
-        key="add-transport"
-        onClick={handleAddTransport}
-        title="Add Transport"
-      >
-        <AddIcon />
-      </IconButton>,
+      <Tooltip key="add-transport" title="Add Transport">
+        <IconButton
+          onClick={handleAddTransport}
+        >
+          <AddIcon />
+        </IconButton>
+      </Tooltip>,
     ],
     [handleAddTransport]
+  );
+
+  const transportInitialData = useMemo(
+    () => (selectedTransport ? { name: selectedTransport.name } : undefined),
+    [selectedTransport]
   );
 
   /* ---------------- Render ---------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Transports
+          </Typography>
+          <Chip 
+            label={`${rows.length}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<Transport>
           title="Transports"
@@ -162,10 +189,13 @@ export default function Page() {
       <TransportFormModal
         open={openModal}
         mode={selectedTransport ? "edit" : "create"}
-        initialData={
-          selectedTransport ? { name: selectedTransport.name } : undefined
-        }
-        onClose={() => setOpenModal(false)}
+        initialData={transportInitialData}
+        errors={errors}
+        setErrors={setErrors}
+        onClose={() => {
+          setOpenModal(false);
+          setErrors({});
+        }}
         onSubmit={handleTransportSubmit}
       />
     </Grid>

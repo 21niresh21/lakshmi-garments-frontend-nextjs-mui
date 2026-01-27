@@ -44,6 +44,7 @@ import { fetchTransports } from "@/app/api/transport";
 import { fetchCategories } from "@/app/api/category";
 import { fetchSubCategories } from "@/app/api/subCategory";
 import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+import { normalizeError } from "@/app/utils/error";
 
 const DRAFT_KEY = "invoiceDraft";
 
@@ -186,7 +187,7 @@ export default function InvoicePage() {
         return next;
       });
     },
-    []
+    [],
   );
 
   const saveDraft = () => {
@@ -234,8 +235,8 @@ export default function InvoicePage() {
       });
       notify("Invoice saved successfully", "success");
       clearForm();
-    } catch {
-      notify("Submission failed", "error");
+    } catch (err) {
+      notify(normalizeError(err), "error");
     } finally {
       hideLoading();
     }

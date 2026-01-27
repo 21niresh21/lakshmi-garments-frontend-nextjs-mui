@@ -1,4 +1,4 @@
-import { Transport } from "../(protected)/invoice/_types/transport";
+import { Transport } from "../(protected)/invoices/_types/transport";
 import { TransportFormData } from "../components/shared/TransportFormModal";
 import axiosInstance from "../config/axiosConfig";
 import { TransportParams } from "./_types/TransportParams";

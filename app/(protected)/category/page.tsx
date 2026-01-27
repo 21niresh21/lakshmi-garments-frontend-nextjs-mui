@@ -1,7 +1,7 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton } from "@mui/material";
+import { Chip, Grid, IconButton, Stack, Typography, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -31,6 +31,11 @@ function normalizeError(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+export type CategoryErrors = {
+  name?: string;
+  code?: string;
+};
+
 export default function Page() {
   const { notify } = useNotification();
   const { showLoading, hideLoading } = useGlobalLoading();
@@ -42,6 +47,7 @@ export default function Page() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
+  const [errors, setErrors] = useState<CategoryErrors>({});
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -86,7 +92,6 @@ export default function Page() {
 
   const handleCategorySubmit = useCallback(
     async (data: CategoryFormData) => {
-      showLoading();
       try {
         if (selectedCategory) {
           await updateCategory(selectedCategory.id, data);
@@ -97,15 +102,17 @@ export default function Page() {
         }
 
         setOpenModal(false);
+        setErrors({});
         loadCategories(search);
-      } catch (err) {
-        console.error(err);
-        notify(normalizeError(err), "error");
-      } finally {
-        hideLoading();
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err.message || normalizeError(err), "error");
+        }
       }
     },
-    [selectedCategory, notify, loadCategories, search, showLoading, hideLoading]
+    [selectedCategory, notify, loadCategories, search]
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -136,24 +143,47 @@ export default function Page() {
 
   const toolbarExtras = useMemo(
     () => [
-      <IconButton
-        key="add-category"
-        onClick={handleAddCategory}
-        title="Add Category"
-      >
-        <AddIcon />
-      </IconButton>,
+      <Tooltip key="add-category" title="Add Category">
+        <IconButton
+          onClick={handleAddCategory}
+        >
+          <AddIcon />
+        </IconButton>
+      </Tooltip>,
     ],
     [handleAddCategory]
+  );
+
+  const categoryInitialData = useMemo(
+    () =>
+      selectedCategory
+        ? {
+            name: selectedCategory.name,
+            code: selectedCategory.code,
+          }
+        : undefined,
+    [selectedCategory]
   );
 
   /* ---------------- Render ---------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Categories
+          </Typography>
+          <Chip 
+            label={`${rows.length}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<Category>
-          title="Categories"
           rows={rows}
           pagination={false}
           totalCount={rows.length}
@@ -171,15 +201,13 @@ export default function Page() {
       <CategoryFormModal
         open={openModal}
         mode={selectedCategory ? "edit" : "create"}
-        initialData={
-          selectedCategory
-            ? {
-                name: selectedCategory.name,
-                code: selectedCategory.code,
-              }
-            : undefined
-        }
-        onClose={() => setOpenModal(false)}
+        initialData={categoryInitialData}
+        errors={errors}
+        setErrors={setErrors}
+        onClose={() => {
+          setOpenModal(false);
+          setErrors({});
+        }}
         onSubmit={handleCategorySubmit}
       />
     </Grid>

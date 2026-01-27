@@ -32,4 +32,31 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      const { status, data } = error.response;
+
+      // Create a simplified error object
+      const appError = {
+        status,
+        message: data.message || "An unexpected error occurred",
+        errorCode: data.errorCode || "UNKNOWN_ERROR",
+        validationErrors: data.validationErrors || null,
+      };
+
+      // You could also trigger global notifications here if desired
+      return Promise.reject(appError);
+    }
+    
+    // Technical errors (network, etc)
+    return Promise.reject({
+      status: 500,
+      message: error.message || "Network Error",
+      errorCode: "NETWORK_ERROR"
+    });
+  }
+);
+
 export default axiosInstance;

@@ -73,6 +73,7 @@ interface GenericTableProps<T> {
 
   // Actions
   rowActions?: RowAction<T>[];
+  getRowSx?: (row: T) => object;
 }
 
 // ---- Component ----
@@ -98,6 +99,7 @@ export default function GenericTable<T extends { id?: string | number }>({
   noDataText = "No data available",
   rowActions,
   onRowClick,
+  getRowSx,
 }: GenericTableProps<T>) {
   const handleSort = (columnId: string) => {
     if (!onSortChange) return;
@@ -107,41 +109,54 @@ export default function GenericTable<T extends { id?: string | number }>({
 
   return (
     <Paper
-      sx={{ width: "100%", display: "flex", flexDirection: "column" }}
+      sx={{ 
+        width: "100%", 
+        maxWidth: "100%",
+        display: "flex", 
+        flexDirection: "column",
+        overflow: "hidden" 
+      }}
       elevation={3}
     >
       {loading && <LinearProgress />}
 
       {/* Toolbar */}
-      <Toolbar sx={{ gap: 2 }}>
-        {title && (
-          <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            {title}
-          </Typography>
-        )}
+      <Toolbar 
+        sx={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center",
+          gap: 2,
+          py: 1
+        }}
+      >
+        <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
+          {showSearch && onSearchChange && (
+            <TextField
+              size="small"
+              placeholder={searchPlacedHolder}
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              sx={{ maxWidth: 350 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
+        </Box>
 
-        {showSearch && onSearchChange && (
-          <TextField
-            size="small"
-            placeholder={searchPlacedHolder}
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        )}
-
-        {toolbarExtras}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {toolbarExtras}
+        </Box>
       </Toolbar>
 
       {/* Table */}
-      <TableContainer sx={{ flexGrow: 1, maxHeight: 600 }}>
-        <Table stickyHeader>
+      <TableContainer sx={{ flexGrow: 1, maxHeight: 600, overflowX: "auto" }}>
+        <Table stickyHeader sx={{ minWidth: 1000 }}>
           <TableHead>
             <TableRow
               sx={{ backgroundColor: (theme) => theme.palette.primary.main }}
@@ -150,7 +165,7 @@ export default function GenericTable<T extends { id?: string | number }>({
                 <TableCell
                   key={String(col.id)}
                   align={col.align}
-                  sx={{ color: "white", fontWeight: 600 }}
+                  sx={{ color: "white", fontWeight: 600, whiteSpace: "nowrap" }}
                 >
                   {col.sortable && onSortChange ? (
                     <TableSortLabel
@@ -185,6 +200,7 @@ export default function GenericTable<T extends { id?: string | number }>({
                 hover
                 sx={{
                   cursor: onRowClick ? "pointer" : "default",
+                  ...(getRowSx ? getRowSx(row) : {}),
                 }}
                 onClick={(e) => {
                   // Prevent navigation when clicking action buttons
@@ -194,13 +210,13 @@ export default function GenericTable<T extends { id?: string | number }>({
                 }}
               >
                 {columns.map((col) => (
-                  <TableCell key={String(col.id)} align={col.align}>
+                  <TableCell key={String(col.id)} align={col.align} sx={{ whiteSpace: "nowrap" }}>
                     {col.render ? col.render(row) : (row as any)[col.id]}
                   </TableCell>
                 ))}
 
                 {rowActions && (
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                     {rowActions.map((action) => (
                       <Box
                         key={action.label}

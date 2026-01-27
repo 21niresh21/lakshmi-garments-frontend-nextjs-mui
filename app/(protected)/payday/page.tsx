@@ -42,16 +42,16 @@ import dayjs from "dayjs";
 
 import { useRouter } from "next/navigation";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import { Supplier } from "../invoice/_types/supplier";
-import { Transport } from "../invoice/_types/transport";
+import { Supplier } from "../invoices/_types/supplier";
+import { Transport } from "../invoices/_types/transport";
 import {
   INITIAL_INVOICE,
   InvoiceErrors,
-} from "../invoice/create/invoice.types";
+} from "../invoices/create/invoice.types";
 import InvoiceFilter, {
   InvoiceFilterType,
-} from "../invoice/list/InvoiceFilter";
-import { InvoiceDetails } from "../invoice/_types/invoiceDetails";
+} from "../invoices/list/InvoiceFilter";
+import { InvoiceDetails } from "../invoices/_types/invoiceDetails";
 import { getPaydaySummary } from "@/app/api/paydayApi";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -362,7 +362,7 @@ export default function Page() {
             setSortBy(SORT_FIELD_MAP[col] ?? "invoiceDate");
             setSortOrder(order);
           }}
-          onRowClick={(row) => router.push(`/invoice/${row.id}`)}
+          onRowClick={(row) => router.push(`/invoices/${row.id}`)}
           columns={HEADERS}
           rowActions={[
             {

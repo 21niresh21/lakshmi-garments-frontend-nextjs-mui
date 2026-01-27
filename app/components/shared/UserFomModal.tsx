@@ -14,6 +14,7 @@ import {
   Switch,
   Autocomplete,
 } from "@mui/material";
+import { useEffect, useRef } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
@@ -40,11 +41,28 @@ export default function UserFormModal({
   onChange,
   roles,
 }: InvoiceFormModalProps) {
-  console.log(initialData);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(initialData);
+  };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <Dialog 
+        open={open} 
+        onClose={onClose} 
+        fullWidth 
+        maxWidth="sm"
+        component="form"
+        onSubmit={handleSubmit}
+        TransitionProps={{
+          onEntered: () => {
+            nameRef.current?.focus();
+          },
+        }}
+      >
         <DialogTitle>
           {mode === "create" ? "Add User" : "Edit User"}
         </DialogTitle>
@@ -52,6 +70,7 @@ export default function UserFormModal({
         <DialogContent dividers>
           <Stack spacing={2} mt={1}>
             <TextField
+              inputRef={nameRef}
               label="First name"
               value={initialData.firstName}
               onChange={(e) => onChange({ firstName: e.target.value })}
@@ -98,6 +117,7 @@ export default function UserFormModal({
                   label="Role"
                   error={!!errors.roleName}
                   helperText={errors.roleName}
+                  required
                 />
               )}
             />
@@ -130,8 +150,8 @@ export default function UserFormModal({
             Cancel
           </Button>
           <Button
+            type="submit"
             variant="contained"
-            onClick={() => onSubmit(initialData)}
             loading={loading}
             loadingPosition="end"
           >

@@ -8,8 +8,8 @@ import {
   Typography,
 } from "@mui/material";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
-import { SelectionState } from "./_types/models";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { SelectionState } from "./_types/models";
 import { createBatch } from "@/app/api/batchApi";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useUser } from "@/app/context/UserContext";
@@ -26,23 +26,19 @@ export default function BatchPreview({
   serialCode,
   batchDetails,
   onClear,
-}: //   onClear,
-Props) {
+}: Props) {
   const [loading, setLoading] = useState(false);
   const { notify } = useNotification();
   const { user } = useUser();
-  const hasSelectedItems =
-    batchDetails?.items?.some((item) => item.selected) ?? false;
+  const selectedItems =
+    batchDetails?.items?.filter((item) => item.selected) || [];
 
-  const submitBatch = () => {
+  const submitBatch = async () => {
     setLoading(true);
-    const selectedItems = batchDetails.items.filter((i) => i.selected);
-
     const getQty = (item: any) => (item.qty === "" ? item.maxQty : item.qty);
-
     const totalQuantity = selectedItems.reduce(
       (sum, item) => sum + getQty(item),
-      0
+      0,
     );
 
     const payload = {
@@ -51,122 +47,100 @@ Props) {
       batchStatus: BatchStatus.CREATED,
       createdByID: user?.id,
       isUrgent: batchDetails.urgent,
-      totalQuantity : totalQuantity,
+      totalQuantity,
       subCategories: selectedItems.map((item) => ({
         subCategoryName: item.name,
         quantity: getQty(item),
       })),
     };
 
-    createBatch(payload)
-      .then(() => {
-        notify("Batch has been created.", "success");
-        onClear();
-      })
-      .catch((err) => notify("Some error occured", "error"))
-      .finally(() => setLoading(false));
+    try {
+      await createBatch(payload);
+      notify("Batch has been created.", "success");
+      onClear();
+    } catch {
+      notify("Some error occurred", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <>
-      <Typography variant="h6" textAlign="center" mb={2}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <Typography variant="h6" textAlign="center" mb={1}>
         Batch Preview
       </Typography>
-
       <Divider />
-      <Grid container mt={2}>
-        <Grid size={12}>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography>{`Serial Code: ${serialCode}`}</Typography>
-            {batchDetails?.urgent && (
-              <Chip
-                label="Urgent"
-                size="small"
-                color="error"
-                icon={<PriorityHighIcon />}
-                sx={{ borderRadius: 1 }}
-              />
-            )}
-          </Stack>
-        </Grid>
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflowY: "auto",
-            pr: 1,
-            my: 3,
-          }}
-        >
-          {batchDetails?.items.map(
-            (subCategory) =>
-              subCategory.selected && (
-                <Box
-                  key={subCategory.name}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    py: 1,
-                    borderBottom: "1px dashed",
-                    borderColor: "divider",
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography variant="body1">{subCategory.name}</Typography>
-                  </Box>
-                  <Stack direction="row" columnGap={2} alignItems="center">
-                    <Typography>
-                      {subCategory.qty === ""
-                        ? subCategory.maxQty
-                        : subCategory.qty}
-                    </Typography>
-                    {(subCategory.qty === subCategory.maxQty ||
-                      subCategory.qty === "") && (
-                      <Chip
-                        label="USING ALL"
-                        size="small"
-                        color="warning"
-                        sx={{
-                          height: 18,
-                          fontSize: 10,
-                          fontWeight: 700,
-                          px: 0.5,
-                          "& .MuiChip-label": {
-                            px: 0.5,
-                          },
-                        }}
-                      />
-                    )}
-                  </Stack>
-                </Box>
-              )
-          )}
-          {batchDetails?.remarks && (
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              mt={3}
-              columnGap={2}
-            >
-              <Typography>Remarks</Typography>
-              <Typography>{batchDetails.remarks}</Typography>
+
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        mt={2}
+        mb={2}
+      >
+        <Typography variant="body2" fontWeight={700}>
+          Serial Code: {serialCode}
+        </Typography>
+        {batchDetails.urgent && (
+          <Chip
+            label="Urgent"
+            size="small"
+            color="error"
+            icon={<PriorityHighIcon />}
+          />
+        )}
+      </Stack>
+
+      <Box sx={{ flexGrow: 1, overflowY: "auto", mb: 2 }}>
+        {selectedItems.map((item) => (
+          <Box
+            key={item.name}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: "1px solid",
+              borderColor: "grey.200",
+            }}
+          >
+            <Typography variant="body2">{item.name}</Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="body2" fontWeight={600}>
+                {item.qty === "" ? item.maxQty : item.qty}
+              </Typography>
+              {item.qty === item.maxQty && (
+                <Chip
+                  label="MAX"
+                  size="small"
+                  color="warning"
+                  sx={{ height: 16, fontSize: 9 }}
+                />
+              )}
             </Stack>
-          )}
-        </Box>
-      </Grid>
-      {hasSelectedItems && (
+          </Box>
+        ))}
+        {batchDetails.remarks && (
+          <Box sx={{ mt: 2, p: 1, bgcolor: "grey.50", borderRadius: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Remarks:
+            </Typography>
+            <Typography variant="body2">{batchDetails.remarks}</Typography>
+          </Box>
+        )}
+      </Box>
+
+      {selectedItems.length > 0 && (
         <Button
+          fullWidth
           onClick={submitBatch}
-          sx={{ width: 100, alignSelf: "flex-end" }}
           startIcon={<CheckCircleIcon />}
-          size="small"
           variant="contained"
-          loading={loading}
-          loadingPosition="start"
+          disabled={loading}
         >
-          Create
+          {loading ? "Creating..." : "Create Batch"}
         </Button>
       )}
-    </>
+    </Box>
   );
 }

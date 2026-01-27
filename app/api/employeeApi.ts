@@ -7,7 +7,7 @@ const baseUrl = API_BASE_URL + "/employees";
 
 export const fetchEmployees = async (
   params?: EmployeeParams
-): Promise<Employee[]> => {
+): Promise<any> => {
   try {
     const response = await axiosInstance.get(`${baseUrl}`, { params });
     return response.data;

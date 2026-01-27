@@ -15,13 +15,18 @@ import {
   Box,
   CircularProgress,
   Tooltip,
+  Badge,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import React, { useEffect, useState } from "react";
 import { People } from "@mui/icons-material";
 import { fetchSuppliers } from "@/app/api/supplier";
-import { fetchBatches, recycleBatch } from "@/app/api/batchApi";
+import {
+  fetchBatches,
+  getAllBatchSerialCodes,
+  recycleBatch,
+} from "@/app/api/batchApi";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import LowPriorityIcon from "@mui/icons-material/LowPriority";
 import { formatToShortDate, formatToShortDateTime } from "@/app/utils/date";
@@ -39,12 +44,12 @@ import ReportIcon from "@mui/icons-material/Report";
 import InvoiceFormModal from "@/app/components/shared/InvoiceFormModal";
 import { fetchTransports } from "@/app/api/transport";
 import dayjs from "dayjs";
-import { Supplier } from "../../invoice/_types/supplier";
+import { Supplier } from "../../invoices/_types/supplier";
 import {
   INITIAL_INVOICE,
   InvoiceErrors,
-} from "../../invoice/create/invoice.types";
-import { InvoiceDetails } from "../../invoice/_types/invoiceDetails";
+} from "../../invoices/create/invoice.types";
+import { InvoiceDetails } from "../../invoices/_types/invoiceDetails";
 import {
   closeJobwork,
   fetchJobworks,
@@ -60,6 +65,13 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { FaClock, FaUserClock } from "react-icons/fa";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import { GoIssueClosed, GoIssueReopened } from "react-icons/go";
+import { MdOutlineAccessTimeFilled } from "react-icons/md";
+import { useRouter } from "next/navigation";
+import { JobworkFilter } from "./_types/JobworkFilter";
+import JobworkFilterPanel from "./JobworkFilter";
+import AddIcon from "@mui/icons-material/Add";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import { fetchEmployees } from "@/app/api/employeeApi";
 
 type SubCategoryWithQuantity = {
   id: number;
@@ -115,6 +127,13 @@ const getJobworkStats = (status: JobworkStatus) => {
         label: "Awaiting Close",
         icon: <FaUserClock color="warning" />,
         color: "warning" as const,
+      };
+
+    case JobworkStatus.AWAITING_APPROVAL:
+      return {
+        label: "Awaiting Approval",
+        icon: <MdOutlineAccessTimeFilled color="primary" />,
+        color: "primary" as const,
       };
   }
 };
@@ -184,9 +203,11 @@ const HEADERS = [
 
 export default function Page() {
   const { notify } = useNotification();
+  const router = useRouter();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<string | undefined>();
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [totalCount, setTotalCount] = useState(0);
@@ -194,6 +215,8 @@ export default function Page() {
   const [rows, setRows] = useState<JobworkRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [transports, setTransports] = useState<Supplier[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [batchSerialCodes, setBatchSerialCodes] = useState<string[]>([]);
   const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee>();
@@ -209,15 +232,63 @@ export default function Page() {
   // ✅ Popper state
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [subCategories, setSubCategories] = useState<SubCategoryWithQuantity[]>(
-    []
+    [],
   );
+  const [filters, setFilters] = useState<JobworkFilter>({
+    search: "",
+    jobworkStatus: [], // Array for multiple status selection
+    jobworkType: [], // Array for multiple type selection
+    assignedToName: [], // Specific employee ID
+    batchSerialCode: [], // Search by batch
+    startDate: "", // yyyy-MM-dd
+    endDate: "", // yyyy-MM-dd
+  });
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
+    null,
+  );
+
+  const activeFilterCount =
+    (filters.jobworkStatus?.length || 0) +
+    (filters.jobworkType?.length || 0) +
+    (filters.assignedToName?.length || 0) +
+    (filters.batchSerialCode?.length || 0) +
+    (filters.startDate || filters.endDate ? 1 : 0);
+
+  const openFilter = Boolean(filterAnchorEl);
+
+  const handleOpenFilter = (e: React.MouseEvent<HTMLElement>) => {
+    setFilterAnchorEl(e.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setFilterAnchorEl(null);
+  };
+
+  const handleApplyFilter = () => {
+    setPage(0);
+    handleCloseFilter();
+  };
+
+  const handleResetFilter = () => {
+    setFilters({
+      search: "",
+      jobworkStatus: [], // Array for multiple status selection
+      jobworkType: [], // Array for multiple type selection
+      assignedToName: [], // Specific employee ID
+      batchSerialCode: [], // Search by batch
+      startDate: "", // yyyy-MM-dd
+      endDate: "", // yyyy-MM-dd
+    });
+    setPage(0);
+    handleCloseFilter();
+  };
 
   const handleInvoiceChange = (patch: Partial<InvoiceDetails>) => {
     setSelectedInvoice((prev) => ({ ...prev, ...patch }));
     setInvoiceErrors((prev) => {
       const next = { ...prev };
       Object.keys(patch).forEach(
-        (key) => delete next[key as keyof InvoiceErrors]
+        (key) => delete next[key as keyof InvoiceErrors],
       );
       return next;
     });
@@ -346,12 +417,8 @@ export default function Page() {
         pageSize: rowsPerPage,
         sortBy,
         sortOrder,
-        search,
-        // batchStatusNames: batchStatusFilter,
-        // categoryNames: categoryFilter,
-        // isUrgent: isUrgentFilter,
-        // startDate: dateRange.start,
-        // endDate: dateRange.end,
+        search: debouncedSearch,
+        ...filters
       });
       setTotalCount(data.totalElements);
       setRows(data.content); // assuming backend returns { content, totalElements, etc. }
@@ -383,34 +450,42 @@ export default function Page() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     loadJobworks();
   }, [
     page,
     rowsPerPage,
-    search,
+    debouncedSearch,
     sortBy,
     sortOrder,
     openModal,
-    // batchStatusFilter,
-    // categoryFilter,
-    // isUrgentFilter,
-    // dateRange,
+    filters
   ]);
 
-  //   useEffect(() => {
-  //     if (openModal) {
-  //       fetchSuppliers()
-  //         .then((res) => setSuppliers(res))
-  //         .catch((err) => {
-  //           notify("Error fetching suppliers", "error");
-  //         });
-  //       fetchTransports()
-  //         .then((res) => setTransports(res))
-  //         .catch((err) => {
-  //           notify("Error fetching transports", "error");
-  //         });
-  //     }
-  //   }, [openModal]);
+  useEffect(() => {
+    if (Boolean(filterAnchorEl)) {
+      fetchEmployees()
+        .then((res) => {
+          setEmployees(res?.content);
+          console.log(res);
+        })
+        .catch((err) => {
+          notify("Error fetching employeees", "error");
+        });
+      getAllBatchSerialCodes()
+        .then((res) => setBatchSerialCodes(res))
+        .catch((err) => {
+          notify("Error fetching batch serial codes", "error");
+        });
+    }
+  }, [filterAnchorEl]);
 
   return (
     <Grid container>
@@ -434,6 +509,31 @@ export default function Page() {
             setSortOrder(order);
           }}
           columns={HEADERS}
+          onRowClick={(row) => router.push(`/jobwork/${row.id}`)}
+          toolbarExtras={
+            <Stack direction="row" alignItems="center">
+              <Badge
+                badgeContent={activeFilterCount}
+                color="primary"
+                overlap="circular"
+                invisible={activeFilterCount === 0} // hide badge when no filters active
+              >
+                <Tooltip title="Filter Jobworks">
+                  <IconButton onClick={handleOpenFilter}>
+                    <FilterAltIcon />
+                  </IconButton>
+                </Tooltip>
+              </Badge>
+              <Tooltip title="Add Jobowork">
+                <IconButton
+                  size="small"
+                  onClick={() => router.push("/batch/assign")}
+                >
+                  <AddIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          }
           rowActions={[
             {
               label: "Close Jobwork",
@@ -460,11 +560,14 @@ export default function Page() {
             },
             {
               label: "Re Assign",
-              icon: (row: JobworkRow) =>  row.status === JobworkStatus.IN_PROGRESS && (
-                <IconButton size="small">
-                  <SwapHorizIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
+              icon: (row: JobworkRow) =>
+                row.status === JobworkStatus.IN_PROGRESS && (
+                  <Tooltip title="Reassign jobwork">
+                  <IconButton size="small">
+                    <SwapHorizIcon sx={{ color: "gray" }} />
+                  </IconButton>
+                  </Tooltip>
+                ),
               onClick: (row) => handleReAssignJob(row),
             },
           ]}
@@ -481,18 +584,17 @@ export default function Page() {
         onSubmit={reassignJob}
       />
 
-      {/* ✅ POPPER (render ONCE, outside table) */}
-      {/* <InvoiceFormModal
-        open={openModal}
-        mode={selectedInvoice ? "edit" : "create"}
-        onChange={handleInvoiceChange}
-        initialData={selectedInvoice}
-        onClose={handleCloseDetails}
-        onSubmit={handleInvoiceSubmit}
-        suppliers={suppliers}
-        transports={transports}
-        errors={invoiceErrors}
-      /> */}
+      <JobworkFilterPanel
+        anchorEl={filterAnchorEl}
+        open={openFilter}
+        filters={filters}
+        employees={employees}
+        batchSerialCodes={batchSerialCodes}
+        onChange={setFilters}
+        onApply={handleApplyFilter}
+        onReset={handleResetFilter}
+        onClose={handleCloseFilter}
+      />
     </Grid>
   );
 }

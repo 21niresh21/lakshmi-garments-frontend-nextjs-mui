@@ -2,11 +2,12 @@
 import { Button, Grid, TextField } from "@mui/material";
 import React, { Dispatch, SetStateAction } from "react";
 import { JobworkForm } from "./_types/jobwork.types";
+import { sanitizeNumberInput } from "@/app/utils/number";
 
 interface Props {
   setJobwork: Dispatch<SetStateAction<JobworkForm>>;
   jobwork: JobworkForm;
-  maxQty: number
+  maxQty: number;
 }
 
 export default function CuttingForm({ setJobwork, jobwork, maxQty }: Props) {
@@ -20,7 +21,7 @@ export default function CuttingForm({ setJobwork, jobwork, maxQty }: Props) {
         value={jobwork.quantity ?? ""}
         onChange={(e) => {
           const raw = e.target.value;
-          let value = raw === "" ? undefined : Number(raw);
+          let value = raw === "" ? undefined : Number(sanitizeNumberInput(raw));
 
           if (value !== undefined && value > maxQty) {
             value = maxQty; // clamp

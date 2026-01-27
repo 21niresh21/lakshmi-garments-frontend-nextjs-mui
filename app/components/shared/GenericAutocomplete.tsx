@@ -10,6 +10,7 @@ type AutocompleteOption<T extends object> = T | CreateOption;
 
 type GenericAutocompleteProps<T extends object> = {
   label: string;
+  placeholder?: string;
   options: T[];
   value: T | null;
   onChange: (value: T | null) => void;
@@ -32,6 +33,7 @@ const filter = createFilterOptions<AutocompleteOption<any>>();
 
 export function GenericAutocomplete<T extends object>({
   label,
+  placeholder,
   options,
   value,
   onChange,
@@ -102,6 +104,7 @@ export function GenericAutocomplete<T extends object>({
         <TextField
           {...params}
           label={label}
+          placeholder={placeholder}
           size={size ? size : "medium"}
           error={Boolean(error)}
           helperText={error}

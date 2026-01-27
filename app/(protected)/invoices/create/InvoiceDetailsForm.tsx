@@ -135,7 +135,7 @@ function InvoiceDetailsForm({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
-        <Typography variant="h5" mb={2}>
+        <Typography variant="h5" mb={2} fontWeight={600}>
           Invoice Details
         </Typography>
 
@@ -146,6 +146,7 @@ function InvoiceDetailsForm({
               fullWidth
               required
               label="Invoice Number"
+              placeholder="Enter Invoice Number"
               value={value.invoiceNumber}
               onChange={(e) => onChange({ invoiceNumber: e.target.value })}
               onBlur={(e) => onChange({ invoiceNumber: e.target.value.trim() })}
@@ -199,6 +200,7 @@ function InvoiceDetailsForm({
           <Grid size={{ xs: 12, md: 4 }}>
             <GenericAutocomplete<Supplier>
               label="Supplier"
+              placeholder="Select Supplier"
               options={suppliers}
               value={selectedSupplier}
               onChange={(s) => onChange({ supplierID: s?.id })}
@@ -223,6 +225,7 @@ function InvoiceDetailsForm({
           <Grid size={{ xs: 12, md: 4 }}>
             <GenericAutocomplete<Transport>
               label="Transport"
+              placeholder="Select Transport"
               options={transports}
               value={selectedTransport}
               onChange={(t) => onChange({ transportID: t?.id })}
@@ -248,6 +251,7 @@ function InvoiceDetailsForm({
             <TextField
               type="number"
               label="Transport Cost"
+              placeholder="Enter Transport Cost"
               fullWidth
               value={value.transportCost ?? ""}
               onChange={(e) => {

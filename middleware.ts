@@ -13,7 +13,7 @@ export function middleware(req: NextRequest) {
 
   // 3. If already logged in, don't let them go back to login page
   if (token && isLoginPage) {
-    return NextResponse.redirect(new URL("/invoice/create", req.url));
+    return NextResponse.redirect(new URL("/invoices/create", req.url));
   }
 
   return NextResponse.next();

@@ -1,67 +1,112 @@
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { purple } from "@mui/material/colors";
+import { alpha, createTheme, Theme } from "@mui/material/styles";
+import { ThemeConfiguration } from "@/app/context/ThemeContext";
 
-export const baseTheme = createTheme({
-  palette: {
-    primary: {
-      main: "#00569d",
-    },
-    background: {
-      default: "#f8fafc",
-      paper: "#ffffff",
-    },
-  },
-
-  shape: {
-    borderRadius: 8,
-  },
-
-  typography: {
-    fontFamily: `"Inter", "Roboto", "Helvetica", "Arial", sans-serif`,
-    fontSize: 14,
-  },
-});
-
-const theme = createTheme(baseTheme, {
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        head: {
-          backgroundColor: baseTheme.palette.primary.main,
-          color: baseTheme.palette.primary.contrastText,
-          fontWeight: "bold",
-        },
+export const createCustomTheme = (config: ThemeConfiguration) => {
+  const baseTheme = createTheme({
+    palette: {
+      mode: config.mode,
+      primary: {
+        main: config.primaryMain,
+        light: config.primaryLight,
+        dark: config.primaryDark,
+      },
+      secondary: {
+        main: config.secondaryMain,
+      },
+      background: {
+        default: config.mode === "light" ? alpha(config.primaryMain, 0.04) : "#121212",
+        paper: config.mode === "light" ? "#FFFFFF" : "#1E1E1E",
       },
     },
-    MuiDialogTitle: {
-      styleOverrides: {
-        root: {
-          backgroundColor: baseTheme.palette.primary.main,
-          color: baseTheme.palette.primary.contrastText,
-        },
-      },
+    shape: {
+      borderRadius: config.borderRadius,
     },
+    typography: {
+      fontFamily: config.fontFamily,
+      fontSize: config.fontSize,
+    },
+  });
 
-    MuiTableSortLabel: {
-      styleOverrides: {
-        root: {
-          color: baseTheme.palette.primary.contrastText, // default white
-
-          "&:hover": {
-            color: baseTheme.palette.primary.contrastText, // hover white
+  return createTheme(baseTheme, {
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "none",
+            fontWeight: 600,
+            borderRadius: config.borderRadius,
           },
-
-          "&.Mui-active": {
-            color: baseTheme.palette.primary.contrastText, // active white
+          containedPrimary: {
+            "&:hover": {
+              backgroundColor: baseTheme.palette.primary.dark,
+            },
+          },
+          outlinedPrimary: {
+            "&:hover": {
+              backgroundColor: baseTheme.palette.primary.main + "10", // Very light tint 
+            },
           },
         },
-
-        icon: {
-          color: baseTheme.palette.primary.contrastText + " !important", // arrow white
+        defaultProps: {
+          size: config.compactMode ? "small" : "medium",
+        }
+      },
+      MuiTextField: {
+        defaultProps: {
+          size: config.compactMode ? "small" : "medium",
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: config.compactMode ? {
+            padding: "6px 16px",
+          } : {},
+          head: {
+            backgroundColor: baseTheme.palette.primary.main,
+            color: baseTheme.palette.primary.contrastText,
+            fontWeight: "bold",
+            padding: config.compactMode ? "8px 16px" : "16px",
+          },
+        },
+      },
+      MuiDialogTitle: {
+        styleOverrides: {
+          root: {
+            backgroundColor: baseTheme.palette.primary.main,
+            color: baseTheme.palette.primary.contrastText,
+          },
+        },
+      },
+      MuiTableSortLabel: {
+        styleOverrides: {
+          root: {
+            color: baseTheme.palette.primary.contrastText,
+            "&:hover": {
+              color: baseTheme.palette.primary.contrastText,
+            },
+            "&.Mui-active": {
+              color: baseTheme.palette.primary.contrastText,
+            },
+          },
+          icon: {
+            color: baseTheme.palette.primary.contrastText + " !important",
+          },
         },
       },
     },
-  },
-});
+  });
+};
 
-export default theme;
+// Default export for initial load / server-side
+const defaultTheme = createCustomTheme({
+  primaryMain: "#AA60C8",
+  primaryLight: "#B28CFA",
+  primaryDark: "#6422CC",
+  secondaryMain: "#3F4C6B",
+  borderRadius: 4,
+  mode: "light",
+  fontSize: 14,
+  fontFamily: "'Inter', 'Roboto', sans-serif",
+  compactMode: false
+});
+export default defaultTheme;

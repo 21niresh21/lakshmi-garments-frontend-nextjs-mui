@@ -16,12 +16,12 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LoadingButton } from "@mui/lab";
 import dayjs, { Dayjs } from "dayjs";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
-import { InvoiceDetails } from "@/app/(protected)/invoice/_types/invoiceDetails";
-import { Supplier } from "@/app/(protected)/invoice/_types/supplier";
-import { Transport } from "@/app/(protected)/invoice/_types/transport";
-import { InvoiceErrors } from "@/app/(protected)/invoice/create/invoice.types";
+import { InvoiceDetails } from "@/app/(protected)/invoices/_types/invoiceDetails";
+import { Supplier } from "@/app/(protected)/invoices/_types/supplier";
+import { Transport } from "@/app/(protected)/invoices/_types/transport";
+import { InvoiceErrors } from "@/app/(protected)/invoices/create/invoice.types";
 import { sanitizeNumberInput } from "@/app/utils/number";
 
 type Props = {
@@ -49,6 +49,7 @@ export default function InvoiceFormModal({
   errors,
   onChange,
 }: Props) {
+  const nameRef = useRef<HTMLInputElement>(null);
   /* ---------------- Memoized Data ---------------- */
 
   const supplierOptions = useMemo(
@@ -154,6 +155,11 @@ export default function InvoiceFormModal({
         fullWidth
         maxWidth="sm"
         aria-labelledby="invoice-form-title"
+        TransitionProps={{
+          onEntered: () => {
+            nameRef.current?.focus();
+          },
+        }}
       >
         <DialogTitle id="invoice-form-title">
           {mode === "create" ? "Add Invoice" : "Edit Invoice"}
@@ -162,12 +168,12 @@ export default function InvoiceFormModal({
         <DialogContent dividers>
           <Stack spacing={2} mt={1}>
             <TextField
+              inputRef={nameRef}
               label="Invoice Number"
               value={initialData.invoiceNumber}
               onChange={handleTextChange("invoiceNumber")}
               onBlur={handleTrimOnBlur("invoiceNumber")}
               required
-              autoFocus
               error={!!errors.invoiceNumber}
               helperText={errors.invoiceNumber}
               fullWidth

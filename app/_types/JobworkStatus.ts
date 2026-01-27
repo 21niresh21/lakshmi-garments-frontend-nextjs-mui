@@ -3,5 +3,10 @@ export enum JobworkStatus {
   PENDING_RETURN = "PENDING_RETURN",
   CLOSED = "CLOSED",
   REASSIGNED = "REASSIGNED",
-  AWAITING_CLOSE = "AWAITING_CLOSE"
+  AWAITING_CLOSE = "AWAITING_CLOSE",
+  AWAITING_APPROVAL = "AWAITING_APPROVAL"
 }
+
+export const JOBWORK_STATUS_ARRAY = Object.values(
+  JobworkStatus,
+) as JobworkStatus[];

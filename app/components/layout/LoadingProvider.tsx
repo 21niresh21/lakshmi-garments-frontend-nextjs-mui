@@ -7,6 +7,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
 
 interface LoadingContextProps {
@@ -30,10 +31,13 @@ export const LoadingProvider = ({ children }: { children: ReactNode }) => {
   const showLoading = useCallback(() => setLoadingState(true), []);
   const hideLoading = useCallback(() => setLoadingState(false), []);
 
+  const value = useMemo(
+    () => ({ loading, setLoading, showLoading, hideLoading }),
+    [loading, setLoading, showLoading, hideLoading]
+  );
+
   return (
-    <LoadingContext.Provider
-      value={{ loading, setLoading, showLoading, hideLoading }}
-    >
+    <LoadingContext.Provider value={value}>
       {children}
     </LoadingContext.Provider>
   );

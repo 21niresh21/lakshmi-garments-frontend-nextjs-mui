@@ -121,27 +121,9 @@ export default function InvoiceDetailsPage() {
 
   return (
     <Box>
-      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
-        <Link
-          href="/invoice/list"
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "flex",
-            alignItems: "center",
-            columnGap: 5,
-          }}
-        >
-          <ArrowBackIcon fontSize="small" />
-          Invoices
-        </Link>
 
-        <Typography color="#0009" variant="body2">
-          {invoice.invoiceNumber}
-        </Typography>
-      </Breadcrumbs>
       <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, ml: 2.5 }}>
-        Invoice {invoice.invoiceNumber}
+        Invoice # {invoice.invoiceNumber}
       </Typography>
 
       <Stack spacing={3}>

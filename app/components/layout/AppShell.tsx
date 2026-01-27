@@ -8,87 +8,134 @@ import {
   Drawer,
   IconButton,
   Toolbar,
-  Typography,
   useMediaQuery,
   useTheme,
+  Slide,
+  Typography,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
-
-import SideBarContent from "./SideBarContent";
-import UserMenu from "./UserMenu";
 import { usePathname } from "next/navigation";
+import AppBreadcrumbs from "../navigation/AppBreadcrumbs";
+import SideBarContent from "./SideBarContent";
+import SessionExpiryTracker from "../shared/SessionExpiryTracker";
 
 const DRAWER_WIDTH = 250;
 const COLLAPSED_WIDTH = 70;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
+  const pathname = usePathname();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const isAnalyticsPage = pathname.includes("/analytics");
 
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [logoHover, setLogoHover] = React.useState(false);
+  const [showAppBar, setShowAppBar] = React.useState(!isAnalyticsPage);
 
-  const pathname = usePathname();
-  const firstSegment = pathname.split("/").filter(Boolean)[0] ?? "";
-  const title =
-    firstSegment.charAt(0).toUpperCase() +
-    firstSegment.slice(1) +
-    " Management";
+  // Reset hover state when sidebar state changes to prevent "stuck" icons
+  React.useEffect(() => {
+    setLogoHover(false);
+  }, [collapsed]);
 
-  /* ---------------- Drawer Content ---------------- */
+  React.useEffect(() => {
+    setShowAppBar(!isAnalyticsPage);
+  }, [isAnalyticsPage]);
 
   const drawerContent = (
     <>
-      {/* Header */}
       <Box
         onMouseEnter={() => setLogoHover(true)}
         onMouseLeave={() => setLogoHover(false)}
         sx={{
-          height: 56,
+          height: 64,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          mt: isMobile ? 7 : "",
+          transition: "all 0.3s",
         }}
       >
-        {!collapsed && (
+        {!collapsed ? (
           <Box
             sx={{
               width: "100%",
               px: 2,
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
-              py: 2,
-              mt: 1,
+              gap: 1.5,
+              height: "100%",
+              mt : 0.7 
             }}
           >
-            <Typography fontWeight={600}>Lakshmi Garments</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1}}>
+ 
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  letterSpacing: "-0.02em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Lakshmi Garments
+              </Typography>
+            </Box>
             {!isMobile && (
-              <IconButton size="small" onClick={() => setCollapsed(true)}>
+              <IconButton size="small" onClick={() => setCollapsed(true)} sx={{ color: "text.secondary" }}>
                 <ChevronLeftIcon />
               </IconButton>
             )}
           </Box>
-        )}
-
-        {collapsed && !logoHover && (
-          <Typography sx={{ mt: 2 }} fontWeight={600}>
-            LG
-          </Typography>
-        )}
-
-        {collapsed && logoHover && !isMobile && (
-          <IconButton
-            sx={{ mt: 2 }}
-            size="small"
+        ) : (
+          <Box
             onClick={() => setCollapsed(false)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "100%",
+              cursor: "pointer",
+              mt : 0.7 
+            }}
           >
-            <ChevronRightIcon />
-          </IconButton>
+            {logoHover && !isMobile ? (
+              <IconButton>
+              <ChevronRightIcon color="primary" />
+
+
+              </IconButton>
+            ) : (
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  // bgcolor: "background.paper", // Optional: highlight if SVG is transparent
+                  // boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/lg_twin_roses.svg"
+                  alt="LG Logo"
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
         )}
       </Box>
 
@@ -99,20 +146,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     </>
   );
 
-  /* ---------------- Render ---------------- */
-
   return (
     <Box sx={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <CssBaseline />
 
-      {/* 🔹 Desktop Drawer */}
       {!isMobile && (
         <Drawer
           variant="permanent"
           sx={{
             width: collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
             flexShrink: 0,
-            "& .MuiDrawer-paper": {
+            ".MuiDrawer-paper": {
               width: collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
               transition: "width 0.25s",
               overflowX: "hidden",
@@ -123,75 +167,70 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </Drawer>
       )}
 
-      {/* 🔹 Mobile Drawer */}
       {isMobile && (
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-            },
-          }}
+          sx={{ ".MuiDrawer-paper": { width: DRAWER_WIDTH } }}
         >
           {drawerContent}
         </Drawer>
       )}
 
-      {/* ---------------- Main Content ---------------- */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        {/* 🔹 Top App Bar */}
-        <AppBar
-          position="sticky"
-          color="inherit"
-          elevation={1}
-          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        >
-          <Toolbar sx={{ justifyContent: "space-between" }}>
-            {isMobile && (
-              <IconButton
-                edge="start"
-                onClick={() => setMobileOpen(!mobileOpen)}
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-
-            <Typography variant="h5" fontWeight={600}>
-              {title}
-            </Typography>
-
-            <UserMenu />
-          </Toolbar>
-        </AppBar>
-
-        {/* 🔹 Scrollable Content */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflowY: "auto",
-            bgcolor: "#f5f5f5",
-            p: 2,
-          }}
-          className="safe-bottom"
-        >
+      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {isAnalyticsPage && (
           <Box
-            sx={{ p: 2, bgcolor: "#fff", minHeight: "100%" }}
-            className="safe-bottom"
+            onMouseEnter={() => setShowAppBar(true)}
+            sx={{
+              position: "fixed",
+              top: 0,
+              left: isMobile ? 0 : collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
+              right: 0,
+              height: 15,
+              zIndex: theme.zIndex.appBar + 1,
+            }}
+          />
+        )}
+
+        <Slide direction="down" in={showAppBar}>
+          <AppBar
+            position={isAnalyticsPage ? "fixed" : "sticky"}
+            color="inherit"
+            elevation={0}
+            onMouseLeave={() => isAnalyticsPage && setShowAppBar(false)}
+            sx={{
+              zIndex: theme.zIndex.drawer + 1,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              width:
+                isAnalyticsPage && !isMobile
+                  ? `calc(100% - ${
+                      collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH
+                    }px)`
+                  : "100%",
+            }}
           >
+            <Toolbar>
+              {isMobile && (
+                <IconButton onClick={() => setMobileOpen(true)}>
+                  <MenuIcon />
+                </IconButton>
+              )}
+
+              <AppBreadcrumbs />
+            </Toolbar>
+          </AppBar>
+        </Slide>
+
+        <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
+          <Box sx={{ p: 2, minHeight: "100%" }}>
             {children}
           </Box>
         </Box>
       </Box>
+      <SessionExpiryTracker />
     </Box>
   );
 }

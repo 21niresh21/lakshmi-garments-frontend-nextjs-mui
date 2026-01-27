@@ -7,14 +7,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
   TextField,
   Stack,
   Autocomplete,
-  DialogProps,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useGlobalLoading } from "../layout/LoadingProvider";
+import { EmployeeErrors } from "@/app/(protected)/employee/page";
 
 export type EmployeeFormData = {
   name: string;
@@ -25,6 +25,8 @@ type EmployeeFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: EmployeeFormData;
+  errors: EmployeeErrors;
+  setErrors: React.Dispatch<React.SetStateAction<EmployeeErrors>>;
   onClose: () => void;
   onSubmit: (data: EmployeeFormData) => void;
 };
@@ -33,6 +35,8 @@ export default function EmployeeFormModal({
   open,
   mode,
   initialData,
+  errors,
+  setErrors,
   onClose,
   onSubmit,
 }: EmployeeFormModalProps) {
@@ -43,7 +47,6 @@ export default function EmployeeFormModal({
     name: "",
     skills: [],
   });
-  const [touched, setTouched] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -55,28 +58,32 @@ export default function EmployeeFormModal({
           skills: [],
         }
       );
-      setTouched(false);
+      setErrors((prev) => (Object.keys(prev).length === 0 ? prev : {}));
     }
-  }, [open, initialData]);
+  }, [open, initialData, setErrors]);
 
   useEffect(() => {
     fetchSkills("").then(setSkills);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
+    const { name, value } = e.target;
     setForm((prev) => ({ ...prev, name: value }));
+    if (errors[name as keyof EmployeeErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = e.target.value.trim();
-    setForm((prev) => ({ ...prev, name: value }));
-    setTouched(true);
+    const { name, value } = e.target;
+    const trimmedValue = value.trim();
+    setForm((prev) => ({ ...prev, name: trimmedValue }));
+    if (errors[name as keyof EmployeeErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  const nameError = touched && !form.name ? "Employee name is required" : "";
-
-  const isSubmitDisabled = loading || !form.name.trim();
+  const isSubmitDisabled = loading;
 
   const selectedSkills = useMemo(
     () => skills.filter((s) => form.skills?.includes(s.id)),
@@ -119,10 +126,9 @@ export default function EmployeeFormModal({
               value={form.name}
               onChange={handleChange}
               onBlur={handleBlur}
-              error={!!nameError}
-              helperText={nameError}
+              error={!!errors.name}
+              helperText={errors.name}
               fullWidth
-              required
               autoComplete="name"
             />
 
@@ -138,19 +144,34 @@ export default function EmployeeFormModal({
                   ...prev,
                   skills: selectedOptions.map((s) => s.id),
                 }));
+                if (errors.skills) {
+                  setErrors((prev) => ({ ...prev, skills: undefined }));
+                }
               }}
-              renderInput={(params) => <TextField {...params} label="Skills" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Skills"
+                  error={!!errors.skills}
+                  helperText={errors.skills}
+                />
+              )}
             />
           </Stack>
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose} disabled={loading}>
+          <LoadingButton onClick={onClose} loading={loading} color="inherit">
             Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitDisabled}>
+          </LoadingButton>
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={loading}
+            disabled={isSubmitDisabled}
+          >
             {mode === "create" ? "Create" : "Save"}
-          </Button>
+          </LoadingButton>
         </DialogActions>
       </form>
     </Dialog>

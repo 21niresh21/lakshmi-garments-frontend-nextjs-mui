@@ -1,7 +1,7 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton } from "@mui/material";
+import { Chip, Grid, IconButton, Stack, Typography, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -27,6 +27,10 @@ function normalizeError(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+export type ItemErrors = {
+  name?: string;
+};
+
 export default function Page() {
   const { notify } = useNotification();
   const { showLoading, hideLoading } = useGlobalLoading();
@@ -36,6 +40,7 @@ export default function Page() {
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [errors, setErrors] = useState<ItemErrors>({});
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -80,7 +85,6 @@ export default function Page() {
 
   const handleItemSubmit = useCallback(
     async (data: ItemFormData) => {
-      showLoading();
       try {
         if (selectedItem) {
           await updateItem(selectedItem.id, data);
@@ -91,15 +95,17 @@ export default function Page() {
         }
 
         setOpenModal(false);
+        setErrors({});
         loadItems(search);
-      } catch (err) {
-        console.error(err);
-        notify(normalizeError(err), "error");
-      } finally {
-        hideLoading();
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err.message || normalizeError(err), "error");
+        }
       }
     },
-    [selectedItem, notify, loadItems, search, showLoading, hideLoading]
+    [selectedItem, notify, loadItems, search]
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -129,20 +135,39 @@ export default function Page() {
 
   const toolbarExtras = useMemo(
     () => [
-      <IconButton key="add-item" onClick={handleAddItem} title="Add Item">
-        <AddIcon />
-      </IconButton>,
+      <Tooltip key="add-item" title="Add Item">
+        <IconButton onClick={handleAddItem}>
+          <AddIcon />
+        </IconButton>
+      </Tooltip>,
     ],
     [handleAddItem]
+  );
+
+  const itemInitialData = useMemo(
+    () => (selectedItem ? { name: selectedItem.name } : undefined),
+    [selectedItem]
   );
 
   /* ---------------- Render ---------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Items
+          </Typography>
+          <Chip 
+            label={`${rows.length}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<Item>
-          title="Items"
           rows={rows}
           pagination={false}
           totalCount={rows.length}
@@ -160,14 +185,13 @@ export default function Page() {
       <ItemFormModal
         open={openModal}
         mode={selectedItem ? "edit" : "create"}
-        initialData={
-          selectedItem
-            ? {
-                name: selectedItem.name,
-              }
-            : undefined
-        }
-        onClose={() => setOpenModal(false)}
+        initialData={itemInitialData}
+        errors={errors}
+        setErrors={setErrors}
+        onClose={() => {
+          setOpenModal(false);
+          setErrors({});
+        }}
         onSubmit={handleItemSubmit}
       />
     </Grid>

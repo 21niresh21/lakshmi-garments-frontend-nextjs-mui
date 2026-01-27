@@ -89,10 +89,12 @@ export default function Page() {
     isPaid: [],
     invoiceStartDate: "",
     invoiceEndDate: "",
+    receivedStartDate: "",
+    receivedEndDate: "",
   });
 
   const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
-    null
+    null,
   );
 
   const isFilterOpen = Boolean(filterAnchorEl);
@@ -143,7 +145,7 @@ export default function Page() {
       },
       { id: "supplierName", label: "Supplier" },
       { id: "transportName", label: "Transport" },
-      { id: "transportCost", label: "Transport Cost" },
+      { id: "transportCost", label: "Transport Cost", sortable: true },
       {
         id: "isTransportPaid",
         label: "Payment Status",
@@ -162,7 +164,7 @@ export default function Page() {
         ),
       },
     ],
-    []
+    [],
   );
 
   /* -------------------------------------------------------------------------- */
@@ -183,6 +185,8 @@ export default function Page() {
         isPaid: filters.isPaid,
         invoiceStartDate: toBackendDate(filters.invoiceStartDate),
         invoiceEndDate: toBackendDate(filters.invoiceEndDate),
+        receivedStartDate: toBackendDate(filters.receivedStartDate),
+        receivedEndDate: toBackendDate(filters.receivedEndDate),
       });
 
       setRows(data.content);
@@ -237,6 +241,8 @@ export default function Page() {
       isPaid: [],
       invoiceStartDate: "",
       invoiceEndDate: "",
+      receivedStartDate: "",
+      receivedEndDate: "",
     });
     setPage(0);
     handleCloseFilter();
@@ -336,21 +342,23 @@ export default function Page() {
             setSortBy(col);
             setSortOrder(order);
           }}
-          onRowClick={(row) => router.push(`/invoice/${row.id}`)}
+          onRowClick={(row) => router.push(`/invoices/${row.id}`)}
           rowActions={[
             {
               label: "Edit",
               icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
+                <Tooltip title="Edit Invoice">
+                  <IconButton size="small">
+                    <EditIcon sx={{ color: "gray" }} />
+                  </IconButton>
+                </Tooltip>
               ),
               onClick: handleEditInvoice,
             },
           ]}
           toolbarExtras={
             <Stack direction="row" alignItems="center">
-              <Tooltip title="Filter">
+              <Tooltip title="Filter Invoices">
                 <Badge
                   badgeContent={activeFilterCount}
                   color="primary"
@@ -365,7 +373,7 @@ export default function Page() {
               <Tooltip title="Add Invoice">
                 <IconButton
                   size="small"
-                  onClick={() => router.push("/invoice/create")}
+                  onClick={() => router.push("/invoices/create")}
                 >
                   <AddIcon />
                 </IconButton>

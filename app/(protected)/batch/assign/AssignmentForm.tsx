@@ -111,7 +111,7 @@ export default function AssignmentForm({
   //         jobwork.jobworkType === "CUTTING"
   //           ? [jobwork.quantity]
   //           : jobwork.items.map((i) => i.quantity ?? 0),
-  //       itemNames: jobwork.items.map((i) => i.item?.name ?? ""),
+  //       itemNames: jobwork.items.map((i) => i.?.name ?? ""),
   //       remarks: jobwork.remarks,
   //     };
 
@@ -193,84 +193,94 @@ export default function AssignmentForm({
   /* ================= UI ================= */
 
   return (
-    <Paper sx={{ p: 2, height: "100%" }} elevation={0}>
-      <Typography fontWeight={600}>Assign Batch</Typography>
+    <Paper sx={{ p: { xs: 2, md: 1 } }} elevation={0}>
+      <Typography fontWeight={600} variant="h6">
+        Assign Batch
+      </Typography>
       <Divider sx={{ my: 2 }} />
 
       <Grid container spacing={2}>
-        <Grid size={12}>
-          <Typography>Jobwork Number : {jobwork.jobworkNumber}</Typography>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="body1" mb={2}>
+            Jobwork Number: {jobwork.jobworkNumber}
+          </Typography>
         </Grid>
 
-        <Grid size={4}>
+        {/* Responsive inputs: stack on xs, side-by-side on sm+ */}
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Autocomplete
             fullWidth
+            openOnFocus
+            autoHighlight
             options={pendingBatches}
             value={jobwork.batchSerialCode}
             onChange={(_, value) =>
               setJobwork((p) => ({ ...p, batchSerialCode: value || "" }))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Batch Serial Code" />
+              <TextField {...params} label="Batch Serial Code" size="medium" />
             )}
           />
         </Grid>
 
-        <Grid size={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Autocomplete
             fullWidth
+            openOnFocus
+            autoHighlight
             options={jobworkTypes}
             value={jobwork.jobworkType}
             onChange={(_, value) =>
               setJobwork((p) => ({ ...p, jobworkType: value || "" }))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Jobwork Type" />
+              <TextField {...params} label="Jobwork Type" size="medium" />
             )}
           />
         </Grid>
 
-        <Grid size={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Autocomplete
             fullWidth
+            openOnFocus
+            autoHighlight
             options={employees.map((e) => e.name)}
-            // getOptionLabel={(e) => e.name}
             value={jobwork.assignedTo}
             onChange={(_, value) =>
               setJobwork((p) => ({ ...p, assignedTo: value ?? "" }))
             }
-            renderInput={(params) => <TextField {...params} label="Employee" />}
+            renderInput={(params) => (
+              <TextField {...params} label="Employee" size="medium" />
+            )}
             disabled={!jobwork.batchSerialCode || !jobwork.jobworkType}
           />
         </Grid>
 
-        {jobwork.jobworkType === "CUTTING" ? (
-          <>
-            <Grid size={12}>
-              <CuttingForm
-                maxQty={availableQty}
-                jobwork={jobwork}
-                setJobwork={setJobwork}
-              />
-            </Grid>
-          </>
-        ) : (
-          jobwork.jobworkType && (
-            <Grid size={12}>
+        {/* Dynamic Forms */}
+        <Grid size={{ xs: 12 }}>
+          {jobwork.jobworkType === "CUTTING" ? (
+            <CuttingForm
+              maxQty={availableQty}
+              jobwork={jobwork}
+              setJobwork={setJobwork}
+            />
+          ) : (
+            jobwork.jobworkType && (
               <ItemJobForm
                 batchItems={batchItems ?? []}
                 jobwork={jobwork}
                 setJobwork={setJobwork}
               />
-            </Grid>
-          )
-        )}
-        <Grid size={12}>
+            )
+          )}
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
           <TextField
             label="Remarks"
             fullWidth
             multiline
-            rows={3}
+            rows={2}
             value={jobwork.remarks}
             onChange={(e) =>
               setJobwork((p) => ({ ...p, remarks: e.target.value }))
@@ -278,85 +288,56 @@ export default function AssignmentForm({
           />
         </Grid>
 
-        {jobwork.jobworkType === "CUTTING" ? (
-          <Grid size={12} display="flex" justifyContent="flex-end" gap={2}>
-            <Button
-              variant="contained"
-              onClick={submitCuttingJobwork}
-              disabled={
-                loading ||
-                !jobwork.quantity ||
-                !jobwork.assignedTo ||
-                !jobwork.jobworkType ||
-                !jobwork.batchSerialCode
-              }
-            >
-              Assign
-            </Button>
-
-            <Button
-              variant="outlined"
-              disabled={
-                loading ||
-                !jobwork.quantity ||
-                !jobwork.assignedTo ||
-                !jobwork.jobworkType ||
-                !jobwork.batchSerialCode
-              }
-              onClick={openPreview}
-            >
-              Preview
-            </Button>
-          </Grid>
-        ) : (
-          <Grid size={12} display="flex" justifyContent="flex-end" gap={2}>
-            <Button
-              variant="contained"
-              onClick={submitItemBasedJobwork}
-              disabled={
-                loading ||
-                !jobwork.items[0]?.item ||
-                !jobwork.assignedTo ||
-                !jobwork.jobworkType ||
-                !jobwork.batchSerialCode
-              }
-            >
-              Assign
-            </Button>
-
-            <Button
-              variant="outlined"
-              disabled={
-                loading ||
-                !jobwork.items[0]?.item ||
-                !jobwork.assignedTo ||
-                !jobwork.jobworkType ||
-                !jobwork.batchSerialCode
-              }
-              onClick={openPreview}
-            >
-              Preview
-            </Button>
-          </Grid>
-        )}
+        {/* Actions */}
+        <Grid
+          size={{ xs: 12 }}
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 1 }}
+        >
+          <Button
+            variant="outlined"
+            onClick={openPreview}
+            disabled={
+              loading ||
+              !jobwork.assignedTo ||
+              !jobwork.batchSerialCode ||
+              (jobwork.jobworkType === "CUTTING" && !jobwork.quantity)
+            }
+          >
+            Preview
+          </Button>
+          <Button
+            variant="contained"
+            onClick={
+              jobwork.jobworkType === "CUTTING"
+                ? submitCuttingJobwork
+                : submitItemBasedJobwork
+            }
+            disabled={
+              loading ||
+              !jobwork.assignedTo ||
+              !jobwork.batchSerialCode ||
+              (jobwork.jobworkType === "CUTTING" && !jobwork.quantity)
+            }
+          >
+            Assign
+          </Button>
+        </Grid>
       </Grid>
 
-      {/* ================= PDF PREVIEW ================= */}
-
+      {/* Responsive Drawer width */}
       <Drawer
         anchor="right"
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        sx={{ top: 0, zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        PaperProps={{ sx: { width: 500 } }}
+        PaperProps={{ sx: { width: { xs: "100%", sm: 500 } } }}
       >
-        <Box sx={{ p: 1 }}>
+        <Box sx={{ p: 1, height: "100%" }}>
           {pdfUrl && (
             <iframe
               src={pdfUrl}
               width="100%"
               height="100%"
-              style={{ border: "none", minHeight: "90vh" }}
+              style={{ border: "none" }}
             />
           )}
         </Box>

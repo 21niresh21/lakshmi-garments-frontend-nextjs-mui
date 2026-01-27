@@ -42,3 +42,23 @@ export const createUser = async (userCreateRequest: UserPayload) => {
     throw error;
   }
 };
+
+export const fetchUserByUsername = async (username: string) => {
+  try {
+    const response = await axiosInstance.get(`${baseUrl}/${username}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user by username:", error);
+    throw error;
+  }
+};
+
+export const changePassword = async (username: string, changePasswordRequest: any) => {
+  try {
+    const response = await axiosInstance.patch(`${baseUrl}/${username}/change-password`, changePasswordRequest);
+    return response.data;
+  } catch (error) {
+    console.error("Error changing password:", error);
+    throw error;
+  }
+};

@@ -7,11 +7,11 @@ import {
   DialogActions,
   Stack,
   TextField,
-  Button,
-  DialogProps,
 } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { LoadingButton } from "@mui/lab";
+import { useEffect, useRef, useState } from "react";
 import { useGlobalLoading } from "../layout/LoadingProvider";
+import { CategoryErrors } from "@/app/(protected)/category/page";
 
 export type CategoryFormData = {
   name: string;
@@ -22,6 +22,8 @@ type CategoryFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: CategoryFormData;
+  errors: CategoryErrors;
+  setErrors: React.Dispatch<React.SetStateAction<CategoryErrors>>;
   onClose: () => void;
   onSubmit: (data: CategoryFormData) => void;
 };
@@ -30,6 +32,8 @@ export default function CategoryFormModal({
   open,
   mode,
   initialData,
+  errors,
+  setErrors,
   onClose,
   onSubmit,
 }: CategoryFormModalProps) {
@@ -38,10 +42,6 @@ export default function CategoryFormModal({
   const [form, setForm] = useState<CategoryFormData>({
     name: "",
     code: "",
-  });
-  const [touched, setTouched] = useState({
-    name: false,
-    code: false,
   });
 
   const nameRef = useRef<HTMLInputElement>(null);
@@ -54,30 +54,28 @@ export default function CategoryFormModal({
           code: "",
         }
       );
-      setTouched({ name: false, code: false });
+      setErrors((prev) => (Object.keys(prev).length === 0 ? prev : {}));
     }
-  }, [open, initialData]);
+  }, [open, initialData, setErrors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof CategoryErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value.trim() }));
-    setTouched((prev) => ({ ...prev, [name]: true }));
+    const trimmedValue = value.trim();
+    setForm((prev) => ({ ...prev, [name]: trimmedValue }));
+    if (errors[name as keyof CategoryErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  const errors = useMemo(
-    () => ({
-      name: touched.name && !form.name ? "Category name is required" : "",
-      code: touched.code && !form.code ? "Code is required" : "",
-    }),
-    [form, touched]
-  );
-
-  const isSubmitDisabled = loading || !form.name.trim() || !form.code.trim();
+  const isSubmitDisabled = loading;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +115,6 @@ export default function CategoryFormModal({
               error={!!errors.name}
               helperText={errors.name}
               fullWidth
-              required
             />
 
             <TextField
@@ -129,18 +126,22 @@ export default function CategoryFormModal({
               error={!!errors.code}
               helperText={errors.code}
               fullWidth
-              required
             />
           </Stack>
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose} disabled={loading}>
+          <LoadingButton onClick={onClose} loading={loading} color="inherit">
             Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitDisabled}>
+          </LoadingButton>
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={loading}
+            disabled={isSubmitDisabled}
+          >
             {mode === "create" ? "Create" : "Save"}
-          </Button>
+          </LoadingButton>
         </DialogActions>
       </form>
     </Dialog>

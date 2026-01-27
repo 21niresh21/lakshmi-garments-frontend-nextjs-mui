@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { TableRow, TableCell, TextField, IconButton } from "@mui/material";
+import {
+  TableRow,
+  TableCell,
+  TextField,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { GenericAutocomplete } from "@/app/components/shared/GenericAutocomplete";
 import { Item } from "@/app/_types/Item";
@@ -18,6 +24,8 @@ interface JobworkItemRowProps {
   onChange: (updatedRow: JobworkItemRowData) => void;
   onRemove: () => void;
   totalExceeded: boolean; // global total exceeded flag
+  rowRemaining: number;
+  showItemQuantity: boolean;
 }
 
 /**
@@ -50,6 +58,8 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
   onChange,
   onRemove,
   totalExceeded,
+  rowRemaining,
+  showItemQuantity,
 }) => {
   const noItemSelected = row.itemId === null;
   const emptyRow = isRowEmpty(row);
@@ -58,11 +68,11 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
 
   const handleNumberChange = (
     field: keyof JobworkItemRowData,
-    value: string
+    value: string,
   ) => {
     onChange({
       ...row,
-      [field]: sanitizeNumber(value),
+      [field]: sanitizeNumber(value) === "" ? 0 : sanitizeNumber(value),
     });
   };
 
@@ -70,7 +80,7 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
     const damages = [...row.damages];
     damages[index] = {
       ...damages[index],
-      quantity: sanitizeNumber(value),
+      quantity: sanitizeNumber(value) === '' ? 0 : sanitizeNumber(value),
     };
     onChange({ ...row, damages });
   };
@@ -130,6 +140,17 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
             setCreateDialog({ type: "item", prefillName: name })
           }
         />
+        {row.itemId && showItemQuantity && (
+          <Typography
+            variant="caption"
+            sx={{
+              display: "block",
+              color: totalExceeded ? "red" : "text.secondary",
+            }}
+          >
+            Item Remaining: {rowRemaining}
+          </Typography>
+        )}
         <ItemFormModal
           open={createDialog.type === "item"}
           mode="create"
@@ -159,7 +180,7 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
         <TextField
           size="small"
           type="number"
-          value={row.wagePerItem ?? ""}
+          value={row.wagePerItem ?? 0}
           onChange={(e) => handleNumberChange("wagePerItem", e.target.value)}
           inputProps={{ min: 0 }}
           sx={{ width: 65 }}
@@ -184,9 +205,7 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
           size="small"
           type="number"
           value={row.salesQuantity}
-          onChange={(e) =>
-            handleNumberChange("salesQuantity", e.target.value)
-          }
+          onChange={(e) => handleNumberChange("salesQuantity", e.target.value)}
           error={row.salesQuantity === 0 && emptyRow}
           inputProps={{ min: 0 }}
           sx={{ width: 70 }}

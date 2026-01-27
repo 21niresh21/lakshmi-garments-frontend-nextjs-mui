@@ -15,6 +15,7 @@ import {
   Box,
   CircularProgress,
   Badge,
+  Tooltip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -41,6 +42,8 @@ import { Category } from "@/app/_types/Category";
 import { BatchFilter } from "./_types/BatchFilter";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { fetchCategories } from "@/app/api/category";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+import AddIcon from "@mui/icons-material/Add";
 
 type Employee = {
   id: number;
@@ -58,6 +61,12 @@ const MOCK_DATA: Employee[] = [
 type SubCategoryWithQuantity = {
   id: number;
   subCategoryName: string;
+  quantity: number;
+};
+
+type BatchItem = {
+  id: number;
+  itemName: string;
   quantity: number;
 };
 
@@ -79,6 +88,7 @@ interface BatchRow {
   batchStatus: BatchStatus;
   isUrgent: boolean;
   subCategories: SubCategoryWithQuantity[];
+  items: BatchItem[];
 }
 
 const HEADERS = [
@@ -154,23 +164,24 @@ const HEADERS = [
 
 export default function Page() {
   const { notify } = useNotification();
+  const { loading, showLoading, hideLoading } = useGlobalLoading();
   const router = useRouter();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<string | undefined>();
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [totalCount, setTotalCount] = useState(0);
 
   const [rows, setRows] = useState<BatchRow[]>([]);
 
-  const [recyclingId, setRecyclingId] = useState<number | null>(null);
-
   // ✅ Popper state
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [subCategories, setSubCategories] = useState<SubCategoryWithQuantity[]>(
-    []
+    [],
   );
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState<BatchFilter>({
@@ -181,7 +192,7 @@ export default function Page() {
     endDate: "",
   });
   const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
-    null
+    null,
   );
 
   const activeFilterCount =
@@ -220,29 +231,16 @@ export default function Page() {
   // ✅ Handlers
   const handleOpenDetails = (
     event: React.MouseEvent<HTMLElement>,
-    data: SubCategoryWithQuantity[]
+    row: BatchRow,
   ) => {
     setAnchorEl(event.currentTarget);
-    setSubCategories(data);
+    setSubCategories(row.subCategories || []);
+    setBatchItems(row.items || []);
   };
 
   const handleRecycle = async (batch: BatchRow) => {
-    if (batch.batchStatus === BatchStatus.DISCARDED) {
-      notify("Batch has already been discarded", "warning");
-      return;
-    } else if (batch.batchStatus === BatchStatus.CLOSED) {
-      notify("Batch has already been packaged", "warning");
-      return;
-    } else if (
-      batch.batchStatus === BatchStatus.ASSIGNED ||
-      batch.batchStatus === BatchStatus.COMPLETED
-    ) {
-      notify("Batch is in use", "warning");
-      return;
-    }
     try {
-      setRecyclingId(batch.id);
-
+      showLoading();
       await recycleBatch(batch.id);
       notify("Batch recycled. Inventory refilled", "success");
 
@@ -250,53 +248,54 @@ export default function Page() {
     } catch (err) {
       notify("Error recycling batch", "error");
     } finally {
-      setRecyclingId(null);
+      hideLoading();
     }
   };
 
   const handleCloseDetails = () => {
     setAnchorEl(null);
     setSubCategories([]);
+    setBatchItems([]);
   };
 
   const loadBatches = async () => {
     try {
+      showLoading();
       const data = await fetchBatches({
         pageNo: page,
         pageSize: rowsPerPage,
         sortBy,
         sortOrder,
-        search,
-        ...filters
-        // batchStatusNames: batchStatusFilter,
-        // categoryNames: categoryFilter,
-        // isUrgent: isUrgentFilter,
-        // startDate: dateRange.start,
-        // endDate: dateRange.end,
+        search: debouncedSearch,
+        ...filters,
+
       });
       setTotalCount(data.totalElements);
       setRows(data.content); // assuming backend returns { content, totalElements, etc. }
     } catch (err) {
       console.error("Error loading batches:", err);
+    } finally {
+      hideLoading();
     }
   };
 
   useEffect(() => {
-    loadBatches();
-  }, [
-    page,
-    rowsPerPage,
-    search,
-    sortBy,
-    sortOrder,
-    filters
-  ]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-    useEffect(() => {
-      fetchCategories()
-        .then((res)=>setCategories(res))
-        .catch(() => notify("Error fetching suppliers", "error"));
-    }, []);
+  useEffect(() => {
+    loadBatches();
+  }, [page, rowsPerPage, debouncedSearch, sortBy, sortOrder, filters]);
+
+  useEffect(() => {
+    fetchCategories()
+      .then((res) => setCategories(res))
+      .catch(() => notify("Error fetching suppliers", "error"));
+  }, []);
 
   return (
     <Grid container>
@@ -322,42 +321,79 @@ export default function Page() {
           onRowClick={(row) => router.push(`/batch/${row.id}`)}
           columns={HEADERS}
           toolbarExtras={
-            <Badge
-              badgeContent={activeFilterCount}
-              color="primary"
-              overlap="circular"
-              invisible={activeFilterCount === 0} // hide badge when no filters active
-            >
-              <IconButton onClick={handleOpenFilter}>
-                <FilterAltIcon />
-              </IconButton>
-            </Badge>
+            <Stack direction="row" alignItems="center">
+              <Badge
+                badgeContent={activeFilterCount}
+                color="primary"
+                overlap="circular"
+                invisible={activeFilterCount === 0} // hide badge when no filters active
+              >
+                <Tooltip title="Filter Batches">
+                  <IconButton onClick={handleOpenFilter}>
+                    <FilterAltIcon />
+                  </IconButton>
+                </Tooltip>
+              </Badge>
+              <Tooltip title="Add Batch">
+                <IconButton
+                  size="small"
+                  onClick={() => router.push("/batch/create")}
+                >
+                  <AddIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
           }
           rowActions={[
             {
               label: "Details",
               icon: (row) => (
-                <IconButton size="small">
-                  <ExpandCircleDownIcon sx={{ color: "gray" }} />
-                </IconButton>
+                <Tooltip title="More details">
+                  <IconButton size="small">
+                    <ExpandCircleDownIcon sx={{ color: "gray" }} />
+                  </IconButton>
+                </Tooltip>
               ),
               onClick: (row: BatchRow, event) =>
-                handleOpenDetails(event, row.subCategories),
+                handleOpenDetails(event, row),
             },
             {
               label: "Recycle",
-              icon: (row) => (
-                <IconButton size="small" disabled={recyclingId === row.id}>
-                  {recyclingId === row.id ? (
-                    <CircularProgress size={18} />
-                  ) : (
-                    <RecyclingIcon sx={{ color: "gray" }} />
-                  )}
-                </IconButton>
-              ),
+              icon: (row) =>
+                row.batchStatus === BatchStatus.CREATED && (
+                  <Tooltip title="Recyle Batch">
+                    <IconButton size="small">
+                      {loading ? (
+                        <CircularProgress size={18} />
+                      ) : (
+                        <RecyclingIcon sx={{ color: "gray" }} />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                ),
               onClick: (row) => handleRecycle(row),
             },
           ]}
+          getRowSx={(row) =>
+            row.batchStatus === "DISCARDED"
+              ? {
+                  position: "relative",
+                  opacity: 0.6,
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: "50%",
+                    height: "2px",
+                    opacity : 0.2,
+                    backgroundColor: "black",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                  },
+                }
+              : {}
+          }
         />
       </Grid>
 
@@ -381,18 +417,17 @@ export default function Page() {
       >
         <ClickAwayListener onClickAway={handleCloseDetails}>
           <Paper elevation={4} sx={{ p: 2, minWidth: 260 }}>
-            <Typography variant="subtitle2" gutterBottom>
+            {/* Sub-categories Section */}
+            <Typography variant="subtitle2" gutterBottom color="primary" fontWeight={700}>
               Sub-Categories
             </Typography>
-
             <Divider sx={{ mb: 1 }} />
-
             {subCategories.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 No sub-categories
               </Typography>
             ) : (
-              <Stack spacing={1}>
+              <Stack spacing={1} sx={{ mb: 2 }}>
                 {subCategories.map((item) => (
                   <Box
                     key={item.id}
@@ -401,6 +436,34 @@ export default function Page() {
                   >
                     <Typography variant="body2">
                       {item.subCategoryName}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {item.quantity}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+
+            {/* Items Section */}
+            <Typography variant="subtitle2" gutterBottom color="primary" fontWeight={700} sx={{ mt: 1 }}>
+              Items
+            </Typography>
+            <Divider sx={{ mb: 1 }} />
+            {batchItems.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No items
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {batchItems.map((item) => (
+                  <Box
+                    key={item.id}
+                    display="flex"
+                    justifyContent="space-between"
+                  >
+                    <Typography variant="body2">
+                      {item.itemName}
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
                       {item.quantity}

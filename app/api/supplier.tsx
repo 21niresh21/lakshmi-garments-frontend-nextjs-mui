@@ -1,4 +1,4 @@
-import { Supplier } from "../(protected)/invoice/_types/supplier";
+import { Supplier } from "../(protected)/invoices/_types/supplier";
 import { SupplierFormData } from "../components/shared/SupplierFormModal";
 import axiosInstance from "../config/axiosConfig";
 import { SupplierParams } from "./_types/SupplierParams";

@@ -7,11 +7,11 @@ import {
   DialogActions,
   Stack,
   TextField,
-  DialogProps,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGlobalLoading } from "../layout/LoadingProvider";
+import { TransportErrors } from "@/app/(protected)/transport/page";
 
 export type TransportFormData = {
   name: string;
@@ -21,6 +21,8 @@ type TransportFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: TransportFormData;
+  errors: TransportErrors;
+  setErrors: React.Dispatch<React.SetStateAction<TransportErrors>>;
   onClose: () => void;
   onSubmit: (data: TransportFormData) => void;
 };
@@ -29,6 +31,8 @@ export default function TransportFormModal({
   open,
   mode,
   initialData,
+  errors,
+  setErrors,
   onClose,
   onSubmit,
 }: TransportFormModalProps) {
@@ -36,10 +40,6 @@ export default function TransportFormModal({
 
   const [form, setForm] = useState<TransportFormData>({
     name: "",
-  });
-
-  const [touched, setTouched] = useState({
-    name: false,
   });
 
   const nameRef = useRef<HTMLInputElement>(null);
@@ -51,26 +51,28 @@ export default function TransportFormModal({
           name: "",
         }
       );
-      setTouched({ name: false });
+      setErrors((prev) => (Object.keys(prev).length === 0 ? prev : {}));
     }
-  }, [open, initialData]);
+  }, [open, initialData, setErrors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof TransportErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value.trim() }));
-    setTouched({ name: true });
+    const trimmedValue = value.trim();
+    setForm((prev) => ({ ...prev, [name]: trimmedValue }));
+    if (errors[name as keyof TransportErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  const error = useMemo(() => {
-    return touched.name && !form.name ? "Transport name is required" : "";
-  }, [form.name, touched.name]);
-
-  const isSubmitDisabled = loading || !form.name.trim();
+  const isSubmitDisabled = loading;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +81,17 @@ export default function TransportFormModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      TransitionProps={{
+        onEntered: () => {
+          nameRef.current?.focus();
+        },
+      }}
+    >
       <DialogTitle>
         {mode === "create" ? "Add Transport" : "Edit Transport"}
       </DialogTitle>
@@ -94,10 +106,9 @@ export default function TransportFormModal({
               value={form.name}
               onChange={handleChange}
               onBlur={handleBlur}
-              error={!!error}
-              helperText={error}
+              error={!!errors?.name}
+              helperText={errors?.name}
               fullWidth
-              required
               autoComplete="off"
             />
           </Stack>

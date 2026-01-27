@@ -1,7 +1,7 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton } from "@mui/material";
+import { Chip, Grid, IconButton, Stack, Typography, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -31,6 +31,10 @@ function normalizeError(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+export type SubCategoryErrors = {
+  name?: string;
+};
+
 export default function Page() {
   const { notify } = useNotification();
   const { showLoading, hideLoading } = useGlobalLoading();
@@ -41,6 +45,7 @@ export default function Page() {
   const [openModal, setOpenModal] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] =
     useState<SubCategory | null>(null);
+  const [errors, setErrors] = useState<SubCategoryErrors>({});
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -85,7 +90,6 @@ export default function Page() {
 
   const handleSubCategorySubmit = useCallback(
     async (data: SubCategoryFormData) => {
-      showLoading();
       try {
         if (selectedSubCategory) {
           await updateSubCategory(selectedSubCategory.id, data);
@@ -96,22 +100,17 @@ export default function Page() {
         }
 
         setOpenModal(false);
+        setErrors({});
         loadSubCategories(search);
-      } catch (err) {
-        console.error(err);
-        notify(normalizeError(err), "error");
-      } finally {
-        hideLoading();
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err.message || normalizeError(err), "error");
+        }
       }
     },
-    [
-      selectedSubCategory,
-      notify,
-      loadSubCategories,
-      search,
-      showLoading,
-      hideLoading,
-    ]
+    [selectedSubCategory, notify, loadSubCategories, search]
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -141,24 +140,42 @@ export default function Page() {
 
   const toolbarExtras = useMemo(
     () => [
-      <IconButton
-        key="add-subcategory"
-        onClick={handleAddSubCategory}
-        title="Add SubCategory"
-      >
-        <AddIcon />
-      </IconButton>,
+      <Tooltip key="add-subcategory" title="Add SubCategory">
+        <IconButton
+          onClick={handleAddSubCategory}
+        >
+          <AddIcon />
+        </IconButton>
+      </Tooltip>,
     ],
     [handleAddSubCategory]
+  );
+
+  const subcategoryInitialData = useMemo(
+    () =>
+      selectedSubCategory ? { name: selectedSubCategory.name } : undefined,
+    [selectedSubCategory]
   );
 
   /* ---------------- Render ---------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Sub Categories
+          </Typography>
+          <Chip 
+            label={`${rows.length}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<SubCategory>
-          title="Sub Categories"
           rows={rows}
           pagination={false}
           totalCount={rows.length}
@@ -176,10 +193,13 @@ export default function Page() {
       <SubCategoryFormModal
         open={openModal}
         mode={selectedSubCategory ? "edit" : "create"}
-        initialData={
-          selectedSubCategory ? { name: selectedSubCategory.name } : undefined
-        }
-        onClose={() => setOpenModal(false)}
+        initialData={subcategoryInitialData}
+        errors={errors}
+        setErrors={setErrors}
+        onClose={() => {
+          setOpenModal(false);
+          setErrors({});
+        }}
         onSubmit={handleSubCategorySubmit}
       />
     </Grid>

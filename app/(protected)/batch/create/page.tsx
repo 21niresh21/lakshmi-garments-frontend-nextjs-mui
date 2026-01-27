@@ -14,9 +14,11 @@ import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import CategoryIcon from "@mui/icons-material/Category";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import InboxIcon from "@mui/icons-material/Inbox";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
 
 export default function Page() {
   const { notify } = useNotification();
+  const { showLoading, hideLoading } = useGlobalLoading();
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [selection, setSelection] = useState<SelectionState | null>(null);
   const [nextSerialCode, setNextSerialCode] = useState<string>("");
@@ -42,9 +44,9 @@ export default function Page() {
         : {
             ...prev,
             items: prev.items.map((i) =>
-              i.name === name ? { ...i, selected: !i.selected } : i
+              i.name === name ? { ...i, selected: !i.selected } : i,
             ),
-          }
+          },
     );
   };
 
@@ -63,9 +65,9 @@ export default function Page() {
                         ? ""
                         : Math.min(Math.max(value, 0), i.maxQty),
                   }
-                : i
+                : i,
             ),
-          }
+          },
     );
   };
 
@@ -81,42 +83,43 @@ export default function Page() {
       const data = await fetchInventory();
       setInventory(data);
     } catch {
-      notify("Error ocurred while fetching data", "error");
+      notify("Error occurred while fetching data", "error");
+    }
+  };
+
+  const loadInventory = async () => {
+    try {
+      showLoading();
+      const data = await fetchInventory();
+      setInventory(data);
+    } catch (error) {
+      notify("Error fetching inventory data", "error");
+    } finally {
+      hideLoading();
     }
   };
 
   useEffect(() => {
-    const loadInventory = async () => {
-      const data = await fetchInventory();
-      setInventory(data);
-    };
-
-    try {
-      loadInventory();
-    } catch {
-      notify("Error fetching inventory data", "error");
-      console.log("error when fetching inventory");
-    }
+    loadInventory();
   }, []);
 
   useEffect(() => {
     if (!selection?.categoryName) return;
-
     fetchNextSerialCode(selection.categoryName)
       .then((serialCode) => setNextSerialCode(serialCode))
-      .catch((err) => notify("Server error"));
+      .catch(() => notify("Server error", "error"));
   }, [selection?.categoryName]);
 
   return (
-    <>
-      <Grid container spacing={1} height={"100%"}>
-        <Grid size={12}>
+    <Box sx={{ p: { xs: 1, md: 1 } }}>
+      <Grid container spacing={2}>
+        {/* Category Header Grid */}
+        <Grid size={{ xs: 12 }}>
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
               gap: 2,
-              alignItems: "stretch", // important
             }}
           >
             {inventory.map((category) => (
@@ -128,119 +131,129 @@ export default function Page() {
             ))}
           </Box>
         </Grid>
+
         {selection ? (
-          <Box
-            sx={{
-              width: "100%",
-              mt: 2,
-              // minHeight: "calc(100vh - 300px)",
-              bgcolor: "grey.100",
-              borderRadius: 1,
-              p: 2,
-              boxShadow: "inset 0 4px 6px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Grid container spacing={2} direction="row">
-              {/* LEFT PANEL */}
-              <Grid size={5}>
-                <Box
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                mt: 2,
+                bgcolor: "grey.100",
+                borderRadius: 2,
+                p: { xs: 1, sm: 2 },
+                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.05)",
+              }}
+            >
+              <Grid container spacing={2}>
+                {/* Left Panel */}
+                <Grid size={{ xs: 12, md: 5 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 2,
+                      p: 2,
+                      height: "100%",
+                    }}
+                  >
+                    <CategorySelection
+                      selection={selection}
+                      onToggleItem={toggleItem}
+                      onQtyChange={onQtyChange}
+                      onUrgentChange={updateIsUrgent}
+                      onRemarksChange={updateRemarks}
+                    />
+                  </Box>
+                </Grid>
+
+                {/* Desktop Arrow */}
+                <Grid
+                  size={{ md: 2 }}
                   sx={{
-                    height: "100%",
-                    bgcolor: "background.paper",
-                    borderRadius: 2,
-                    p: 2,
-                    display: "flex",
-                    flexDirection: "column",
+                    display: { xs: "none", md: "flex" },
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  <CategorySelection
-                    selection={selection}
-                    onToggleItem={toggleItem}
-                    onQtyChange={onQtyChange}
-                    onUrgentChange={updateIsUrgent}
-                    onRemarksChange={updateRemarks}
-                  />
-                </Box>
+                  <Stack alignItems="center">
+                    <ArrowRightAltIcon
+                      sx={{ fontSize: 60, color: "grey.400" }}
+                    />
+                    <Typography variant="caption" color="grey.500">
+                      Preview
+                    </Typography>
+                  </Stack>
+                </Grid>
+
+                {/* Right Panel */}
+                <Grid size={{ xs: 12, md: 5 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 2,
+                      p: 2,
+                      height: "100%",
+                      borderTop: selection?.urgent
+                        ? { xs: "5px solid #ff000091", md: "none" }
+                        : "none",
+                      borderLeft: selection?.urgent
+                        ? { md: "5px solid #ff000091" }
+                        : "none",
+                    }}
+                  >
+                    <BatchPreview
+                      serialCode={nextSerialCode}
+                      batchDetails={selection}
+                      onClear={clearSelection}
+                    />
+                  </Box>
+                </Grid>
               </Grid>
-              <Grid
-                container
-                size={2}
-                sx={{ alignItems: "center", justifyContent: "center" }}
-              >
-                <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
-                  <ArrowRightAltIcon sx={{ fontSize: 90 }} />
-                  <Typography variant="body2">
-                    Choose from left to Preview
-                  </Typography>
-                </Stack>
-              </Grid>
-              {/* RIGHT PANEL */}
-              <Grid size={5}>
-                <Box
-                  sx={{
-                    height: "100%",
-                    bgcolor: "background.paper",
-                    borderRadius: 2,
-                    p: 2,
-                    display: "flex",
-                    flexDirection: "column",
-                    borderLeft: `${
-                      selection?.urgent ? "5px solid #ff000091" : ""
-                    }`,
-                  }}
-                >
-                  <BatchPreview
-                    serialCode={nextSerialCode}
-                    batchDetails={selection}
-                    onClear={clearSelection}
-                  />
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
+            </Box>
+          </Grid>
         ) : (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              mt: 20,
-              flexDirection: "column",
-            }}
-          >
-            {inventory.length > 0 ? (
-              <>
-                <CategoryIcon sx={{ fontSize: 100, color: "gray" }} />
-                <Typography variant="h6" color="gray">
-                  Choose from the above categories to start forming the Batch
-                </Typography>
-              </>
-            ) : (
-              <>
-                <InboxIcon sx={{ fontSize: 100, color: "gray" }} />
-                <Typography variant="h6" color="gray">
-                  Inventory is empty.
-                </Typography>
-              </>
-            )}
-          </Box>
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mt: 10,
+                textAlign: "center",
+              }}
+            >
+              {inventory.length > 0 ? (
+                <>
+                  <CategoryIcon sx={{ fontSize: 80, color: "grey.300" }} />
+                  <Typography variant="h6" color="text.secondary">
+                    Select a category to begin
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <InboxIcon sx={{ fontSize: 80, color: "grey.300" }} />
+                  <Typography variant="h6" color="text.secondary">
+                    Inventory is empty
+                  </Typography>
+                </>
+              )}
+            </Box>
+          </Grid>
         )}
+
         {selection && (
-          <Grid size={12}>
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
               <Button
                 startIcon={<DeleteIcon />}
                 variant="outlined"
                 color="error"
                 onClick={clearSelection}
               >
-                Clear
+                Clear All
               </Button>
             </Box>
           </Grid>
         )}
       </Grid>
-    </>
+    </Box>
   );
 }

@@ -7,11 +7,11 @@ import {
   DialogActions,
   Stack,
   TextField,
-  DialogProps,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGlobalLoading } from "../layout/LoadingProvider";
+import { SupplierErrors } from "@/app/(protected)/supplier/page";
 
 export type SupplierFormData = {
   name: string;
@@ -22,6 +22,8 @@ type SupplierFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: SupplierFormData;
+  errors: SupplierErrors;
+  setErrors: React.Dispatch<React.SetStateAction<SupplierErrors>>;
   onClose: () => void;
   onSubmit: (data: SupplierFormData) => void;
 };
@@ -30,6 +32,8 @@ export default function SupplierFormModal({
   open,
   mode,
   initialData,
+  errors,
+  setErrors,
   onClose,
   onSubmit,
 }: SupplierFormModalProps) {
@@ -38,11 +42,6 @@ export default function SupplierFormModal({
   const [form, setForm] = useState<SupplierFormData>({
     name: "",
     location: "",
-  });
-
-  const [touched, setTouched] = useState({
-    name: false,
-    location: false,
   });
 
   const nameRef = useRef<HTMLInputElement>(null);
@@ -55,31 +54,28 @@ export default function SupplierFormModal({
           location: "",
         }
       );
-      setTouched({ name: false, location: false });
+      setErrors((prev) => (Object.keys(prev).length === 0 ? prev : {}));
     }
-  }, [open, initialData]);
+  }, [open, initialData, setErrors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof SupplierErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value.trim() }));
-    setTouched((prev) => ({ ...prev, [name]: true }));
+    const trimmedValue = value.trim();
+    setForm((prev) => ({ ...prev, [name]: trimmedValue }));
+    if (errors[name as keyof SupplierErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  const errors = useMemo(() => {
-    return {
-      name: touched.name && !form.name ? "Supplier name is required" : "",
-      location:
-        touched.location && !form.location ? "Location is required" : "",
-    };
-  }, [form, touched]);
-
-  const isSubmitDisabled =
-    loading || !form.name.trim() || !form.location.trim();
+  const isSubmitDisabled = loading;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,10 +113,9 @@ export default function SupplierFormModal({
               onChange={handleChange}
               onBlur={handleBlur}
               autoComplete="organization"
-              error={!!errors.name}
-              helperText={errors.name}
+              error={!!errors?.name}
+              helperText={errors?.name}
               fullWidth
-              required
             />
 
             <TextField
@@ -130,10 +125,9 @@ export default function SupplierFormModal({
               onChange={handleChange}
               onBlur={handleBlur}
               autoComplete="address-level2"
-              error={!!errors.location}
-              helperText={errors.location}
+              error={!!errors?.location}
+              helperText={errors?.location}
               fullWidth
-              required
             />
           </Stack>
         </DialogContent>

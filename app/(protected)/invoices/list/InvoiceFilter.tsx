@@ -24,6 +24,8 @@ export interface InvoiceFilterType {
   isPaid: boolean[];
   invoiceStartDate: string;
   invoiceEndDate: string;
+  receivedStartDate: string;
+  receivedEndDate: string;
 }
 
 interface Props {
@@ -113,7 +115,7 @@ export default function InvoiceFilter({
               {/* From Date */}
               <FormControl fullWidth>
                 <DatePicker
-                  label="From Date"
+                  label="From Invoice Date"
                   format="DD/MM/YYYY"
                   value={
                     filters.invoiceStartDate
@@ -139,8 +141,9 @@ export default function InvoiceFilter({
               {/* To Date */}
               <FormControl fullWidth>
                 <DatePicker
-                  label="To Date"
+                  label="To Invoice Date"
                   format="DD/MM/YYYY"
+                  minDate={filters.invoiceStartDate ? dayjs(filters.invoiceStartDate, "DD-MM-YYYY") : undefined}
                   value={
                     filters.invoiceEndDate
                       ? dayjs(filters.invoiceEndDate, "DD-MM-YYYY", true)
@@ -149,6 +152,60 @@ export default function InvoiceFilter({
                   onAccept={(date) =>
                     handleChange(
                       "invoiceEndDate",
+                      date ? date.format("DD-MM-YYYY") : ""
+                    )
+                  }
+                  maxDate={dayjs()}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                    },
+                  }}
+                />
+              </FormControl>
+
+
+              {/* From Date */}
+              <FormControl fullWidth>
+                <DatePicker
+                  label="From Received Date"
+                  format="DD/MM/YYYY"
+                  value={
+                    filters.receivedStartDate
+                      ? dayjs(filters.receivedStartDate, "DD-MM-YYYY", true)
+                      : null
+                  }
+                  onAccept={(date) =>
+                    handleChange(
+                      "receivedStartDate",
+                      date ? date.format("DD-MM-YYYY") : ""
+                    )
+                  }
+                  maxDate={dayjs()}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                    },
+                  }}
+                />
+              </FormControl>
+
+              {/* To Date */}
+              <FormControl fullWidth>
+                <DatePicker
+                  label="To Received Date"
+                  format="DD/MM/YYYY"
+                  minDate={filters.receivedStartDate ? dayjs(filters.receivedStartDate, "DD-MM-YYYY") : undefined}
+                  value={
+                    filters.receivedEndDate
+                      ? dayjs(filters.receivedEndDate, "DD-MM-YYYY", true)
+                      : null
+                  }
+                  onAccept={(date) =>
+                    handleChange(
+                      "receivedEndDate",
                       date ? date.format("DD-MM-YYYY") : ""
                     )
                   }

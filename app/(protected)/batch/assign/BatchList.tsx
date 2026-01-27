@@ -41,28 +41,23 @@ export default function BatchList({ batchList }: Props) {
   const open = Boolean(anchorEl);
 
   return (
-    <Paper
-      sx={{
-        height: "100%",
-        p: 2,
-        display: "flex",
-        flexDirection: "column",
-      }}
-      elevation={0}
-    >
+    <Paper elevation={0} sx={{ height: "100%", p: { xs: 1, md: 2 } }}>
       <Typography fontWeight={600} mb={1}>
-        Priority Batches (Date)
+        Priority Batches
       </Typography>
       <Divider />
-
-      {/* Scrollable list */}
-      <Box sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+      <Box
+        sx={{
+          flex: 1,
+          overflow: "auto",
+          maxHeight: { xs: "300px", md: "calc(100vh - 250px)" },
+        }}
+      >
         {batchList.length > 0 ? (
-          <List>
+          <List dense>
             {batchList.map((batch) => (
               <ListItem
                 key={batch.id}
-                disableGutters
                 secondaryAction={
                   <IconButton
                     onClick={(e) => handleClick(e, batch)}
@@ -74,14 +69,14 @@ export default function BatchList({ batchList }: Props) {
               >
                 <ListItemText
                   primary={
-                    <Stack direction="row" alignItems="center" columnGap={1}>
-                      <Typography display="flex" alignItems="center" gap={1}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="body2" fontWeight={500}>
                         {batch.serialCode}
                       </Typography>
                       <Chip
                         label={formatToShortDate(batch.createdAt)}
                         size="small"
-                        sx={{ fontSize: 10, height: 12, p: 1.3 }}
+                        sx={{ height: 16, fontSize: "0.65rem" }}
                       />
                     </Stack>
                   }
@@ -93,21 +88,17 @@ export default function BatchList({ batchList }: Props) {
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              my: 10,
               flexDirection: "column",
+              alignItems: "center",
+              py: 5,
+              opacity: 0.5,
             }}
           >
-            <GiCardboardBox size={70} />
-            <Typography variant="body2" fontSize={15} mt={1}>
-              No Urgent Batches
-            </Typography>
+            <GiCardboardBox size={50} />
+            <Typography variant="caption">No Urgent Batches</Typography>
           </Box>
         )}
       </Box>
-
-      {/* Remarks Popper */}
       <Popper open={open} anchorEl={anchorEl} placement="left">
         <ClickAwayListener onClickAway={handleClose}>
           <Paper sx={{ p: 1.5, maxWidth: 220 }}>

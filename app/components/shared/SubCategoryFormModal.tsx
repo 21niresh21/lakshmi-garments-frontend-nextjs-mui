@@ -7,10 +7,11 @@ import {
   DialogActions,
   Stack,
   TextField,
-  Button,
 } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { LoadingButton } from "@mui/lab";
+import { useEffect, useRef, useState } from "react";
 import { useGlobalLoading } from "../layout/LoadingProvider";
+import { SubCategoryErrors } from "@/app/(protected)/subcategory/page";
 
 export type SubCategoryFormData = {
   name: string;
@@ -20,6 +21,8 @@ type SubCategoryFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialData?: SubCategoryFormData;
+  errors: SubCategoryErrors;
+  setErrors: React.Dispatch<React.SetStateAction<SubCategoryErrors>>;
   onClose: () => void;
   onSubmit: (data: SubCategoryFormData) => void;
 };
@@ -28,38 +31,41 @@ export default function SubCategoryFormModal({
   open,
   mode,
   initialData,
+  errors,
+  setErrors,
   onClose,
   onSubmit,
 }: SubCategoryFormModalProps) {
   const { loading } = useGlobalLoading();
 
   const [form, setForm] = useState<SubCategoryFormData>({ name: "" });
-  const [touched, setTouched] = useState(false);
-
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setForm(initialData ?? { name: "" });
-      setTouched(false);
+      setErrors((prev) => (Object.keys(prev).length === 0 ? prev : {}));
     }
-  }, [open, initialData]);
+  }, [open, initialData, setErrors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ name: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof SubCategoryErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    setForm({ name: e.target.value.trim() });
-    setTouched(true);
+    const { name, value } = e.target;
+    const trimmedValue = value.trim();
+    setForm((prev) => ({ ...prev, [name]: trimmedValue }));
+    if (errors[name as keyof SubCategoryErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  const error = useMemo(
-    () => (touched && !form.name ? "Sub category name is required" : ""),
-    [touched, form.name]
-  );
-
-  const isSubmitDisabled = loading || !form.name.trim();
+  const isSubmitDisabled = loading;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,22 +99,26 @@ export default function SubCategoryFormModal({
               value={form.name}
               onChange={handleChange}
               onBlur={handleBlur}
-              error={!!error}
-              helperText={error}
+              error={!!errors.name}
+              helperText={errors.name}
               fullWidth
-              required
               autoComplete="off"
             />
           </Stack>
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose} disabled={loading}>
+          <LoadingButton onClick={onClose} loading={loading} color="inherit">
             Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitDisabled}>
+          </LoadingButton>
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={loading}
+            disabled={isSubmitDisabled}
+          >
             {mode === "create" ? "Create" : "Save"}
-          </Button>
+          </LoadingButton>
         </DialogActions>
       </form>
     </Dialog>

@@ -1,4 +1,4 @@
-import { InvoiceDetails } from "../(protected)/invoice/_types/invoiceDetails";
+import { InvoiceDetails } from "../(protected)/invoices/_types/invoiceDetails";
 import axiosInstance from "../config/axiosConfig";
 import { InvoiceParams } from "./_types/InvoiceParams";
 

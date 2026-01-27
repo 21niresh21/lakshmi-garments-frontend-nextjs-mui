@@ -17,7 +17,7 @@ import { useCallback, useMemo } from "react";
 import {
   BaleDetails,
   BaleErrors,
-} from "@/app/(protected)/invoice/[id]/bale.types";
+} from "@/app/(protected)/invoices/[id]/bale.types";
 import { Category } from "@/app/_types/Category";
 import { SubCategory } from "@/app/_types/SubCategory";
 import { sanitizeNumberInput } from "@/app/utils/number";

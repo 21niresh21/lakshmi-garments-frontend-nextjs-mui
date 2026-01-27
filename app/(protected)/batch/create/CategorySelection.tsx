@@ -1,10 +1,4 @@
-import {
-  Box,
-  Checkbox,
-  Switch,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Checkbox, Switch, TextField, Typography } from "@mui/material";
 import { SelectionState } from "./_types/models";
 
 interface Props {
@@ -13,7 +7,6 @@ interface Props {
   onQtyChange: (name: string, qty: number | "") => void;
   onUrgentChange: (v: boolean) => void;
   onRemarksChange: (v: string) => void;
-  //   onClear: () => void;
 }
 
 export default function CategorySelection({
@@ -22,85 +15,69 @@ export default function CategorySelection({
   onQtyChange,
   onUrgentChange,
   onRemarksChange,
-}: //   onClear,
-Props) {
-  if (!selection) {
-    return "";
-  }
+}: Props) {
+  if (!selection) return null;
 
   return (
-    <>
-      <Typography variant="h6" mb={1}>
-        {selection.categoryName}
-      </Typography>
-
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <Typography variant="h6">{selection.categoryName}</Typography>
       <Typography variant="body2" color="text.secondary" mb={2}>
-        Choose items to include in batch
+        Select items and adjust quantities
       </Typography>
 
-      {/* ITEM LIST */}
       <Box
         sx={{
           flexGrow: 1,
           overflowY: "auto",
+          maxHeight: { xs: "300px", md: "500px" },
           pr: 1,
         }}
       >
-        {selection.items.map((subCategory) => (
+        {selection.items.map((item) => (
           <Box
-            key={subCategory.name}
+            key={item.name}
             sx={{
               display: "flex",
-              alignItems: "center",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
               justifyContent: "space-between",
-              py: 1,
+              gap: 1,
+              py: 1.5,
               borderBottom: "1px dashed",
               borderColor: "divider",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <Checkbox
-                checked={subCategory.selected}
-                onChange={() => onToggleItem(subCategory.name)}
+                checked={item.selected}
+                onChange={() => onToggleItem(item.name)}
               />
-              <Typography variant="body1">{subCategory.name}</Typography>
+              <Typography variant="body1">{item.name}</Typography>
             </Box>
             <TextField
-              value={subCategory.qty}
+              value={item.qty}
               label="Quantity"
               type="number"
               size="small"
-              disabled={!subCategory.selected}
-              slotProps={{
-                htmlInput: {
-                  min: 0,
-                  max: subCategory.maxQty,
-                },
-              }}
-              onChange={(e) => {
-                const v = e.target.value;
-
-                if (v === "") {
-                  onQtyChange(subCategory.name, "");
-                  return;
-                }
-
-                onQtyChange(subCategory.name, Number(v));
-              }}
-              sx={{minWidth : 200, maxWidth : 300}}
+              disabled={!item.selected}
+              onChange={(e) =>
+                onQtyChange(
+                  item.name,
+                  e.target.value === "" ? "" : Number(e.target.value),
+                )
+              }
+              sx={{ width: { xs: "100%", sm: "140px" } }}
             />
           </Box>
         ))}
       </Box>
 
-      {/* URGENT */}
       <Box
         sx={{
           mt: 2,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          
         }}
       >
         <Typography fontWeight={500}>Urgent Order</Typography>
@@ -110,23 +87,16 @@ Props) {
         />
       </Box>
 
-      {/* REMARKS */}
-      <Box mt={2}>
-        <TextField
-          multiline
-          fullWidth
-          value={selection.remarks}
-          onChange={(e) => onRemarksChange(e.target.value)}
-          size="small"
-          label="Remarks"
-          rows={3}
-        />
-      </Box>
-
-      {/* CLEAR */}
-      <Box mt={2} textAlign="right">
-        {/* Button later */}
-      </Box>
-    </>
+      <TextField
+        multiline
+        fullWidth
+        value={selection.remarks}
+        onChange={(e) => onRemarksChange(e.target.value)}
+        size="small"
+        label="Remarks"
+        rows={3}
+        sx={{ mt: 2 }}
+      />
+    </Box>
   );
 }

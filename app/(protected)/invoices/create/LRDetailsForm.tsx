@@ -115,7 +115,7 @@ export default function LRDetailsForm({
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2, fontWeight: 500 }}>
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
         Lorry Receipt & Bale Details
       </Typography>
 

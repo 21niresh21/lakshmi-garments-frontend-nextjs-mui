@@ -1,12 +1,12 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton, CircularProgress, Box } from "@mui/material";
+import { Grid, IconButton, CircularProgress, Box, Stack, Typography, Chip, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-import { Supplier } from "../invoice/_types/supplier";
+import { Supplier } from "../invoices/_types/supplier";
 import {
   fetchSuppliers,
   updateSupplier,
@@ -16,6 +16,11 @@ import SupplierFormModal, {
   SupplierFormData,
 } from "@/app/components/shared/SupplierFormModal";
 import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+
+export type SupplierErrors = {
+  name?: string;
+  location?: string;
+};
 
 function normalizeError(error: unknown): string {
   if (
@@ -40,6 +45,7 @@ export default function Page() {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   );
+  const [errors, setErrors] = useState<SupplierErrors>({});
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -57,7 +63,7 @@ export default function Page() {
         hideLoading();
       }
     },
-    [notify]
+    [notify, showLoading, hideLoading]
   );
 
   useEffect(() => {
@@ -101,9 +107,15 @@ export default function Page() {
 
         setOpenModal(false);
         setSelectedSupplier(null);
+        setErrors({});
         loadSuppliers(search);
-      } catch (err) {
-        notify(normalizeError(err), "error");
+      } catch (err: any) {
+        if (err.validationErrors) {
+          console.log(err.validationErrors);
+          setErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err.message || normalizeError(err), "error");
+        }
       }
     },
     [selectedSupplier, notify, loadSuppliers, search]
@@ -137,21 +149,45 @@ export default function Page() {
 
   const toolbarExtras = useMemo(
     () => [
-      <IconButton
-        key="add-supplier"
-        onClick={handleAddSupplier}
-        title="Add Supplier"
-      >
-        <PersonAddAlt1Icon />
-      </IconButton>,
+      <Tooltip key="add-supplier" title="Add Supplier">
+        <IconButton
+          onClick={handleAddSupplier}
+        >
+          <PersonAddAlt1Icon />
+        </IconButton>
+      </Tooltip>,
     ],
     [handleAddSupplier]
+  );
+
+  const supplierInitialData = useMemo(
+    () =>
+      selectedSupplier
+        ? {
+            name: selectedSupplier.name,
+            location: selectedSupplier.location,
+          }
+        : undefined,
+    [selectedSupplier]
   );
 
   /* ---------------- Render ---------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Suppliers
+          </Typography>
+          <Chip 
+            label={`${rows.length}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<Supplier>
           title="Suppliers"
@@ -170,16 +206,12 @@ export default function Page() {
       <SupplierFormModal
         open={openModal}
         mode={selectedSupplier ? "edit" : "create"}
-        initialData={
-          selectedSupplier
-            ? {
-                name: selectedSupplier.name,
-                location: selectedSupplier.location,
-              }
-            : undefined
-        }
+        initialData={supplierInitialData}
+        errors={errors}
+        setErrors={setErrors}
         onClose={() => {
           setOpenModal(false);
+          setErrors({});
         }}
         onSubmit={handleSupplierSubmit}
       />

@@ -18,13 +18,13 @@ import {
   LoadingProvider,
   useGlobalLoading,
 } from "../components/layout/LoadingProvider";
+import { useAuthorization } from "../hooks/useAuthorization";
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
@@ -35,19 +35,29 @@ export default function ProtectedLayout({
   }, []);
 
   return (
-    // <ThemeProvider theme={theme}>
     <LoadingProvider>
       <GlobalLinearLoading />
       <UserProvider user={user}>
-        <NotificationProvider>
-          <ConfirmationProvider>
-            <AppShell>{children}</AppShell>;
-          </ConfirmationProvider>
-        </NotificationProvider>
+        <AuthorizationGuard>
+          <NotificationProvider>
+            <ConfirmationProvider>
+              <AppShell>{children}</AppShell>
+            </ConfirmationProvider>
+          </NotificationProvider>
+        </AuthorizationGuard>
       </UserProvider>
     </LoadingProvider>
-    // </ThemeProvider>
   );
+}
+
+function AuthorizationGuard({ children }: { children: React.ReactNode }) {
+  const { isAuthorized } = useAuthorization();
+
+  if (isAuthorized === false) {
+    return null;
+  }
+
+  return <>{children}</>;
 }
 
 function GlobalLinearLoading() {
@@ -56,7 +66,15 @@ function GlobalLinearLoading() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Box sx={{ position: "fixed", top: isMobile ? 56.5 : 64, left: 0, right: 0, zIndex: 1200 }}>
+    <Box
+      sx={{
+        position: "fixed",
+        top: isMobile ? 56.5 : 64,
+        left: 0,
+        right: 0,
+        zIndex: 1200,
+      }}
+    >
       {loading && <LinearProgress />}
     </Box>
   );
