@@ -231,7 +231,7 @@ export default function SideBarContent({
                                     }
                                   }}
                                 >
-                                  <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
+                                  <ListItemIcon sx={{ minWidth: 32}}>
                                     {child.icon}
                                   </ListItemIcon>
                                   <ListItemText primary={child.label} />
