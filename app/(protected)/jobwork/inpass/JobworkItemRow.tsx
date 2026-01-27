@@ -15,6 +15,7 @@ import { JobworkItemRowData } from "./_types/jobwork";
 import ItemFormModal, {
   ItemFormData,
 } from "@/app/components/shared/ItemFormModal";
+import { ItemErrors } from "../../item/page";
 import { addItem } from "@/app/api/itemApi";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 
@@ -97,11 +98,11 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
     type: null,
     prefillName: "",
   });
+  const [itemErrors, setItemErrors] = useState<ItemErrors>({});
 
   const createItem = async (data: ItemFormData) => {
     try {
       const createdItem = await addItem(data);
-      setCreateDialog({ type: null, prefillName: "" });
       setItems((prev) => [...prev, createdItem]);
       onChange({
         ...row,
@@ -110,8 +111,14 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
         itemName: createdItem.name,
       });
       notify("Item created successfully", "success");
+      setCreateDialog({ type: null, prefillName: "" });
+      setItemErrors({});
     } catch (err: any) {
-      notify(err?.response?.data ?? "Error saving item", "error");
+      if (err.validationErrors) {
+        setItemErrors(err.validationErrors);
+      } else if (err.message && err.message !== "Validation failed") {
+        notify(err?.message || "Error saving item", "error");
+      }
     }
   };
 
@@ -155,8 +162,13 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
           open={createDialog.type === "item"}
           mode="create"
           onSubmit={createItem}
-          onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+          onClose={() => {
+            setCreateDialog({ type: null, prefillName: "" });
+            setItemErrors({});
+          }}
           initialData={{ name: createDialog.prefillName }}
+          errors={itemErrors}
+          setErrors={setItemErrors}
         />
         {noItemSelected && (
           <span style={{ color: "red", fontSize: 12 }}>Select an item</span>

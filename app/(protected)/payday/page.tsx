@@ -153,6 +153,8 @@ export default function Page() {
     isPaid: [],
     invoiceStartDate: "",
     invoiceEndDate: "",
+    receivedEndDate : "",
+    receivedStartDate : ""
   });
 
 

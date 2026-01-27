@@ -141,6 +141,8 @@ export default function Page() {
     isPaid: [],
     invoiceStartDate: "",
     invoiceEndDate: "",
+    receivedStartDate: "",
+    receivedEndDate: "",
   });
 
   const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
@@ -187,6 +189,8 @@ export default function Page() {
       isPaid: [],
       invoiceStartDate: "",
       invoiceEndDate: "",
+      receivedStartDate: "",
+      receivedEndDate: "",
     });
     setPage(0);
     handleCloseFilter();

@@ -19,9 +19,11 @@ import { useNotification } from "@/app/components/shared/NotificationProvider";
 import CategoryFormModal, {
   CategoryFormData,
 } from "@/app/components/shared/CategoryFormModal";
+import { CategoryErrors } from "../../category/page";
 import SubCategoryFormModal, {
   SubCategoryFormData,
 } from "@/app/components/shared/SubCategoryFormModal";
+import { SubCategoryErrors } from "../../subcategory/page";
 import { addCategory } from "@/app/api/category";
 import { addSubCategory } from "@/app/api/subCategory";
 import { sanitizeNumberInput } from "@/app/utils/number";
@@ -57,6 +59,8 @@ export default function BaleRow({
     type: CreateEntityType;
     prefillName: string;
   }>({ type: null, prefillName: "" });
+  const [categoryErrors, setCategoryErrors] = useState<CategoryErrors>({});
+  const [subCategoryErrors, setSubCategoryErrors] = useState<SubCategoryErrors>({});
 
   /* ---------------- Memoized Values ---------------- */
 
@@ -105,10 +109,14 @@ export default function BaleRow({
         setCategories((prev) => [...prev, created]);
         onChange({ categoryID: created.id });
         notify("Category created successfully", "success");
-      } catch (err: any) {
-        notify(err?.response?.data ?? "Error saving category", "error");
-      } finally {
         setCreateDialog({ type: null, prefillName: "" });
+        setCategoryErrors({});
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setCategoryErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err?.message || "Error saving category", "error");
+        }
       }
     },
     [notify, onChange, setCategories]
@@ -121,10 +129,14 @@ export default function BaleRow({
         setSubCategories((prev) => [...prev, created]);
         onChange({ subCategoryID: created.id });
         notify("Sub Category created successfully", "success");
-      } catch (err: any) {
-        notify(err?.response?.data ?? "Error saving sub category", "error");
-      } finally {
         setCreateDialog({ type: null, prefillName: "" });
+        setSubCategoryErrors({});
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setSubCategoryErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err?.message || "Error saving sub category", "error");
+        }
       }
     },
     [notify, onChange, setSubCategories]
@@ -237,16 +249,26 @@ export default function BaleRow({
         open={createDialog.type === "category"}
         mode="create"
         onSubmit={createCategory}
-        onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+        onClose={() => {
+          setCreateDialog({ type: null, prefillName: "" });
+          setCategoryErrors({});
+        }}
         initialData={{ name: createDialog.prefillName, code: "" }}
+        errors={categoryErrors}
+        setErrors={setCategoryErrors}
       />
 
       <SubCategoryFormModal
         open={createDialog.type === "subCategory"}
         mode="create"
         onSubmit={createSubCategory}
-        onClose={() => setCreateDialog({ type: null, prefillName: "" })}
+        onClose={() => {
+          setCreateDialog({ type: null, prefillName: "" });
+          setSubCategoryErrors({});
+        }}
         initialData={{ name: createDialog.prefillName }}
+        errors={subCategoryErrors}
+        setErrors={setSubCategoryErrors}
       />
     </Stack>
   );

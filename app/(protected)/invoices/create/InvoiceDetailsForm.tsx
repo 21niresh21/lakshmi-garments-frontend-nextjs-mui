@@ -23,9 +23,11 @@ import { GenericAutocomplete } from "@/app/components/shared/GenericAutocomplete
 import SupplierFormModal, {
   SupplierFormData,
 } from "@/app/components/shared/SupplierFormModal";
+import { SupplierErrors } from "../../supplier/page";
 import TransportFormModal, {
   TransportFormData,
 } from "@/app/components/shared/TransportFormModal";
+import { TransportErrors } from "../../transport/page";
 
 import { addSupplier } from "@/app/api/supplier";
 import { addTransport } from "@/app/api/transport";
@@ -69,6 +71,8 @@ function InvoiceDetailsForm({
     type: CreateEntityType;
     prefillName: string;
   }>({ type: null, prefillName: "" });
+  const [supplierErrors, setSupplierErrors] = useState<SupplierErrors>({});
+  const [transportErrors, setTransportErrors] = useState<TransportErrors>({});
 
   /* ---------- Memoized lookups ---------- */
 
@@ -107,9 +111,14 @@ function InvoiceDetailsForm({
         setSuppliers((p) => [...p, supplier]);
         onChange({ supplierID: supplier.id });
         notify("Supplier created successfully", "success");
-        closeDialog();
+        setCreateDialog({ type: null, prefillName: "" });
+        setSupplierErrors({});
       } catch (err: any) {
-        notify(err?.response?.data ?? "Failed to create supplier", "error");
+        if (err.validationErrors) {
+          setSupplierErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err?.message || "Failed to create supplier", "error");
+        }
       }
     },
     [closeDialog, notify, onChange, setSuppliers]
@@ -122,9 +131,14 @@ function InvoiceDetailsForm({
         setTransports((p) => [...p, transport]);
         onChange({ transportID: transport.id });
         notify("Transport created successfully", "success");
-        closeDialog();
+        setCreateDialog({ type: null, prefillName: "" });
+        setTransportErrors({});
       } catch (err: any) {
-        notify(err?.response?.data ?? "Failed to create transport", "error");
+        if (err.validationErrors) {
+          setTransportErrors(err.validationErrors);
+        } else if (err.message && err.message !== "Validation failed") {
+          notify(err?.message || "Failed to create transport", "error");
+        }
       }
     },
     [closeDialog, notify, onChange, setTransports]
@@ -216,8 +230,13 @@ function InvoiceDetailsForm({
               open={createDialog.type === "supplier"}
               mode="create"
               onSubmit={createSupplier}
-              onClose={closeDialog}
+              onClose={() => {
+                setCreateDialog({ type: null, prefillName: "" });
+                setSupplierErrors({});
+              }}
               initialData={{ name: createDialog.prefillName, location: "" }}
+              errors={supplierErrors}
+              setErrors={setSupplierErrors}
             />
           </Grid>
 
@@ -241,8 +260,13 @@ function InvoiceDetailsForm({
               open={createDialog.type === "transport"}
               mode="create"
               onSubmit={createTransport}
-              onClose={closeDialog}
+              onClose={() => {
+                setCreateDialog({ type: null, prefillName: "" });
+                setTransportErrors({});
+              }}
               initialData={{ name: createDialog.prefillName }}
+              errors={transportErrors}
+              setErrors={setTransportErrors}
             />
           </Grid>
 
