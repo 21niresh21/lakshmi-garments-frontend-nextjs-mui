@@ -14,7 +14,7 @@ export const createCustomTheme = (config: ThemeConfiguration) => {
         main: config.secondaryMain,
       },
       background: {
-        default: config.mode === "light" ? alpha(config.primaryMain, 0.04) : "#121212",
+        default: config.mode === "light" ? alpha(config.primaryMain, 0.025) : "#121212",
         paper: config.mode === "light" ? "#FFFFFF" : "#1E1E1E",
       },
     },
