@@ -15,13 +15,13 @@ export default function CategoryCard({ category, onChange, readOnly }: Props) {
         sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch" }}
       >
         <CardContent>
-          <Typography variant="h6" noWrap>{category.categoryName}</Typography>
+          <Typography variant="h6" fontWeight={600} noWrap>{category.categoryName}</Typography>
           <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
             {category.subCategories.map((sub) => (
               <Box key={sub.subCategoryName}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="caption">{sub.subCategoryName}</Typography>
-                  <Typography variant="caption" fontWeight={600}>{sub.count} pcs</Typography>
+                  <Typography variant="subtitle2" fontWeight={600}>{sub.subCategoryName}</Typography>
+                  <Typography variant="subtitle2" fontWeight={600}>{sub.count} pcs</Typography>
                 </Box>
                 <LinearProgress 
                   variant="determinate" 

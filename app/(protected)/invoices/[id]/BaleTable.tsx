@@ -1,7 +1,7 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton } from "@mui/material";
+import { Chip, Grid, IconButton, Stack, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { useEffect, useState } from "react";
 import { SubCategory } from "@/app/_types/SubCategory";
@@ -172,8 +172,8 @@ export default function BaleTable({ bales, canEdit }: Props) {
                 category: data.category || "",
                 subCategory: data.subCategory || "",
               }
-            : row
-        )
+            : row,
+        ),
       );
     } catch (err: any) {
       notify(err?.response?.data?.message ?? "Error saving invoice", "error");
@@ -210,7 +210,25 @@ export default function BaleTable({ bales, canEdit }: Props) {
   }, [openModal]);
 
   return (
-    <Grid container>
+    <Grid container spacing={2}>
+      <Grid size={12}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
+          <Typography variant="h5" fontWeight={600}>
+            Bales
+          </Typography>
+          <Chip
+            label={`${totalCount}`}
+            size="small"
+            color="primary"
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<BaleRow>
           title="Bales"

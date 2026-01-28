@@ -185,7 +185,8 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Items"
+          showSearch={true}
+          searchPlacedHolder="Search Items..."
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}

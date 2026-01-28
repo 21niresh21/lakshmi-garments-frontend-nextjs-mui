@@ -63,6 +63,7 @@ interface GenericTableProps<T> {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   toolbarExtras?: React.ReactNode;
+  showToolbar?: boolean;
 
   // ✅ Row click
   onRowClick?: (row: T) => void;
@@ -91,7 +92,7 @@ export default function GenericTable<T extends { id?: string | number }>({
   sortOrder = "asc",
   onSortChange,
   searchPlacedHolder = "Search...",
-  showSearch = true,
+  showSearch = false,
   searchValue = "",
   onSearchChange,
   toolbarExtras,
@@ -123,11 +124,11 @@ export default function GenericTable<T extends { id?: string | number }>({
       {/* Toolbar */}
       <Toolbar 
         sx={{ 
-          display: "flex", 
           justifyContent: "space-between", 
           alignItems: "center",
           gap: 2,
-          py: 1
+          py: 1,
+          display: !showSearch && !toolbarExtras ? 'none' : 'flex',
         }}
       >
         <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>

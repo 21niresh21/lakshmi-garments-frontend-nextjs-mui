@@ -190,7 +190,8 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Transports"
+          showSearch={true}
+          searchPlacedHolder="Search Transports..."
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}

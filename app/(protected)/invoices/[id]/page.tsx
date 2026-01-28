@@ -128,7 +128,7 @@ export default function InvoiceDetailsPage() {
 
       <Stack spacing={3}>
         {lorryReceipts.map((lr) => (
-          <Paper key={lr.id} sx={{ p: 2 }} elevation={0}>
+          <Box key={lr.id} sx={{ p: 2 }}>
             {/* 🔹 LR Number Row */}
             <Stack
               direction="row"
@@ -165,7 +165,7 @@ export default function InvoiceDetailsPage() {
 
             {/* 🔹 Bale Table */}
             <BaleTable canEdit={canEdit} bales={lr.baleDTOs ?? []} />
-          </Paper>
+          </Box>
         ))}
       </Stack>
     </Box>
