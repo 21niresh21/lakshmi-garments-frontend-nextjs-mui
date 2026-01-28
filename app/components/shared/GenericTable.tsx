@@ -155,7 +155,7 @@ export default function GenericTable<T extends { id?: string | number }>({
       </Toolbar>
 
       {/* Table */}
-      <TableContainer sx={{ flexGrow: 1, maxHeight: 600, overflowX: "auto" }}>
+      <TableContainer sx={{ flexGrow: 1, maxHeight: 550, overflowX: "auto" }}>
         <Table stickyHeader sx={{ minWidth: 1000 }}>
           <TableHead>
             <TableRow

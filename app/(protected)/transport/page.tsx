@@ -1,7 +1,16 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton, CircularProgress, Box, Stack, Typography, Chip, Tooltip } from "@mui/material";
+import {
+  Grid,
+  IconButton,
+  CircularProgress,
+  Box,
+  Stack,
+  Typography,
+  Chip,
+  Tooltip,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -42,7 +51,7 @@ export default function Page() {
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedTransport, setSelectedTransport] = useState<Transport | null>(
-    null
+    null,
   );
   const [errors, setErrors] = useState<TransportErrors>({});
 
@@ -62,7 +71,7 @@ export default function Page() {
         hideLoading();
       }
     },
-    [notify, showLoading, hideLoading]
+    [notify, showLoading, hideLoading],
   );
 
   useEffect(() => {
@@ -107,7 +116,7 @@ export default function Page() {
         }
       }
     },
-    [selectedTransport, notify, loadTransports, search]
+    [selectedTransport, notify, loadTransports, search],
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -117,7 +126,7 @@ export default function Page() {
       { id: "id", label: "ID", sortable: false },
       { id: "name", label: "Transport Name", sortable: false },
     ],
-    []
+    [],
   );
 
   const rowActions = useMemo(
@@ -125,32 +134,32 @@ export default function Page() {
       {
         label: "Edit",
         icon: () => (
-          <IconButton size="small">
-            <EditIcon sx={{ color: "gray" }} />
-          </IconButton>
+          <Tooltip title="Edit Transport">
+            <IconButton size="small">
+              <EditIcon sx={{ color: "gray" }} />
+            </IconButton>
+          </Tooltip>
         ),
         onClick: (row: Transport) => handleEditTransport(row),
       },
     ],
-    [handleEditTransport]
+    [handleEditTransport],
   );
 
   const toolbarExtras = useMemo(
     () => [
       <Tooltip key="add-transport" title="Add Transport">
-        <IconButton
-          onClick={handleAddTransport}
-        >
+        <IconButton onClick={handleAddTransport}>
           <AddIcon />
         </IconButton>
       </Tooltip>,
     ],
-    [handleAddTransport]
+    [handleAddTransport],
   );
 
   const transportInitialData = useMemo(
     () => (selectedTransport ? { name: selectedTransport.name } : undefined),
-    [selectedTransport]
+    [selectedTransport],
   );
 
   /* ---------------- Render ---------------- */
@@ -158,14 +167,19 @@ export default function Page() {
   return (
     <Grid container spacing={3}>
       <Grid size={12}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
           <Typography variant="h4" fontWeight={600}>
             Transports
           </Typography>
-          <Chip 
-            label={`${rows.length}`} 
-            size="small" 
-            color="primary" 
+          <Chip
+            label={`${rows.length}`}
+            size="small"
+            color="primary"
             sx={{ fontWeight: 700 }}
           />
         </Stack>
@@ -176,7 +190,7 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Transports..."
+          searchPlacedHolder="Search Transports"
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}

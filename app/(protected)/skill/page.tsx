@@ -1,7 +1,14 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Chip, Grid, IconButton, Stack, Typography, Tooltip } from "@mui/material";
+import {
+  Chip,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
+  Tooltip,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -58,7 +65,7 @@ export default function Page() {
         hideLoading();
       }
     },
-    [notify, showLoading, hideLoading]
+    [notify, showLoading, hideLoading],
   );
 
   useEffect(() => {
@@ -105,7 +112,7 @@ export default function Page() {
         }
       }
     },
-    [selectedSkill, notify, loadSkills, search]
+    [selectedSkill, notify, loadSkills, search],
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -115,7 +122,7 @@ export default function Page() {
       { id: "id", label: "ID", sortable: false },
       { id: "name", label: "Skill Name", sortable: false },
     ],
-    []
+    [],
   );
 
   const rowActions = useMemo(
@@ -123,14 +130,16 @@ export default function Page() {
       {
         label: "Edit",
         icon: () => (
-          <IconButton size="small">
-            <EditIcon sx={{ color: "gray" }} />
-          </IconButton>
+          <Tooltip title="Edit Skill">
+            <IconButton size="small">
+              <EditIcon sx={{ color: "gray" }} />
+            </IconButton>
+          </Tooltip>
         ),
         onClick: (row: Skill) => handleEditSkill(row),
       },
     ],
-    [handleEditSkill]
+    [handleEditSkill],
   );
 
   const toolbarExtras = useMemo(
@@ -141,12 +150,12 @@ export default function Page() {
         </IconButton>
       </Tooltip>,
     ],
-    [handleAddSkill]
+    [handleAddSkill],
   );
 
   const skillInitialData = useMemo(
     () => (selectedSkill ? { name: selectedSkill.name } : undefined),
-    [selectedSkill]
+    [selectedSkill],
   );
 
   /* ---------------- Render ---------------- */
@@ -154,14 +163,19 @@ export default function Page() {
   return (
     <Grid container spacing={3}>
       <Grid size={12}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
           <Typography variant="h4" fontWeight={600}>
             Skills
           </Typography>
-          <Chip 
-            label={`${rows.length}`} 
-            size="small" 
-            color="primary" 
+          <Chip
+            label={`${rows.length}`}
+            size="small"
+            color="primary"
             sx={{ fontWeight: 700 }}
           />
         </Stack>
@@ -171,7 +185,7 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Skills..."
+          searchPlacedHolder="Search Skills"
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}

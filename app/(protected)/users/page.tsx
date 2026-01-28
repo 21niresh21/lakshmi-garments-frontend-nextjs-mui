@@ -189,6 +189,7 @@ export default function Page() {
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}
+          searchPlacedHolder="Search Users"
           onRowsPerPageChange={setRowsPerPage}
           searchValue={search}
           onSearchChange={setSearch}

@@ -1,7 +1,16 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Grid, IconButton, CircularProgress, Box, Stack, Typography, Chip, Tooltip } from "@mui/material";
+import {
+  Grid,
+  IconButton,
+  CircularProgress,
+  Box,
+  Stack,
+  Typography,
+  Chip,
+  Tooltip,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -43,7 +52,7 @@ export default function Page() {
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null
+    null,
   );
   const [errors, setErrors] = useState<SupplierErrors>({});
 
@@ -63,7 +72,7 @@ export default function Page() {
         hideLoading();
       }
     },
-    [notify, showLoading, hideLoading]
+    [notify, showLoading, hideLoading],
   );
 
   useEffect(() => {
@@ -118,7 +127,7 @@ export default function Page() {
         }
       }
     },
-    [selectedSupplier, notify, loadSuppliers, search]
+    [selectedSupplier, notify, loadSuppliers, search],
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -129,7 +138,7 @@ export default function Page() {
       { id: "name", label: "Supplier Name", sortable: false },
       { id: "location", label: "Location", sortable: false },
     ],
-    []
+    [],
   );
 
   const rowActions = useMemo(
@@ -137,27 +146,27 @@ export default function Page() {
       {
         label: "Edit",
         icon: () => (
-          <IconButton size="small">
-            <EditIcon sx={{ color: "gray" }} />
-          </IconButton>
+          <Tooltip title="Edit Supplier">
+            <IconButton size="small">
+              <EditIcon sx={{ color: "gray" }} />
+            </IconButton>
+          </Tooltip>
         ),
         onClick: (row: Supplier) => handleEditSupplier(row),
       },
     ],
-    [handleEditSupplier]
+    [handleEditSupplier],
   );
 
   const toolbarExtras = useMemo(
     () => [
       <Tooltip key="add-supplier" title="Add Supplier">
-        <IconButton
-          onClick={handleAddSupplier}
-        >
+        <IconButton onClick={handleAddSupplier}>
           <PersonAddAlt1Icon />
         </IconButton>
       </Tooltip>,
     ],
-    [handleAddSupplier]
+    [handleAddSupplier],
   );
 
   const supplierInitialData = useMemo(
@@ -168,7 +177,7 @@ export default function Page() {
             location: selectedSupplier.location,
           }
         : undefined,
-    [selectedSupplier]
+    [selectedSupplier],
   );
 
   /* ---------------- Render ---------------- */
@@ -176,14 +185,19 @@ export default function Page() {
   return (
     <Grid container spacing={3}>
       <Grid size={12}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
           <Typography variant="h4" fontWeight={600}>
             Suppliers
           </Typography>
-          <Chip 
-            label={`${rows.length}`} 
-            size="small" 
-            color="primary" 
+          <Chip
+            label={`${rows.length}`}
+            size="small"
+            color="primary"
             sx={{ fontWeight: 700 }}
           />
         </Stack>
@@ -194,7 +208,7 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Suppliers..."
+          searchPlacedHolder="Search Suppliers"
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}

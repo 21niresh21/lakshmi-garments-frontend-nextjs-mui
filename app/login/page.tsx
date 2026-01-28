@@ -9,6 +9,7 @@ import {
   IconButton,
   InputAdornment,
 } from "@mui/material";
+import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { login } from "../api/loginApi";
@@ -50,14 +51,14 @@ export default function LoginPage() {
 
       const expiresAtZonedStr = response.expiresAt;
 
-// Parse it into a Date object
-const expiresAt = new Date(expiresAtZonedStr);
+      // Parse it into a Date object
+      const expiresAt = new Date(expiresAtZonedStr);
 
-// Convert to UTC string for cookie
-const utcString = expiresAt.toUTCString();
+      // Convert to UTC string for cookie
+      const utcString = expiresAt.toUTCString();
 
-// Set the cookie
-document.cookie = `token=${token}; path=/; expires=${utcString}; SameSite=Strict; Secure`;
+      // Set the cookie
+      document.cookie = `token=${token}; path=/; expires=${utcString}; SameSite=Strict; Secure`;
 
       // 3. Store user details (username, roles) for the UI
       localStorage.setItem(
@@ -65,10 +66,13 @@ document.cookie = `token=${token}; path=/; expires=${utcString}; SameSite=Strict
         JSON.stringify({
           username: response.username,
           roles: response.roles,
-        })
+        }),
       );
       // Store session expiry for tracking
-      localStorage.setItem("session_expires_at", expiresAt.getTime().toString());
+      localStorage.setItem(
+        "session_expires_at",
+        expiresAt.getTime().toString(),
+      );
 
       if (response.roles.includes(Roles.SUPER_ADMIN)) {
         router.push("/users");
@@ -105,7 +109,7 @@ document.cookie = `token=${token}; path=/; expires=${utcString}; SameSite=Strict
       <Paper
         elevation={8}
         sx={{
-          width: 360,
+          width: 420,
           p: 4,
           borderRadius: 2,
           display: "flex",
@@ -113,9 +117,27 @@ document.cookie = `token=${token}; path=/; expires=${utcString}; SameSite=Strict
           gap: 2,
         }}
       >
-        <Typography variant="h5" textAlign="center" fontWeight={500}>
-          Lakshmi Garments
-        </Typography>
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            mb: 2,
+          }}
+        >
+          <NextImage
+            src="/lg_logo.svg"
+            alt="LG Logo"
+            width={200}
+            height={150}
+            style={{
+              maxWidth: "50%",
+              height: "auto",
+              objectFit: "contain",
+            }}
+            priority
+          />
+        </Box>
 
         <Box
           component="form"

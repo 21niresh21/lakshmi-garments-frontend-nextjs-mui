@@ -1,7 +1,14 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Chip, Grid, IconButton, Stack, Typography, Tooltip } from "@mui/material";
+import {
+  Chip,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
+  Tooltip,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -63,7 +70,7 @@ export default function Page() {
         hideLoading();
       }
     },
-    [notify, showLoading, hideLoading]
+    [notify, showLoading, hideLoading],
   );
 
   useEffect(() => {
@@ -110,7 +117,7 @@ export default function Page() {
         }
       }
     },
-    [selectedSubCategory, notify, loadSubCategories, search]
+    [selectedSubCategory, notify, loadSubCategories, search],
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -120,7 +127,7 @@ export default function Page() {
       { id: "id", label: "ID", sortable: false },
       { id: "name", label: "Sub Category Name", sortable: false },
     ],
-    []
+    [],
   );
 
   const rowActions = useMemo(
@@ -128,33 +135,33 @@ export default function Page() {
       {
         label: "Edit",
         icon: () => (
-          <IconButton size="small">
-            <EditIcon sx={{ color: "gray" }} />
-          </IconButton>
+          <Tooltip title="Edit Sub Category">
+            <IconButton size="small">
+              <EditIcon sx={{ color: "gray" }} />
+            </IconButton>
+          </Tooltip>
         ),
         onClick: (row: SubCategory) => handleEditSubCategory(row),
       },
     ],
-    [handleEditSubCategory]
+    [handleEditSubCategory],
   );
 
   const toolbarExtras = useMemo(
     () => [
-      <Tooltip key="add-subcategory" title="Add SubCategory">
-        <IconButton
-          onClick={handleAddSubCategory}
-        >
+      <Tooltip key="add-subcategory" title="Add Sub Category">
+        <IconButton onClick={handleAddSubCategory}>
           <AddIcon />
         </IconButton>
       </Tooltip>,
     ],
-    [handleAddSubCategory]
+    [handleAddSubCategory],
   );
 
   const subcategoryInitialData = useMemo(
     () =>
       selectedSubCategory ? { name: selectedSubCategory.name } : undefined,
-    [selectedSubCategory]
+    [selectedSubCategory],
   );
 
   /* ---------------- Render ---------------- */
@@ -162,14 +169,19 @@ export default function Page() {
   return (
     <Grid container spacing={3}>
       <Grid size={12}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
           <Typography variant="h4" fontWeight={600}>
             Sub Categories
           </Typography>
-          <Chip 
-            label={`${rows.length}`} 
-            size="small" 
-            color="primary" 
+          <Chip
+            label={`${rows.length}`}
+            size="small"
+            color="primary"
             sx={{ fontWeight: 700 }}
           />
         </Stack>
@@ -179,7 +191,7 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Sub Categories..."
+          searchPlacedHolder="Search Sub Categories"
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}

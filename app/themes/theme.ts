@@ -93,6 +93,19 @@ export const createCustomTheme = (config: ThemeConfiguration) => {
           },
         },
       },
+      MuiTooltip: {
+        defaultProps: {
+          arrow: true,
+        },
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: '#222', // your color
+        },
+        arrow: {
+          color: '#222', // if you're using arrow tooltips
+        },
+      },
+    },
     },
   });
 };

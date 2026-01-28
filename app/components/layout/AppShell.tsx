@@ -13,6 +13,7 @@ import {
   Slide,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -51,11 +52,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         onMouseEnter={() => setLogoHover(true)}
         onMouseLeave={() => setLogoHover(false)}
         sx={{
-          height: 64,
+          ...theme.mixins.toolbar,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           transition: "all 0.3s",
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
       >
         {!collapsed ? (
@@ -67,11 +70,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               alignItems: "center",
               gap: 1.5,
               height: "100%",
-              mt : 0.7 
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1}}>
- 
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexGrow: 1,
+              }}
+            >
               <Typography
                 variant="subtitle2"
                 sx={{
@@ -85,7 +93,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Typography>
             </Box>
             {!isMobile && (
-              <IconButton size="small" onClick={() => setCollapsed(true)} sx={{ color: "text.secondary" }}>
+              <IconButton
+                size="small"
+                onClick={() => setCollapsed(true)}
+                sx={{ color: "text.secondary" }}
+              >
                 <ChevronLeftIcon />
               </IconButton>
             )}
@@ -100,14 +112,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               width: "100%",
               height: "100%",
               cursor: "pointer",
-              mt : 0.7 
+              mt: 0.7,
             }}
           >
             {logoHover && !isMobile ? (
               <IconButton>
-              <ChevronRightIcon color="primary" />
-
-
+                <ChevronRightIcon color="primary" />
               </IconButton>
             ) : (
               <Box
@@ -125,7 +135,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Box
                   component="img"
-                  src="/lg_twin_roses.svg"
+                  src="/lg_logo.svg"
                   alt="LG Logo"
                   sx={{
                     width: "100%",
@@ -179,7 +189,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </Drawer>
       )}
 
-      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+        }}
+      >
         {isAnalyticsPage && (
           <Box
             onMouseEnter={() => setShowAppBar(true)}
@@ -225,9 +242,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </Slide>
 
         <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
-          <Box sx={{ p: 2, minHeight: "100%" }}>
-            {children}
-          </Box>
+          <Box sx={{ p: 2, minHeight: "100%" }}>{children}</Box>
         </Box>
       </Box>
       <SessionExpiryTracker />

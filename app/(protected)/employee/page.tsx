@@ -1,7 +1,14 @@
 "use client";
 
 import GenericTable from "@/app/components/shared/GenericTable";
-import { Chip, Grid, IconButton, Stack, Typography, Tooltip } from "@mui/material";
+import {
+  Chip,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
+  Tooltip,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -20,8 +27,6 @@ import { normalizeError } from "@/app/utils/error";
 
 /* ---------------- Error Normalizer ---------------- */
 
-
-
 export type EmployeeErrors = {
   name?: string;
   skills?: string;
@@ -36,7 +41,7 @@ export default function Page() {
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null
+    null,
   );
   const [errors, setErrors] = useState<EmployeeErrors>({});
 
@@ -56,7 +61,7 @@ export default function Page() {
         hideLoading();
       }
     },
-    [notify, showLoading, hideLoading]
+    [notify, showLoading, hideLoading],
   );
 
   useEffect(() => {
@@ -103,7 +108,7 @@ export default function Page() {
         }
       }
     },
-    [selectedEmployee, notify, loadEmployees, search]
+    [selectedEmployee, notify, loadEmployees, search],
   );
 
   /* ---------------- Memoized Table Config ---------------- */
@@ -127,7 +132,7 @@ export default function Page() {
           )),
       },
     ],
-    []
+    [],
   );
 
   const rowActions = useMemo(
@@ -135,27 +140,27 @@ export default function Page() {
       {
         label: "Edit",
         icon: () => (
-          <IconButton size="small">
-            <EditIcon sx={{ color: "gray" }} />
-          </IconButton>
+          <Tooltip title="Edit Employee">
+            <IconButton size="small">
+              <EditIcon sx={{ color: "gray" }} />
+            </IconButton>
+          </Tooltip>
         ),
         onClick: (row: Employee) => handleEditEmployee(row),
       },
     ],
-    [handleEditEmployee]
+    [handleEditEmployee],
   );
 
   const toolbarExtras = useMemo(
     () => [
       <Tooltip key="add-employee" title="Add Employee">
-        <IconButton
-          onClick={handleAddEmployee}
-        >
+        <IconButton onClick={handleAddEmployee}>
           <PersonAddAlt1Icon />
         </IconButton>
       </Tooltip>,
     ],
-    [handleAddEmployee]
+    [handleAddEmployee],
   );
 
   const employeeInitialData = useMemo(
@@ -166,7 +171,7 @@ export default function Page() {
             skills: selectedEmployee.skills.map((skill) => skill.id),
           }
         : undefined,
-    [selectedEmployee]
+    [selectedEmployee],
   );
 
   /* ---------------- Render ---------------- */
@@ -174,14 +179,19 @@ export default function Page() {
   return (
     <Grid container spacing={3}>
       <Grid size={12}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
           <Typography variant="h4" fontWeight={600}>
             Employees
           </Typography>
-          <Chip 
-            label={`${rows.length}`} 
-            size="small" 
-            color="primary" 
+          <Chip
+            label={`${rows.length}`}
+            size="small"
+            color="primary"
             sx={{ fontWeight: 700 }}
           />
         </Stack>
@@ -191,7 +201,7 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Employees..."
+          searchPlacedHolder="Search Employees"
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}
