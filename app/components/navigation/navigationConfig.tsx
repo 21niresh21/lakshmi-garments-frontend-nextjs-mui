@@ -66,46 +66,47 @@ export const navigationConfig: NavGroup[] = [
   //     },
   //   ],
   // },
-  // {
-  //   title: "Invoice",
-  //   allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
-  //   items: [
-  //     {
-  //       label: "Invoice Management",
-  //       href: "/invoices", // 👈 This maps any /invoices/... URL to this parent
-  //       icon: <ReceiptLongIcon fontSize="small" />,
-  //       breadcrumbLabel: "Invoices",
-  //       children: [
-  //         {
-  //           label: "Add Invoice",
-  //           href: "/invoices/create",
-  //           icon: <AssignmentAddIcon fontSize="small" />,
-  //         },
-  //         {
-  //           label: "All Invoices",
-  //           href: "/invoices/list",
-  //           icon: <ListAltIcon fontSize="small" />,
-  //         },
-  //         {
-  //           label: "Invoice Details",
-  //           href: "/invoices/:id", // 👈 This pattern matches /invoices/ANYTHING
-  //           icon: <VisibilityIcon fontSize="small" />,
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
-  // {
-  //   title: "Inventory",
-  //   allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
-  //   items: [
-  //     {
-  //       label: "Inventory",
-  //       href: "/inventory",
-  //       icon: <WarehouseIcon fontSize="small" />,
-  //     },
-  //   ],
-  // },
+  {
+    title: "Invoice",
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
+    items: [
+      {
+        label: "Invoice Management",
+        href: "/invoices", // 👈 This maps any /invoices/... URL to this parent
+        icon: <ReceiptLongIcon fontSize="small" />,
+        breadcrumbLabel: "Invoices",
+        children: [
+          {
+            label: "Add Invoice",
+            href: "/invoices/create",
+            icon: <AssignmentAddIcon fontSize="small" />,
+          },
+          {
+            label: "All Invoices",
+            href: "/invoices/list",
+            icon: <ListAltIcon fontSize="small" />,
+          },
+          {
+            label: "Invoice Details",
+            href: "/invoices/:id", // 👈 This pattern matches /invoices/ANYTHING
+            icon: <VisibilityIcon fontSize="small" />,
+            hideInSidebar: true, // 👈 Hide from sidebar navigation
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Inventory",
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
+    items: [
+      {
+        label: "Inventory",
+        href: "/inventory",
+        icon: <WarehouseIcon fontSize="small" />,
+      },
+    ],
+  },
   // {
   //   title: "Production",
   //   allowFor: [],

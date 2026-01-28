@@ -10,6 +10,7 @@ import {
   Tooltip,
   useMediaQuery,
   useTheme,
+  Typography,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
@@ -321,7 +322,20 @@ export default function Page() {
   /* -------------------------------------------------------------------------- */
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Invoices
+          </Typography>
+          <Chip 
+            label={`${totalCount}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<InvoiceDetails>
           title={isMobile ? "" : "Invoices"}
@@ -333,7 +347,8 @@ export default function Page() {
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}
           onRowsPerPageChange={setRowsPerPage}
-          searchPlacedHolder="Search invoice number"
+          showSearch={true}
+          searchPlacedHolder="Search invoice number..."
           searchValue={search}
           onSearchChange={setSearch}
           sortBy={sortBy}

@@ -26,7 +26,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import PaletteIcon from "@mui/icons-material/Palette";
 import SettingsIcon from "@mui/icons-material/Settings";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import { alpha } from "@mui/material/styles";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -53,11 +53,14 @@ export default function SideBarContent({
   const [openMap, setOpenMap] = React.useState<Record<string, boolean>>({});
 
   /** Hover state for collapsed sidebar */
-  const [hoverAnchorEl, setHoverAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [hoverAnchorEl, setHoverAnchorEl] = React.useState<HTMLElement | null>(
+    null,
+  );
   const [hoveredItem, setHoveredItem] = React.useState<NavItem | null>(null);
 
   /** User menu anchor */
-  const [userMenuAnchorEl, setUserMenuAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [userMenuAnchorEl, setUserMenuAnchorEl] =
+    React.useState<HTMLElement | null>(null);
 
   // Timer to prevent immediate closing when moving to popper
   const closeTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -83,7 +86,10 @@ export default function SideBarContent({
     setOpenMap(map);
   }, [pathname]);
 
-  const handleHoverEnter = (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
+  const handleHoverEnter = (
+    event: React.MouseEvent<HTMLElement>,
+    item: NavItem,
+  ) => {
     if (collapsed && item.children) {
       if (closeTimer.current) clearTimeout(closeTimer.current);
       setHoverAnchorEl(event.currentTarget);
@@ -147,8 +153,13 @@ export default function SideBarContent({
                 {visibleItems.map((item: NavItem) => {
                   const isNested = Boolean(item.children);
                   const isActive = isNested
-                    ? item.children?.some((child) => child.href && pathname.startsWith(child.href))
-                    : (item.href ? pathname.startsWith(item.href) : false);
+                    ? item.children?.some(
+                        (child) =>
+                          child.href && pathname.startsWith(child.href),
+                      )
+                    : item.href
+                    ? pathname.startsWith(item.href)
+                    : false;
 
                   return (
                     <React.Fragment key={item.label}>
@@ -294,7 +305,14 @@ export default function SideBarContent({
               onMouseEnter={handlePopperEnter}
               onMouseLeave={handleHoverLeave}
             >
-              <Box sx={{ py: 1, bgcolor: "primary.main", color: "primary.contrastText", px: 2 }}>
+              <Box
+                sx={{
+                  py: 1,
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                  px: 2,
+                }}
+              >
                 <Typography variant="subtitle2" fontWeight={700}>
                   {hoveredItem?.label.toUpperCase()}
                 </Typography>
@@ -329,7 +347,9 @@ export default function SideBarContent({
                           "&:hover": { backgroundColor: "primary.dark" },
                         },
                         "&:hover": {
-                          backgroundColor: isChildActive ? "primary.dark" : "action.hover",
+                          backgroundColor: isChildActive
+                            ? "primary.dark"
+                            : "action.hover",
                         },
                       }}
                     >
@@ -344,7 +364,7 @@ export default function SideBarContent({
                       <ListItemText
                         primary={child.label}
                         primaryTypographyProps={{
-                          fontWeight: isChildActive ? 600 : 400
+                          fontWeight: isChildActive ? 600 : 400,
                         }}
                       />
                     </ListItemButton>
@@ -396,12 +416,12 @@ export default function SideBarContent({
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, width: "100%" }}>
-              <AccountBalanceWalletIcon 
+              <PrecisionManufacturingIcon 
                 sx={{ fontSize: 22, color: "secondary.main", mb: 0.5 }} 
               />
               <Box>
                 <Typography variant="caption" sx={{ fontWeight: 700, color: "secondary.main", display: "block", lineHeight: 1, fontSize: "0.85rem" }}>
-                  Accounts Module
+                  Production Module
                 </Typography>
               </Box>
             </Box>
@@ -489,7 +509,7 @@ export default function SideBarContent({
                 bgcolor: "primary.main",
                 fontSize: "0.875rem",
                 fontWeight: 700,
-                color: "primary.contrastText"
+                color: "primary.contrastText",
               }}
             >
               {user?.username?.[0]?.toUpperCase() || "U"}
@@ -528,7 +548,7 @@ export default function SideBarContent({
             borderRadius: 2,
             border: "1px solid",
             borderColor: "divider",
-          }
+          },
         }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
@@ -550,7 +570,10 @@ export default function SideBarContent({
           <ListItemIcon>
             <AccountCircleIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="My Profile" primaryTypographyProps={{ variant: "body2" }} />
+          <ListItemText
+            primary="My Profile"
+            primaryTypographyProps={{ variant: "body2" }}
+          />
         </MenuItem>
 
         <Divider />
@@ -576,13 +599,16 @@ export default function SideBarContent({
           sx={{
             py: 1,
             color: "error.main",
-            "& .MuiListItemIcon-root": { color: "error.main" }
+            "& .MuiListItemIcon-root": { color: "error.main" },
           }}
         >
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Logout" primaryTypographyProps={{ variant: "body2", fontWeight: 600 }} />
+          <ListItemText
+            primary="Logout"
+            primaryTypographyProps={{ variant: "body2", fontWeight: 600 }}
+          />
         </MenuItem>
       </Menu>
     </Box>

@@ -201,7 +201,8 @@ export default function Page() {
           rows={rows}
           pagination={false}
           totalCount={rows.length}
-          searchPlacedHolder="Search Employees"
+          showSearch={true}
+          searchPlacedHolder="Search Employees..."
           searchValue={search}
           onSearchChange={setSearch}
           columns={columns}
