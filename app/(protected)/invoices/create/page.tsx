@@ -2,8 +2,6 @@
 
 import {
   Box,
-  Button,
-  Divider,
   Grid,
   Stack,
   useMediaQuery,
@@ -14,6 +12,7 @@ import dayjs from "dayjs";
 
 import InvoiceDetailsForm from "./InvoiceDetailsForm";
 import LRDetailsForm from "./LRDetailsForm";
+import InvoiceSummary from "./InvoiceSummary";
 
 import {
   BaleErrors,
@@ -37,8 +36,6 @@ import { createStock } from "@/app/api/invoiceApi";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useUser } from "@/app/context/UserContext";
 
-import DeleteIcon from "@mui/icons-material/Delete";
-import DraftsIcon from "@mui/icons-material/Drafts";
 import { fetchSuppliers } from "@/app/api/supplier";
 import { fetchTransports } from "@/app/api/transport";
 import { fetchCategories } from "@/app/api/category";
@@ -119,7 +116,8 @@ const validateLRs = (lrs: LR[]) => {
 
 export default function InvoicePage() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  // We use LG breakpoint to switch from 2-column to 1-column
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const { notify } = useNotification();
   const { user } = useUser();
   const { loading, showLoading, hideLoading } = useGlobalLoading();
@@ -245,70 +243,44 @@ export default function InvoicePage() {
   /* ---------- UI ---------- */
 
   return (
-    <Box>
+    <Box sx={{ p: { xs: 0, md: 1 } }}>
       <Grid container spacing={3}>
-        <Grid size={12}>
-          <InvoiceDetailsForm
-            value={invoice}
-            errors={invoiceErrors}
-            onChange={handleInvoiceChange}
-            suppliers={suppliers}
-            transports={transports}
-            setSuppliers={setSuppliers}
-            setTransports={setTransports}
-          />
-        </Grid>
+        {/* Main Form Area */}
+        <Grid size={{ xs: 12, lg: 8, xl: 9 }}>
+          <Stack spacing={3}>
+            <InvoiceDetailsForm
+              value={invoice}
+              errors={invoiceErrors}
+              onChange={handleInvoiceChange}
+              suppliers={suppliers}
+              transports={transports}
+              setSuppliers={setSuppliers}
+              setTransports={setTransports}
+            />
 
-        <Grid size={12}>
-          <Divider />
-        </Grid>
-
-        <Grid size={12}>
-          <LRDetailsForm
-            value={lr}
-            onChange={(p) => setLr((v) => ({ ...v, ...p }))}
-            categories={categories}
-            subCategories={subCategories}
-            lrErrors={lrErrors}
-            onClearBaleError={clearBaleError}
-            setCategories={setCategories}
-            setSubCategories={setSubCategories}
-          />
-        </Grid>
-
-        <Grid size={12}>
-          <Stack
-            direction={isMobile ? "column" : "row"}
-            justifyContent="flex-end"
-            gap={1.5}
-          >
-            <Button
-              color="error"
-              variant="outlined"
-              startIcon={<DeleteIcon />}
-              onClick={clearForm}
-              disabled={loading}
-            >
-              Clear
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<DraftsIcon />}
-              onClick={saveDraft}
-              disabled={loading}
-            >
-              Save Draft
-            </Button>
-            <Button
-              variant="contained"
-              loading={loading}
-              onClick={submitInvoice}
-              disabled={loading}
-            >
-              Submit Invoice
-            </Button>
+            <LRDetailsForm
+              value={lr}
+              onChange={(p) => setLr((v) => ({ ...v, ...p }))}
+              categories={categories}
+              subCategories={subCategories}
+              lrErrors={lrErrors}
+              onClearBaleError={clearBaleError}
+              setCategories={setCategories}
+              setSubCategories={setSubCategories}
+            />
           </Stack>
+        </Grid>
+
+        {/* Sticky Summary Area */}
+        <Grid size={{ xs: 12, lg: 4, xl: 3 }}>
+          <InvoiceSummary
+            invoice={invoice}
+            lr={lr}
+            loading={loading}
+            onSubmit={submitInvoice}
+            onSaveDraft={saveDraft}
+            onClear={clearForm}
+          />
         </Grid>
       </Grid>
     </Box>

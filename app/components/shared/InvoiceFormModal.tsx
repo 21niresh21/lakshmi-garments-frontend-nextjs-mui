@@ -88,13 +88,19 @@ export default function InvoiceFormModal({
 
   const handleNumberChange = useCallback(
     (field: "transportCost") => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      const numeric = value === "" ? undefined : Number(value);
-
-      onChange({
-        [field]: numeric,
-        ...(numeric ? {} : { isTransportPaid: false }),
-      });
+      let value = e.target.value;
+      const regex = /^[0-9]*\.?[0-9]*$/;
+      
+      if (regex.test(value) || value === "") {
+        // Prevent leading zeros unless followed by a decimal
+        if (value.length > 1 && value.startsWith("0") && value[1] !== ".") {
+          value = value.replace(/^0+/, "");
+          if (value === "") value = "0";
+        }
+        onChange({
+          [field]: value === "" ? undefined : (value as any),
+        });
+      }
     },
     [onChange]
   );
@@ -241,17 +247,11 @@ export default function InvoiceFormModal({
 
             <TextField
               label="Transport Cost"
-              type="number"
               value={initialData.transportCost ?? ""}
-              onChange={(e) => {
-                const raw = e.target.value;
-                onChange({
-                  transportCost:
-                    raw === "" ? undefined : Number(sanitizeNumberInput(raw)),
-                });
-              }}
+              onChange={handleNumberChange("transportCost")}
               error={!!errors.transportCost}
               helperText={errors.transportCost}
+              inputProps={{ inputMode: "decimal" }}
               fullWidth
             />
 

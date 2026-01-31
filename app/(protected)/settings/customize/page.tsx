@@ -51,9 +51,20 @@ export default function CustomizePage() {
     { label: "Roboto (Classic)", value: "'Roboto', sans-serif" },
     { label: "Outfit (Rounded)", value: "'Outfit', sans-serif" },
     { label: "Poppins (Friendly)", value: "'Poppins', sans-serif" },
+    { label: "Helvetica (System)", value: "'Helvetica', 'Arial', sans-serif" },
+    { label: "Verdana (Clean)", value: "'Verdana', sans-serif" },
+    { label: "Segoe UI (Windows)", value: "'Segoe UI', Tahoma, sans-serif" },
+    { label: "Montserrat (Geometric)", value: "'Montserrat', sans-serif" },
   ];
 
   const presetThemes = [
+    {
+      name: "Indigo Emerald (Modern)",
+      primaryMain: "#6366f1",
+      primaryLight: "#818cf8",
+      primaryDark: "#4f46e5",
+      secondaryMain: "#10b981",
+    },
     {
       name: "Lakshmi Garments",
       primaryMain: "#6f41a8ff",
@@ -61,20 +72,13 @@ export default function CustomizePage() {
       primaryDark: "#4e2a7bff",
       secondaryMain: "#3F4C6B",
     },
-
-{
-  name: "Vintage",
-  primaryMain: "#4B4658",   // softened ink purple
-  primaryLight: "#EFE6D3",  // parchment
-  primaryDark: "#322E3E",   // dusk ink
-  secondaryMain: "#8A4F63", // muted wine
-}
-
-
-
-,
-
-
+    {
+      name: "Vintage",
+      primaryMain: "#4B4658",
+      primaryLight: "#EFE6D3",
+      primaryDark: "#322E3E",
+      secondaryMain: "#8A4F63",
+    },
     {
       name: "Midnight Ocean",
       primaryMain: "#0077B6",
@@ -177,20 +181,20 @@ export default function CustomizePage() {
               <DarkModeIcon fontSize="small" /> Mode & Density
             </Typography>
             <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={localConfig.mode === "dark"}
-                    onChange={(e) => handleChange("mode", e.target.checked ? "dark" : "light")}
-                  />
-                }
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    {localConfig.mode === "dark" ? <DarkModeIcon fontSize="small" /> : <LightModeIcon fontSize="small" />}
-                    <Typography variant="body2">Dark Theme</Typography>
-                  </Box>
-                }
-              />
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" fontWeight={600}>Visual Style</Typography>
+                <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                  <Select
+                    value={localConfig.themeStyle}
+                    onChange={(e) => handleChange("themeStyle", e.target.value)}
+                  >
+                    <MenuItem value="standard">Standard (Modern)</MenuItem>
+                    <MenuItem value="glass">Glass (Blur & Slate)</MenuItem>
+                    <MenuItem value="frosted">Frosted Glass (High Blur)</MenuItem>
+                    <MenuItem value="flat">Flat (Minimalist)</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
               <FormControlLabel
                 control={
                   <Switch
@@ -227,6 +231,25 @@ export default function CustomizePage() {
                   ))}
                 </Select>
               </FormControl>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" fontWeight={600}>Font Style (Regular Weight): {localConfig.fontWeight}</Typography>
+                <Slider
+                  min={300}
+                  max={700}
+                  step={100}
+                  marks={[
+                    { value: 300, label: 'Light' },
+                    { value: 400, label: 'Regular' },
+                    { value: 500, label: 'Medium' },
+                    { value: 700, label: 'Bold' },
+                  ]}
+                  value={localConfig.fontWeight}
+                  onChange={(_, val) => handleChange("fontWeight", val)}
+                  valueLabelDisplay="auto"
+                  sx={{ mt: 1, mb: 1 }}
+                />
+              </Box>
 
               <Typography variant="caption" fontWeight={600}>Base Font Size: {localConfig.fontSize}px</Typography>
               <Slider

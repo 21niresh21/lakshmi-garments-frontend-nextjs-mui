@@ -293,6 +293,7 @@ export default function Page() {
     if (invoice.transportCost == null || invoice.transportCost < 0)
       errors.transportCost = "Transport cost must be ≥ 0";
 
+
     setInvoiceErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -324,14 +325,19 @@ export default function Page() {
   return (
     <Grid container spacing={3}>
       <Grid size={12}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
           <Typography variant="h4" fontWeight={600}>
             Invoices
           </Typography>
-          <Chip 
-            label={`${totalCount}`} 
-            size="small" 
-            color="primary" 
+          <Chip
+            label={`${totalCount}`}
+            size="small"
+            color="primary"
             sx={{ fontWeight: 700 }}
           />
         </Stack>

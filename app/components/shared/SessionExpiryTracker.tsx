@@ -71,7 +71,7 @@ export default function SessionExpiryTracker() {
       aria-describedby="session-expiry-dialog-description"
     >
       <DialogTitle id="session-expiry-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <TimerIcon color="warning" />
+        <TimerIcon/>
         Session Expiring Soon
       </DialogTitle>
       <DialogContent sx={{mt : 3}}>

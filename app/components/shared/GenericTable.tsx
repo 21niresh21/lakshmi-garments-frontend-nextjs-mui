@@ -17,6 +17,7 @@ import {
   LinearProgress,
   TableSortLabel,
   InputAdornment,
+  alpha,
 } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
 import SearchIcon from "@mui/icons-material/Search";
@@ -110,70 +111,79 @@ export default function GenericTable<T extends { id?: string | number }>({
 
   return (
     <Paper
-      sx={{ 
-        width: "100%", 
+      elevation={0}
+      sx={{
+        width: "100%",
         maxWidth: "100%",
-        display: "flex", 
+        display: "flex",
         flexDirection: "column",
-        overflow: "hidden" 
+        overflow: "hidden",
       }}
-      elevation={3}
     >
-      {loading && <LinearProgress />}
+      {loading && <LinearProgress sx={{ height: 3 }} />}
 
       {/* Toolbar */}
-      <Toolbar 
-        sx={{ 
-          justifyContent: "space-between", 
-          alignItems: "center",
-          gap: 2,
-          py: 1,
-          display: !showSearch && !toolbarExtras ? 'none' : 'flex',
-        }}
-      >
-        <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
-          {showSearch && onSearchChange && (
-            <TextField
-              size="small"
-              placeholder={searchPlacedHolder}
-              value={searchValue}
-              onChange={(e) => onSearchChange(e.target.value)}
-              sx={{ maxWidth: 350 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          )}
-        </Box>
+      {(showSearch || toolbarExtras || title) && (
+        <Toolbar
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 2,
+            py: 2,
+            px: 3,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center", gap: 2 }}>
+            {showSearch && onSearchChange && (
+              <TextField
+                size="small"
+                placeholder={searchPlacedHolder}
+                value={searchValue}
+                onChange={(e) => onSearchChange(e.target.value)}
+                sx={{ 
+                  maxWidth: 350,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            )}
+          </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {toolbarExtras}
-        </Box>
-      </Toolbar>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {toolbarExtras}
+          </Box>
+        </Toolbar>
+      )}
 
       {/* Table */}
       <TableContainer sx={{ flexGrow: 1, maxHeight: 550, overflowX: "auto" }}>
         <Table stickyHeader sx={{ minWidth: 1000 }}>
           <TableHead>
-            <TableRow
-              sx={{ backgroundColor: (theme) => theme.palette.primary.main }}
-            >
+            <TableRow>
               {columns.map((col) => (
                 <TableCell
                   key={String(col.id)}
                   align={col.align}
-                  sx={{ color: "white", fontWeight: 600, whiteSpace: "nowrap" }}
+                  sx={{ 
+                    whiteSpace: "nowrap",
+                    py: 2,
+                  }}
                 >
                   {col.sortable && onSortChange ? (
                     <TableSortLabel
                       active={sortBy === col.id}
                       direction={sortBy === col.id ? sortOrder : "asc"}
                       onClick={() => handleSort(String(col.id))}
-                      sx={{ color: "inherit" }}
                     >
                       {col.label}
                     </TableSortLabel>
@@ -186,7 +196,6 @@ export default function GenericTable<T extends { id?: string | number }>({
               {rowActions && (
                 <TableCell
                   align="right"
-                  sx={{ color: "white", fontWeight: 600 }}
                 >
                   Actions
                 </TableCell>
@@ -204,33 +213,50 @@ export default function GenericTable<T extends { id?: string | number }>({
                   ...(getRowSx ? getRowSx(row) : {}),
                 }}
                 onClick={(e) => {
-                  // Prevent navigation when clicking action buttons
                   if ((e.target as HTMLElement).closest("[data-row-action]"))
                     return;
                   onRowClick?.(row);
                 }}
               >
                 {columns.map((col) => (
-                  <TableCell key={String(col.id)} align={col.align} sx={{ whiteSpace: "nowrap" }}>
+                  <TableCell 
+                    key={String(col.id)} 
+                    align={col.align} 
+                    sx={{ 
+                      whiteSpace: "nowrap",
+                      fontSize: "0.9rem",
+                      py: 1.5,
+                    }}
+                  >
                     {col.render ? col.render(row) : (row as any)[col.id]}
                   </TableCell>
                 ))}
 
                 {rowActions && (
-                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                    {rowActions.map((action) => (
-                      <Box
-                        key={action.label}
-                        data-row-action
-                        component="span"
-                        sx={{ cursor: "pointer", ml: 1 }}
-                        onClick={(e) => action.onClick(row, e)}
-                      >
-                        {typeof action.icon === "function"
-                          ? action.icon(row)
-                          : action.icon}
-                      </Box>
-                    ))}
+                  <TableCell align="right" sx={{ whiteSpace: "nowrap", py: 1.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                      {rowActions.map((action) => (
+                        <Box
+                          key={action.label}
+                          data-row-action
+                          component="span"
+                          sx={{ 
+                            cursor: "pointer", 
+                            p: 0.5,
+                            borderRadius: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s',
+                          }}
+                          onClick={(e) => action.onClick(row, e)}
+                        >
+                          {typeof action.icon === "function"
+                            ? action.icon(row)
+                            : action.icon}
+                        </Box>
+                      ))}
+                    </Box>
                   </TableCell>
                 )}
               </TableRow>
@@ -242,9 +268,14 @@ export default function GenericTable<T extends { id?: string | number }>({
                   colSpan={columns.length + (rowActions ? 1 : 0)}
                   align="center"
                 >
-                  <Box sx={{ py: 4, color: "text.secondary" }}>
-                    <InboxIcon sx={{ fontSize: 48, mb: 1 }} />
-                    <Typography variant="body2">{noDataText}</Typography>
+                  <Box sx={{ py: 8, color: "text.secondary" }}>
+                    <InboxIcon sx={{ fontSize: 64, mb: 2, opacity: 0.2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 600, opacity: 0.5 }}>
+                      {noDataText}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.5 }}>
+                      Try adjusting your search or filters
+                    </Typography>
                   </Box>
                 </TableCell>
               </TableRow>
@@ -262,6 +293,10 @@ export default function GenericTable<T extends { id?: string | number }>({
           onPageChange={(_, newPage) => onPageChange?.(newPage)}
           onRowsPerPageChange={(e) => onRowsPerPageChange?.(+e.target.value)}
           rowsPerPageOptions={[5, 10, 25, 50]}
+          sx={{
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
         />
       )}
     </Paper>

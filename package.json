@@ -9,11 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.6",
     "@mui/lab": "^7.0.1-beta.20",
     "@mui/material": "^7.3.6",
+    "@mui/material-nextjs": "^7.3.7",
     "@mui/x-date-pickers": "^8.22.0",
     "@nivo/bar": "^0.99.0",
     "@nivo/calendar": "^0.99.0",

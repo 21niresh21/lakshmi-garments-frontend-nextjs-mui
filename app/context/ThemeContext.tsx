@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from "react";
-import { ThemeProvider } from "@mui/material/styles";
-import { createCustomTheme } from "@/app/themes/theme";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { getThemeOptions } from "@/app/themes/theme";
 
 export type ThemeConfiguration = {
   primaryMain: string;
@@ -12,14 +12,18 @@ export type ThemeConfiguration = {
   borderRadius: number;
   mode: "light" | "dark";
   fontSize: number;
+  fontWeight: number;
   fontFamily: string;
   compactMode: boolean;
+  themeStyle: "standard" | "glass" | "flat" | "frosted";
 };
 
 type ThemeContextType = {
   config: ThemeConfiguration;
-  updateConfig: (newConfig: ThemeConfiguration) => void;
+  updateConfig: (newConfig: Partial<ThemeConfiguration>) => void;
   resetConfig: () => void;
+  toggleMode: () => void;
+  setThemeStyle: (style: ThemeConfiguration["themeStyle"]) => void;
 };
 
 export const defaultConfig: ThemeConfiguration = {
@@ -30,8 +34,10 @@ export const defaultConfig: ThemeConfiguration = {
   borderRadius: 4,
   mode: "light",
   fontSize: 14,
+  fontWeight: 400,
   fontFamily: "'Inter', 'Roboto', sans-serif",
   compactMode: false,
+  themeStyle: "standard",
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -44,17 +50,22 @@ export function ThemeCustomizationProvider({ children }: { children: React.React
     const savedConfig = localStorage.getItem("customThemeConfig");
     if (savedConfig) {
       try {
-        setConfig(JSON.parse(savedConfig));
+        const parsed = JSON.parse(savedConfig);
+        // Merge with defaults to handle partial or outdated configs
+        setConfig((prev) => ({ ...prev, ...parsed }));
       } catch (e) {
         console.error("Failed to parse saved config", e);
       }
     }
     setIsLoaded(true);
   }, []);
-
-  const updateConfig = (newConfig: ThemeConfiguration) => {
-    setConfig(newConfig);
-    localStorage.setItem("customThemeConfig", JSON.stringify(newConfig));
+  
+  const updateConfig = (newConfig: Partial<ThemeConfiguration>) => {
+    setConfig((prev) => {
+      const merged = { ...prev, ...newConfig };
+      localStorage.setItem("customThemeConfig", JSON.stringify(merged));
+      return merged;
+    });
   };
 
   const resetConfig = () => {
@@ -62,14 +73,22 @@ export function ThemeCustomizationProvider({ children }: { children: React.React
     localStorage.removeItem("customThemeConfig");
   };
 
+  const toggleMode = () => {
+    updateConfig({ ...config, mode: config.mode === "light" ? "dark" : "light" });
+  };
+
+  const setThemeStyle = (themeStyle: ThemeConfiguration["themeStyle"]) => {
+    updateConfig({ ...config, themeStyle });
+  };
+
   const activeTheme = useMemo(() => {
-    return createCustomTheme(config);
+    return createTheme(getThemeOptions(config));
   }, [config]);
 
   if (!isLoaded) return null; // Prevent flash of default theme
 
   return (
-    <ThemeContext.Provider value={{ config, updateConfig, resetConfig }}>
+    <ThemeContext.Provider value={{ config, updateConfig, resetConfig, toggleMode, setThemeStyle }}>
       <ThemeProvider theme={activeTheme}>
         {children}
       </ThemeProvider>

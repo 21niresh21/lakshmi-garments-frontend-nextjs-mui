@@ -71,7 +71,7 @@ export const navigationConfig: NavGroup[] = [
     allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
     items: [
       {
-        label: "Invoice Management",
+        label: "Invoice",
         href: "/invoices", // 👈 This maps any /invoices/... URL to this parent
         icon: <ReceiptLongIcon fontSize="small" />,
         breadcrumbLabel: "Invoices",

@@ -54,6 +54,7 @@ export function GenericAutocomplete<T extends object>({
       onClose={() => setOpen(false)}
       id={label}
       sx={sx}
+      size={size}
       autoHighlight
       loading={loading}
       openOnFocus
@@ -99,13 +100,11 @@ export function GenericAutocomplete<T extends object>({
         }
         onChange(newValue as T | null);
       }}
-      disablePortal
       renderInput={(params) => (
         <TextField
           {...params}
           label={label}
           placeholder={placeholder}
-          size={size ? size : "medium"}
           error={Boolean(error)}
           helperText={error}
         />

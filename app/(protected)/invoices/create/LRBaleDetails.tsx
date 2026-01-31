@@ -10,6 +10,9 @@ import {
   Typography,
   TextField,
   IconButton,
+  Divider,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
@@ -42,6 +45,7 @@ export default function LRAccordionSection({
   setCategories,
   setSubCategories,
 }: Props) {
+  const theme = useTheme();
   /* ---------------- LR actions ---------------- */
 
   const removeLR = (lrId: string) => {
@@ -105,20 +109,42 @@ export default function LRAccordionSection({
   /* ---------------- UI ---------------- */
 
   return (
-    <Box mt={2}>
+    <Box mt={1}>
       {lorryReceipts.map((lr) => (
-        <Accordion defaultExpanded key={lr.id} sx={{ mb: 2 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />} component="div">
+        <Accordion
+          disableGutters
+          elevation={0}
+          defaultExpanded
+          key={lr.id}
+          sx={{
+            mb: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: "12px !important",
+            overflow: "hidden",
+            "&:before": { display: "none" },
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            component="div"
+            sx={{
+              bgcolor: alpha(theme.palette.action.hover, 0.1),
+              minHeight: 64,
+            }}
+          >
             <Stack
               direction="row"
               alignItems="center"
               justifyContent="space-between"
               width="100%"
+              pr={1}
             >
               <Stack>
-                <Typography fontWeight={600}>LR: {lr.lrNumber}</Typography>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  LR: {lr.lrNumber}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {lr.bales.length} bales
+                   {lr.bales.length} {lr.bales.length === 1 ? "bale" : "bales"} recorded
                 </Typography>
               </Stack>
 
@@ -126,17 +152,21 @@ export default function LRAccordionSection({
                 color="error"
                 size="small"
                 onClick={(e) => {
-                  e.stopPropagation(); // 🔥 prevents accordion toggle
+                  e.stopPropagation();
                   removeLR(lr.id);
                 }}
+                sx={{ 
+                  bgcolor: alpha(theme.palette.error.main, 0.05),
+                  "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.1) }
+                }}
               >
-                <DeleteIcon />
+                <DeleteIcon fontSize="small" />
               </IconButton>
             </Stack>
           </AccordionSummary>
 
-          <AccordionDetails>
-            <Stack spacing={2}>
+          <AccordionDetails sx={{ p: 3 }}>
+            <Stack spacing={3}>
               {lr.bales.map((bale) => (
                 <Box key={bale.id} width="100%">
                   <BaleRow
@@ -155,18 +185,30 @@ export default function LRAccordionSection({
                     subCategories={subCategories}
                     errors={errors[lr.id]?.bales?.[bale.id]}
                   />
+                  {/* Subtle divider between rows if not the last one */}
+                  {lr.bales[lr.bales.length - 1].id !== bale.id && (
+                    <Divider sx={{ mt: 3, opacity: 0.6 }} />
+                  )}
                 </Box>
               ))}
 
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => addBale(lr.id)}
-                size="small"
-                variant="contained"
-                // sx={{width : 200}}
-              >
-                Add Bale
-              </Button>
+              <Box sx={{ pt: 1 }}>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() => addBale(lr.id)}
+                  size="medium"
+                  variant="outlined"
+                  sx={{ 
+                    borderRadius: 2,
+                    borderStyle: "dashed",
+                    borderWidth: 2,
+                    px: 4,
+                    "&:hover": { borderWidth: 2, borderStyle: "dashed" }
+                  }}
+                >
+                  Add Bale
+                </Button>
+              </Box>
             </Stack>
           </AccordionDetails>
         </Accordion>
