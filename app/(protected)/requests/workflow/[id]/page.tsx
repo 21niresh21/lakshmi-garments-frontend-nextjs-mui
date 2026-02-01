@@ -23,12 +23,16 @@ import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { createJobworkReceipt } from "@/app/api/jobworkReceipt";
 import { WorkflowRequestStatus } from "@/app/_types/WorkflowRequestStatus";
+import { useAuth } from "@/app/context/AuthProvider";
+import { useUser } from "@/app/context/UserContext";
+import { Roles } from "@/app/_types/RoleType";
 
 export default function Page() {
   const { loading, showLoading, hideLoading } = useGlobalLoading();
   const { notify } = useNotification();
   const router = useRouter();
   const params = useParams();
+  const { user } = useUser();
   const id = Number(params.id);
 
   const [workflowRequest, setWorkflowRequest] =
@@ -65,9 +69,30 @@ export default function Page() {
       notify("Jobwork accepted and approved!", "success");
 
       // Redirect to the list after success
-      router.push("/workflow/requests");
+      router.push("/requests/workflow");
     } catch (err) {
       notify("An error occurred during processing", "error");
+      console.error(err);
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!workflowRequest) return;
+
+    showLoading();
+    try {
+      await updateWorkflowRequests(id, {
+        requestStatus: WorkflowRequestStatus.REJECTED,
+      });
+
+      notify("Request rejected successfully", "success");
+
+      // Redirect to the list after success
+      router.push("/requests/workflow");
+    } catch (err) {
+      notify("An error occurred while rejecting the request", "error");
       console.error(err);
     } finally {
       hideLoading();
@@ -127,8 +152,15 @@ export default function Page() {
             <Typography component="div" sx={{ mt: 0.5 }}>
               <Chip
                 size="small"
+                variant="filled"
                 label={requestStatus}
-                color={requestStatus === "PENDING" ? "warning" : "success"}
+                color={
+                  requestStatus === "PENDING" 
+                    ? "warning" 
+                    : requestStatus === "APPROVED" 
+                    ? "success" 
+                    : "error"
+                }
                 sx={{ fontWeight: 600 }}
               />
             </Typography>
@@ -279,9 +311,8 @@ export default function Page() {
                           dmg.quantity > 0 && (
                             <Chip
                               key={i}
-                              label={`${dmg.type.replace(/_/g, " ")}: ${
-                                dmg.quantity
-                              }`}
+                              label={`${dmg.type.replace(/_/g, " ")}: ${dmg.quantity
+                                }`}
                               size="small"
                               variant="outlined"
                               color="error"
@@ -301,13 +332,22 @@ export default function Page() {
           </Paper>
         )}
       </Stack>
-      {/* 🔹 Fixed Bottom Right Approve Button */}
-      {requestStatus === "PENDING" && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
+      {/* 🔹 Action Buttons for Pending Requests */}
+      {requestStatus === "PENDING" && user?.roles.includes(Roles.SUPER_ADMIN) && (
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={handleRejectRequest}
+            disabled={loading}
+          >
+            Reject Request
+          </Button>
           <Button
             variant="contained"
             color="success"
             onClick={handleSubmitRequest}
+            disabled={loading}
           >
             Approve Request
           </Button>

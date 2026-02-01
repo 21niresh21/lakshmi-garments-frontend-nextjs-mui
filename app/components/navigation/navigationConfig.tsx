@@ -26,6 +26,7 @@ import {
 } from "@mui/icons-material";
 import { Roles } from "@/app/_types/RoleType";
 import React, { ReactNode } from "react";
+import { tr } from "framer-motion/client";
 
 export type NavItem = {
   label: string;
@@ -55,17 +56,17 @@ export const navigationConfig: NavGroup[] = [
   //     },
   //   ],
   // },
-  // {
-  //   title: "Requests",
-  //   allowFor: [],
-  //   items: [
-  //     {
-  //       label: "Workflow Requests",
-  //       href: "/requests/workflow",
-  //       icon: <BackHandIcon fontSize="small" />,
-  //     },
-  //   ],
-  // },
+  {
+    title: "Requests",
+    allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
+    items: [
+      {
+        label: "Workflow Requests",
+        href: "/requests/workflow",
+        icon: <BackHandIcon fontSize="small" />,
+      },
+    ],
+  },
   {
     title: "Invoice",
     allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
@@ -107,66 +108,72 @@ export const navigationConfig: NavGroup[] = [
       },
     ],
   },
-  // {
-  //   title: "Production",
-  //   allowFor: [],
-  //   items: [
-  //     {
-  //       label: "Production",
-  //       icon: <LayersIcon fontSize="small" />,
-  //       children: [
-  //         {
-  //           label: "Create Batch",
-  //           href: "/batch/create",
-  //           icon: <AssignmentAddIcon fontSize="small" />,
-  //         },
-  //         {
-  //           label: "View Batches",
-  //           href: "/batch/list",
-  //           icon: <DynamicFeedIcon fontSize="small" />,
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
-  // {
-  //   title: "Jobwork",
-  //   allowFor: [],
-  //   items: [
-  //     {
-  //       label: "Jobwork",
-  //       icon: <AssignmentIcon fontSize="small" />,
-  //       children: [
-  //         {
-  //           label: "View Jobworks",
-  //           href: "/jobwork/list",
-  //           icon: <AssignmentIcon fontSize="small" />,
-  //         },
-  //         {
-  //           label: "In Pass",
-  //           href: "/jobwork/inpass",
-  //           icon: <AssignmentTurnedInIcon fontSize="small" />,
-  //         },
-  //         {
-  //           label: "Out Pass",
-  //           href: "/batch/assign",
-  //           icon: <AssignmentAddIcon fontSize="small" />,
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
-  // {
-  //   title: "Finance",
-  //   allowFor: [],
-  //   items: [
-  //     {
-  //       label: "Payday Summary",
-  //       href: "/payday",
-  //       icon: <MoneyIcon fontSize="small" />,
-  //     },
-  //   ],
-  // },
+  {
+    title: "Production",
+    allowFor: [Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
+    items: [
+      {
+        label: "Production",
+        icon: <LayersIcon fontSize="small" />,
+        children: [
+          {
+            label: "Create Batch",
+            href: "/batch/create",
+            icon: <AssignmentAddIcon fontSize="small" />,
+          },
+          {
+            label: "View Batches",
+            href: "/batch/list",
+            icon: <DynamicFeedIcon fontSize="small" />,
+          },
+          {
+            label: "Batch Timeline",
+            href: "/batch/:id", // 👈 This pattern matches /batch/ANYTHING
+            icon: <VisibilityIcon fontSize="small" />,
+            hideInSidebar: true, // 👈 Hide from sidebar navigation
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Jobwork",
+    allowFor: [Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
+    items: [
+      {
+        label: "Jobwork",
+        icon: <AssignmentIcon fontSize="small" />,
+        children: [
+          {
+            label: "View Jobworks",
+            href: "/jobwork/list",
+            icon: <AssignmentIcon fontSize="small" />,
+          },
+          {
+            label: "In Pass",
+            href: "/jobwork/inpass",
+            icon: <AssignmentTurnedInIcon fontSize="small" />,
+          },
+          {
+            label: "Out Pass",
+            href: "/batch/assign",
+            icon: <AssignmentAddIcon fontSize="small" />,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Finance",
+    allowFor: [Roles.SUPER_ADMIN, Roles.ACCOUNT_ADMIN],
+    items: [
+      {
+        label: "Payday Summary",
+        href: "/payday",
+        icon: <MoneyIcon fontSize="small" />,
+      },
+    ],
+  },
   {
     title: "User Management",
     allowFor: [Roles.SUPER_ADMIN],
@@ -227,6 +234,17 @@ export const navigationConfig: NavGroup[] = [
       },
     ],
   },
+  {
+    title: "Application Guide",
+    allowFor: [Roles.SUPER_ADMIN, Roles.ACCOUNT_ADMIN, Roles.PRODUCTION_ADMIN],
+    items: [
+      {
+        label: "Application Guide",
+        href: "/guide",
+        icon: <PolicyIcon fontSize="small" />,
+      },
+    ],
+  },
   // {
   //   title: "Documents",
   //   allowFor: [],
@@ -256,6 +274,18 @@ export const navigationConfig: NavGroup[] = [
       },
     ],
   },
+  {
+    title: "Employee Lookup",
+    allowFor: [Roles.SUPER_ADMIN, Roles.ACCOUNT_ADMIN, Roles.PRODUCTION_ADMIN],
+    items: [
+      {
+        label: "Employee Lookup",
+        href: "/jobwork/employee-lookup",
+        icon: <PeopleIcon fontSize="small" />,
+        hideInSidebar: true,
+      },
+    ],
+  }
 ];
 
 /**

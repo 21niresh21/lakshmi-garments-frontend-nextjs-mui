@@ -268,7 +268,6 @@ export default function Page() {
         sortOrder,
         search: debouncedSearch,
         ...filters,
-
       });
       setTotalCount(data.totalElements);
       setRows(data.content); // assuming backend returns { content, totalElements, etc. }
@@ -298,7 +297,25 @@ export default function Page() {
   }, []);
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{ mb: 0.5, mx: 1 }}
+        >
+          <Typography variant="h4" fontWeight={600}>
+            Batches
+          </Typography>
+          <Chip
+            label={`${totalCount}`}
+            size="small"
+            color="primary"
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<BatchRow>
           title="Batches"
@@ -309,6 +326,7 @@ export default function Page() {
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}
           onRowsPerPageChange={setRowsPerPage}
+          showSearch={true}
           searchPlacedHolder="Search Serial Codes"
           searchValue={search}
           onSearchChange={setSearch}
@@ -354,8 +372,7 @@ export default function Page() {
                   </IconButton>
                 </Tooltip>
               ),
-              onClick: (row: BatchRow, event) =>
-                handleOpenDetails(event, row),
+              onClick: (row: BatchRow, event) => handleOpenDetails(event, row),
             },
             {
               label: "Recycle",
@@ -386,7 +403,7 @@ export default function Page() {
                     right: 0,
                     top: "50%",
                     height: "2px",
-                    opacity : 0.2,
+                    opacity: 0.2,
                     backgroundColor: "black",
                     transform: "translateY(-50%)",
                     pointerEvents: "none",
@@ -418,7 +435,12 @@ export default function Page() {
         <ClickAwayListener onClickAway={handleCloseDetails}>
           <Paper elevation={4} sx={{ p: 2, minWidth: 260 }}>
             {/* Sub-categories Section */}
-            <Typography variant="subtitle2" gutterBottom color="primary" fontWeight={700}>
+            <Typography
+              variant="subtitle2"
+              gutterBottom
+              color="primary"
+              fontWeight={700}
+            >
               Sub-Categories
             </Typography>
             <Divider sx={{ mb: 1 }} />
@@ -446,7 +468,13 @@ export default function Page() {
             )}
 
             {/* Items Section */}
-            <Typography variant="subtitle2" gutterBottom color="primary" fontWeight={700} sx={{ mt: 1 }}>
+            <Typography
+              variant="subtitle2"
+              gutterBottom
+              color="primary"
+              fontWeight={700}
+              sx={{ mt: 1 }}
+            >
               Items
             </Typography>
             <Divider sx={{ mb: 1 }} />
@@ -462,9 +490,7 @@ export default function Page() {
                     display="flex"
                     justifyContent="space-between"
                   >
-                    <Typography variant="body2">
-                      {item.itemName}
-                    </Typography>
+                    <Typography variant="body2">{item.itemName}</Typography>
                     <Typography variant="body2" fontWeight={600}>
                       {item.quantity}
                     </Typography>

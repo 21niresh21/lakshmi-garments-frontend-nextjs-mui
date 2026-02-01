@@ -82,8 +82,10 @@ export default function ItemJobForm({
         return (
           <Grid container size={12} spacing={2} key={row.rowId}>
             {/* ITEM */}
-            <Grid size={5}>
+            <Grid size={5.5}>
               <Autocomplete
+                autoHighlight
+                openOnFocus
                 fullWidth
                 options={availableItems}
                 getOptionLabel={(bi) => bi.name}
@@ -114,7 +116,7 @@ export default function ItemJobForm({
             </Grid>
 
             {/* QUANTITY */}
-            <Grid size={5}>
+            <Grid size={5.5}>
               <TextField
                 fullWidth
                 type="number"
@@ -146,7 +148,7 @@ export default function ItemJobForm({
 
             {/* DELETE */}
             <Grid
-              size={2}
+              size={1}
               display="flex"
               alignItems="center"
               justifyContent="center"
@@ -165,7 +167,7 @@ export default function ItemJobForm({
       {/* ADD BUTTON */}
       <Grid size={12}>
         <Button
-          variant="outlined"
+          variant="contained"
           onClick={addRow}
           disabled={selectedItemIds.length >= batchItems.length}
         >

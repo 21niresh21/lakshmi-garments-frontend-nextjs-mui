@@ -103,9 +103,7 @@ export default function CustomizePage() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1000, mx: "auto" }}>
-      <Box sx={{ mb: 2 }}>
-        <AppBreadcrumbs />
-      </Box>
+
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <PaletteIcon color="primary" sx={{ fontSize: 32 }} />
@@ -171,7 +169,7 @@ export default function CustomizePage() {
           </Paper>
         </Grid>
         {/* Theme Mode & Layout Density */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        {/* <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={0} sx={{ p: 3, border: "1px solid", borderColor: "divider", borderRadius: 3, height: "100%" }}>
             <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <DarkModeIcon fontSize="small" /> Mode & Density
@@ -207,10 +205,10 @@ export default function CustomizePage() {
               />
             </Box>
           </Paper>
-        </Grid>
+        </Grid> */}
 
         {/* Typography */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 12 }}>
           <Paper elevation={0} sx={{ p: 3, border: "1px solid", borderColor: "divider", borderRadius: 3, height: "100%" }}>
             <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <TextFieldsIcon fontSize="small" /> Typography
@@ -290,7 +288,6 @@ export default function CustomizePage() {
               size="large"
               startIcon={<SaveIcon />}
               onClick={handleApply}
-              sx={{ px: 6, py: 1.5, borderRadius: 2, fontWeight: 800, fontSize: "1rem" }}
             >
               Apply All Changes
             </Button>

@@ -5,6 +5,11 @@ import { AuthProvider } from "./context/AuthProvider";
 import { HistoryProvider } from "./context/HistoryContext";
 import "./globals.css";
 
+export const metadata = {
+  title: 'Lakshmi Garments', // Change this to your desired name
+  description: 'A description for the new app.',
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" style={{ overflow: "hidden" }}>

@@ -39,26 +39,8 @@ export default function Page() {
   }, []);
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
-        <Link
-          href="/batch/list"
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "flex",
-            alignItems: "center",
-            columnGap: 5,
-          }}
-        >
-          <ArrowBackIcon fontSize="small" />
-          Batches
-        </Link>
+    <Box>
 
-        <Typography color="#0009" variant="body2">
-          {batchTimeline?.batchDetails?.serialCode}
-        </Typography>
-      </Breadcrumbs>
 
       {/* Page Content */}
       <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, ml: 2.5 }}>

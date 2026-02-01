@@ -1,8 +1,8 @@
 export interface JobworkParams {
-  pageNo?: number;
-  pageSize?: number;
+  page?: number;
+  size?: number;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  order?: "asc" | "desc";
   search?: string;
 //   supplierNames?: string[];
 //   transportNames?: string[];

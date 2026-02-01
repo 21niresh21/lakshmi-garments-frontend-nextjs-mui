@@ -93,7 +93,7 @@ const HEADERS = [
     sortable: true,
   },
   {
-    id: "totalQuantities",
+    id: "totalAcceptedQuantity",
     label: "Volume Handled",
     sortable: true,
   },
@@ -106,7 +106,7 @@ const HEADERS = [
     label: "Purchase done",
   },
   {
-    id: "wage",
+    id: "netWage",
     label: "wage",
   },
   // {
@@ -301,10 +301,10 @@ export default function Page() {
       const { invoiceStartDate, invoiceEndDate, ...otherFilters } = filters;
 
       const data = await getPaydaySummary({
-        pageNo: page,
-        pageSize: rowsPerPage,
+        page: page,
+        size: rowsPerPage,
         sortBy: sortBy ?? "employeeName",
-        sortOrder,
+        sortDir: sortOrder,
         employeeName: search,
         fromDate: fromDate ? fromDate.format("YYYY-MM-DDTHH:mm:ss") : undefined,
         toDate: toDate ? toDate.format("YYYY-MM-DDTHH:mm:ss") : undefined,
@@ -344,7 +344,20 @@ export default function Page() {
   }, []);
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+                <Typography variant="h4" fontWeight={600}>
+                  Employee Efforts
+                </Typography>
+                <Chip 
+                  label={`${totalCount}`} 
+                  size="small" 
+                  color="primary" 
+                  sx={{ fontWeight: 700 }}
+                />
+              </Stack>
+            </Grid>
       <Grid size={12}>
         <GenericTable<BatchRow>
           title="Employee Effort"
@@ -355,6 +368,7 @@ export default function Page() {
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}
           onRowsPerPageChange={setRowsPerPage}
+          showSearch={true}
           searchPlacedHolder="Search employee name"
           searchValue={search}
           onSearchChange={setSearch}
@@ -364,7 +378,12 @@ export default function Page() {
             setSortBy(SORT_FIELD_MAP[col] ?? "invoiceDate");
             setSortOrder(order);
           }}
-          onRowClick={(row) => router.push(`/invoices/${row.id}`)}
+          onRowClick={(row: any) => {
+            const params = new URLSearchParams();
+            if (fromDate) params.append("startDate", fromDate.format("YYYY-MM-DDTHH:mm:ss"));
+            if (toDate) params.append("endDate", toDate.format("YYYY-MM-DDTHH:mm:ss"));
+            router.push(`/payday/${encodeURIComponent(row.employeeName)}?${params.toString()}`);
+          }}
           columns={HEADERS}
           rowActions={[
             {

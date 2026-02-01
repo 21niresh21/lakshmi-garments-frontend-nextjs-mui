@@ -90,7 +90,7 @@ export default function Page() {
   }, [jobwork.jobworkType]);
 
   return (
-    <Box sx={{ p: { xs: 1, md: 1 } }}>
+    <Box sx={{ p: { xs: 1, md: 0 } }}>
       <Grid container spacing={3}>
         {/* Left Section: Assignment Form */}
         <Grid size={{ xs: 12, md: 8 }}>

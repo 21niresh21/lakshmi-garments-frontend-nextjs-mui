@@ -1,8 +1,8 @@
 export interface PaydayParams {
-  pageNo?: number;
-  pageSize?: number;
+  page?: number;
+  size?: number;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortDir?: "asc" | "desc";
   employeeName?: string;
   fromDate?: string;
   toDate?: string;

@@ -41,7 +41,7 @@ export default function BatchList({ batchList }: Props) {
   const open = Boolean(anchorEl);
 
   return (
-    <Paper elevation={0} sx={{ height: "100%", p: { xs: 1, md: 2 } }}>
+    <Box sx={{ height: "100%", p: { xs: 1, md: 1 } }}>
       <Typography fontWeight={600} mb={1}>
         Priority Batches
       </Typography>
@@ -90,11 +90,11 @@ export default function BatchList({ batchList }: Props) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              py: 5,
+              py: 15,
               opacity: 0.5,
             }}
           >
-            <GiCardboardBox size={50} />
+            <GiCardboardBox size={75} />
             <Typography variant="caption">No Urgent Batches</Typography>
           </Box>
         )}
@@ -111,6 +111,6 @@ export default function BatchList({ batchList }: Props) {
           </Paper>
         </ClickAwayListener>
       </Popper>
-    </Paper>
+    </Box>
   );
 }

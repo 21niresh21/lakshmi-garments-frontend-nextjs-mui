@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Divider, Grid, Stack, TextField } from "@mui/material";
+import { Alert, Button, Divider, Grid, Link, Stack, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import { fetchJobworkDetail, getItemsForJobwork } from "@/app/api/jobworkApi";
 import CuttingForm from "../../batch/assign/CuttingForm";
@@ -10,13 +10,15 @@ import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { fetchItems } from "@/app/api/itemApi";
 import JobworkItemsTable from "./JobworkItemsTable";
 import { Item } from "@/app/_types/Item";
+import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+import { JobworkStatus } from "@/app/_types/JobworkStatus";
 
 export default function Page() {
   const { notify } = useNotification();
+  const {loading, showLoading, hideLoading} = useGlobalLoading();
   const [jobworkNumber, setJobworkNumber] = useState<string>("");
   const [jobwork, setJobwork] = useState<any | null>(null);
   const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
 
   const [items, setItems] = useState<Item[]>([]);
   const [itemsForJobwork, setItemsForJobWork] = useState([]);
@@ -31,14 +33,16 @@ export default function Page() {
       setError("Jobwork Number format must be JW-YYYYMMDD-XXX");
       return;
     }
-    setLoading(true);
+    showLoading();
     try {
       const res = await fetchJobworkDetail(trimmed);
       setJobwork(res);
     } catch (error) {
       notify("No jobwork found", "error");
+      setJobwork(null);
+      
     } finally {
-      setLoading(false);
+      hideLoading();
     }
   };
 
@@ -81,13 +85,32 @@ export default function Page() {
               sx={{ height: 40 }}
               variant="contained"
               onClick={handleFind}
-              disabled={!jobworkNumber}
+              disabled={!jobworkNumber || loading}
               loading={loading}
               loadingPosition="start"
             >
               Find
             </Button>
+            <Link
+              href="/jobwork/employee-lookup"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="hover"
+              sx={{ 
+                fontSize: "0.875rem", 
+                cursor: "pointer",
+                whiteSpace: "nowrap" 
+              }}
+            >
+              Find by Employee
+            </Link>
           </Stack>
+          {jobwork?.jobworkStatus === JobworkStatus.AWAITING_APPROVAL && (
+            <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
+              This jobwork has a receipt raised already and is still pending approval. 
+              No further actions can be taken until the receipt is approved or rejected.
+            </Alert>
+          )}
           {jobwork && (
             <JobworkItemsTable
               setJobwork={setJobwork}

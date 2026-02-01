@@ -53,6 +53,13 @@ export default function EmployeeReassignModal({
       onClose={onClose} 
       fullWidth 
       maxWidth="sm"
+      PaperProps={{
+        component: 'form',
+        onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
+          event.preventDefault();
+          if (selectedEmployee) onSubmit();
+        },
+      }}
       TransitionProps={{
         onEntered: () => {
           nameRef.current?.focus();
@@ -65,7 +72,6 @@ export default function EmployeeReassignModal({
         <Autocomplete
           sx={{ my: 1 }}
           openOnFocus
-          disablePortal
           autoHighlight
           options={filteredEmployees}
           getOptionLabel={(o) => o.name}
@@ -86,7 +92,7 @@ export default function EmployeeReassignModal({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
-          onClick={() => onSubmit()}
+          type="submit"
           disabled={!selectedEmployee}
           // loading={loading}
           loadingPosition="end"

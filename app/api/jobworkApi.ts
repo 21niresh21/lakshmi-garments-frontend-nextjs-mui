@@ -117,3 +117,34 @@ export const getItemsForJobwork = async (jobworkNumber: string): Promise<any> =>
     throw error;
   }
 };
+
+export const fetchJobworksByEmployee = async (employeeName: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `${baseUrl}/employee/${employeeName}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching jobworks by employee:", error);
+    throw error;
+  }
+};
+
+export const fetchDetailedJobworkByEmployee = async (
+  employeeName: string,
+  startDate?: string,
+  endDate?: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `${baseUrl}/employee/${employeeName}/detailed`,
+      {
+        params: { startDate, endDate },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching detailed jobworks by employee:", error);
+    throw error;
+  }
+};

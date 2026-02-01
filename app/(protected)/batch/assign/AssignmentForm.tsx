@@ -59,6 +59,50 @@ export default function AssignmentForm({
 
   console.log(user);
 
+  /* ================= VALIDATION ================= */
+
+  const isFormValid = (): boolean => {
+    // Basic required fields
+    if (!jobwork.assignedTo || !jobwork.batchSerialCode || !jobwork.jobworkType) {
+      return false;
+    }
+
+    // CUTTING validation
+    if (jobwork.jobworkType === "CUTTING") {
+      return (
+        jobwork.quantity !== undefined &&
+        jobwork.quantity !== null &&
+        jobwork.quantity > 0 &&
+        !isNaN(jobwork.quantity)
+      );
+    }
+
+    // Item-based jobwork validation
+    if (jobwork.items.length === 0) {
+      return false; // Must have at least one item row
+    }
+
+    // Check all rows are completely filled with valid data
+    return jobwork.items.every((row) => {
+      // Each row must have an item selected
+      if (!row.item || !row.item.id) {
+        return false;
+      }
+
+      // Each row must have a valid positive quantity
+      if (
+        row.quantity === undefined ||
+        row.quantity === null ||
+        row.quantity <= 0 ||
+        isNaN(row.quantity)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
   /* ================= PREVIEW ================= */
 
   const openPreview = async () => {
@@ -193,7 +237,7 @@ export default function AssignmentForm({
   /* ================= UI ================= */
 
   return (
-    <Paper sx={{ p: { xs: 2, md: 1 } }} elevation={0}>
+    <Box sx={{ p: { xs: 2, md: 0 } }}>
       <Typography fontWeight={600} variant="h6">
         Assign Batch
       </Typography>
@@ -280,7 +324,7 @@ export default function AssignmentForm({
             label="Remarks"
             fullWidth
             multiline
-            rows={2}
+            rows={3}
             value={jobwork.remarks}
             onChange={(e) =>
               setJobwork((p) => ({ ...p, remarks: e.target.value }))
@@ -296,12 +340,7 @@ export default function AssignmentForm({
           <Button
             variant="outlined"
             onClick={openPreview}
-            disabled={
-              loading ||
-              !jobwork.assignedTo ||
-              !jobwork.batchSerialCode ||
-              (jobwork.jobworkType === "CUTTING" && !jobwork.quantity)
-            }
+            disabled={loading || !isFormValid()}
           >
             Preview
           </Button>
@@ -312,12 +351,7 @@ export default function AssignmentForm({
                 ? submitCuttingJobwork
                 : submitItemBasedJobwork
             }
-            disabled={
-              loading ||
-              !jobwork.assignedTo ||
-              !jobwork.batchSerialCode ||
-              (jobwork.jobworkType === "CUTTING" && !jobwork.quantity)
-            }
+            disabled={loading || !isFormValid()}
           >
             Assign
           </Button>
@@ -342,6 +376,6 @@ export default function AssignmentForm({
           )}
         </Box>
       </Drawer>
-    </Paper>
+    </Box>
   );
 }

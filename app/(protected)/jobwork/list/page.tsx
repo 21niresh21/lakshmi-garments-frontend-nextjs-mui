@@ -72,6 +72,7 @@ import JobworkFilterPanel from "./JobworkFilter";
 import AddIcon from "@mui/icons-material/Add";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { fetchEmployees } from "@/app/api/employeeApi";
+import { JobworkTypeEnum } from "@/app/_types/JobworkTypeEnum";
 
 type SubCategoryWithQuantity = {
   id: number;
@@ -87,7 +88,7 @@ export interface JobworkRow {
   status: string;
   startedAt: string;
   jobworkType: string;
-  totalQuantites: number;
+  totalQuantitesIssued: number;
   //   subCategories: SubCategoryWithQuantity[];
 }
 
@@ -411,15 +412,20 @@ export default function Page() {
   };
 
   const loadJobworks = async () => {
+    
     try {
+      // Remove search from filters to avoid override, then add debouncedSearch
+      const { search: _, ...filtersWithoutSearch } = filters;
+      
       const data = await fetchJobworks({
-        pageNo: page,
-        pageSize: rowsPerPage,
+        page: page,
+        size: rowsPerPage,
         sortBy,
-        sortOrder,
+        order: sortOrder,
         search: debouncedSearch,
-        ...filters
+        ...filtersWithoutSearch
       });
+      console.log("Loading jobworks with filters:", filtersWithoutSearch, "search:", debouncedSearch);
       setTotalCount(data.totalElements);
       setRows(data.content); // assuming backend returns { content, totalElements, etc. }
     } catch (err) {
@@ -458,6 +464,7 @@ export default function Page() {
   }, [search]);
 
   useEffect(() => {
+    console.log("Filters changed:", filters);
     loadJobworks();
   }, [
     page,
@@ -488,7 +495,20 @@ export default function Page() {
   }, [filterAnchorEl]);
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Jobworks
+          </Typography>
+          <Chip 
+            label={`${totalCount}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<JobworkRow>
           title="Jobworks"
@@ -499,6 +519,7 @@ export default function Page() {
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}
           onRowsPerPageChange={setRowsPerPage}
+          showSearch={true}
           searchPlacedHolder="Search jobwork number"
           searchValue={search}
           onSearchChange={setSearch}
@@ -538,14 +559,14 @@ export default function Page() {
             {
               label: "Close Jobwork",
               icon: (row: JobworkRow) =>
-                row.status === JobworkStatus.AWAITING_CLOSE ? (
+                row.status === JobworkStatus.AWAITING_CLOSE && row.jobworkType === JobworkTypeEnum.CUTTING ? (
                   <Tooltip title="Close Jobwork">
                     <IconButton size="small">
                       <VerifiedIcon />
                     </IconButton>
                   </Tooltip>
                 ) : (
-                  row.status === JobworkStatus.CLOSED && (
+                 row.jobworkType === JobworkTypeEnum.CUTTING && row.status === JobworkStatus.CLOSED && (
                     <Tooltip title="Reopen Jobwork">
                       <IconButton size="small">
                         <AutorenewIcon />

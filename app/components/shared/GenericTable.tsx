@@ -75,6 +75,10 @@ interface GenericTableProps<T> {
   // Actions
   rowActions?: RowAction<T>[];
   getRowSx?: (row: T) => object;
+  
+  // Customization
+  elevation?: number;
+  paperSx?: object;
 }
 
 // ---- Component ----
@@ -101,12 +105,19 @@ export default function GenericTable<T extends { id?: string | number }>({
   rowActions,
   onRowClick,
   getRowSx,
+  elevation = 3,
+  paperSx,
 }: GenericTableProps<T>) {
   const handleSort = (columnId: string) => {
     if (!onSortChange) return;
     const isAsc = sortBy === columnId && sortOrder === "asc";
     onSortChange(columnId, isAsc ? "desc" : "asc");
   };
+
+  React.useEffect(() => {
+    // Reset to first page when search changes
+    console.log(searchValue);
+  }, [searchValue]);
 
   return (
     <Paper
@@ -115,9 +126,10 @@ export default function GenericTable<T extends { id?: string | number }>({
         maxWidth: "100%",
         display: "flex", 
         flexDirection: "column",
-        overflow: "hidden" 
+        overflow: "hidden",
+        ...paperSx
       }}
-      elevation={3}
+      elevation={elevation}
     >
       {loading && <LinearProgress />}
 

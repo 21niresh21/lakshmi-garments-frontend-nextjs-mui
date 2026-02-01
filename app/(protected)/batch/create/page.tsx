@@ -111,7 +111,10 @@ export default function Page() {
   }, [selection?.categoryName]);
 
   return (
-    <Box sx={{ p: { xs: 1, md: 1 } }}>
+    <Box sx={{ p: { xs: 1, md: 0 } }}>
+      <Typography variant="h4" component="h6" fontWeight={600} gutterBottom>
+        Create Batch
+      </Typography>
       <Grid container spacing={2}>
         {/* Category Header Grid */}
         <Grid size={{ xs: 12 }}>

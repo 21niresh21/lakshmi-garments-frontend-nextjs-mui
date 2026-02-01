@@ -19,11 +19,11 @@ import { Item } from "@/app/_types/Item";
 import { JobworkItemRowData } from "./_types/jobwork";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { DamageType } from "@/app/_types/DamageType";
-import { useUser } from "@/app/context/UserContext";
 import { createJobworkReceipt } from "@/app/api/jobworkReceipt";
 import { JobworkStatus } from "@/app/_types/JobworkStatus";
 import { createWorflowRequest } from "@/app/api/workflowRequestApi";
 import { WorkflowRequestType } from "@/app/_types/WorkflowRequestType";
+import InpassConfirmationDialog from "./InpassConfirmationDialog";
 
 interface JobworkItemsTableProps {
   allItems: Item[];
@@ -43,15 +43,53 @@ export default function JobworkItemsTable({
   const { notify } = useNotification();
   const [rows, setRows] = useState<JobworkItemRowData[]>([]);
 
-  // Helper: Get original issued amount for a specific item
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    mode: "submit" | "raise-request";
+  }>({ open: false, mode: "submit" });
+
+  const isAwaitingApproval = jobwork.jobworkStatus === JobworkStatus.AWAITING_APPROVAL;
+
+  const disableRequest = 
+    jobwork.jobworkStatus === JobworkStatus.CLOSED || 
+    jobwork.jobworkStatus === JobworkStatus.REASSIGNED ||
+    isAwaitingApproval;
+
+  const disableSubmit = 
+    jobwork.jobworkStatus === JobworkStatus.CLOSED || 
+    jobwork.jobworkStatus === JobworkStatus.REASSIGNED ||
+    isAwaitingApproval;
+
+  const disableAddItem = 
+    jobwork.jobworkStatus === JobworkStatus.CLOSED || 
+    jobwork.jobworkStatus === JobworkStatus.REASSIGNED ||
+    isAwaitingApproval;
+
+  // Helper: Get remaining quantity for a specific item after reconciling receipts
   const getIssuedQtyForItem = (itemName: string | null) => {
     if (!itemName) return 0;
-    console.log(itemName, jobwork.jobworkItems);
 
+    // Find the original assigned quantity from jobworkItems
     const originalItem = jobwork.jobworkItems.find(
       (i: any) => i.itemName === itemName,
     );
-    return originalItem ? originalItem.quantity : 0;
+    
+    if (!originalItem) return 0;
+    
+    const assignedQty = originalItem.quantity;
+
+    // Calculate total already received for this item from jobworkReceiptItems
+    const receivedForItem = jobwork.jobworkReceiptItems
+      .filter((receipt: any) => receipt.itemName === itemName)
+      .reduce((sum: number, receipt: any) => {
+        return sum + 
+          (receipt.acceptedQuantity ?? 0) + 
+          (receipt.salesQuantity ?? 0) + 
+          (receipt.damagedQuantity ?? 0);
+      }, 0);
+
+    // Return remaining quantity
+    return assignedQty - receivedForItem;
   };
 
   // Helper: Calculate total of (Accepted + Sales + Damages) for a single row
@@ -145,34 +183,46 @@ export default function JobworkItemsTable({
       );
       return;
     }
-    createJobworkReceipt({
-      jobworkNumber: jobwork.jobworkNumber,
-      jobworkReceiptItems: rows,
-    })
-      .then(() => {
-        notify("Success!", "success");
-        setRows([]);
-        setJobwork(null);
-        setJobworkNumber("");
-      })
-      .catch(() => notify("Error occurred", "error"));
+    setConfirmDialog({ open: true, mode: "submit" });
   };
 
   const raiseRequest = () => {
-    createWorflowRequest({
-      requestType: WorkflowRequestType.JOBWORK_RECEIPT,
-      payload: JSON.stringify({
+    setConfirmDialog({ open: true, mode: "raise-request" });
+  };
+
+  const handleConfirm = () => {
+    const { mode } = confirmDialog;
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+
+    if (mode === "submit") {
+      createJobworkReceipt({
         jobworkNumber: jobwork.jobworkNumber,
-        items: rows,
-      }),
-      systemComments: "Quantity mismatch",
-    })
-      .then(() => {
-        notify("Request raised", "success");
-        setRows([]);
-        setJobwork(null);
+        jobworkReceiptItems: rows,
       })
-      .catch(() => notify("Error raising request", "error"));
+        .then(() => {
+          notify("Jobwork receipt created successfully", "success");
+          setRows([]);
+          setJobwork(null);
+          setJobworkNumber("");
+        })
+        .catch(() => notify("Error occurred", "error"));
+    } else {
+      createWorflowRequest({
+        requestType: WorkflowRequestType.JOBWORK_RECEIPT,
+        payload: JSON.stringify({
+          jobworkNumber: jobwork.jobworkNumber,
+          items: rows,
+        }),
+        systemComments: "Quantity mismatch",
+      })
+        .then(() => {
+          notify("Request raised", "success");
+          setRows([]);
+          setJobwork(null);
+          setJobworkNumber("");
+        })
+        .catch(() => notify("Error raising request", "error"));
+    }
   };
 
   const selectedItemIds = rows
@@ -184,7 +234,7 @@ export default function JobworkItemsTable({
       <Typography sx={{ my: 2 }}>
         Assigned Qty: <b>{assignedQuantity}</b>
         {" | "}
-        Pending quantity: <b>{pendingQuantity}</b>
+        Pending quantity: <b>{pendingQuantity > 0 ? pendingQuantity : 0}</b>
         {" | "}
         Remaining:{" "}
         <Box
@@ -201,7 +251,15 @@ export default function JobworkItemsTable({
         </Box>
       </Typography>
 
-      <TableContainer component={Paper} sx={{ mt: 2, width: "100%" }}>
+      { disableAddItem ? (
+        <Typography variant="body2" color="error.main" sx={{ mt: 2 }}>
+          {isAwaitingApproval 
+            ? "This jobwork has a receipt raised already and is still pending approval" 
+            : "Jobwork is closed or reassigned"}
+        </Typography>
+      ) : (
+        <>
+          <TableContainer component={Paper} sx={{ mt: 2, width: "100%" }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -257,7 +315,7 @@ export default function JobworkItemsTable({
         <Button
           variant="contained"
           onClick={raiseRequest}
-          disabled={!canRaiseRequest}
+          disabled={!canRaiseRequest || disableRequest}
         >
           Raise Request
         </Button>
@@ -265,11 +323,22 @@ export default function JobworkItemsTable({
           variant="contained"
           color="success"
           onClick={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || disableSubmit}
         >
           Submit
         </Button>
       </Stack>
+        </>
+      )}
+
+      <InpassConfirmationDialog
+        open={confirmDialog.open}
+        mode={confirmDialog.mode}
+        rows={rows}
+        jobwork={jobwork}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        onConfirm={handleConfirm}
+      />
     </>
   );
 }

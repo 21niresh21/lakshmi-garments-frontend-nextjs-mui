@@ -34,26 +34,14 @@ import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturi
 import ExpandCircleDownIcon from "@mui/icons-material/ExpandCircleDown";
 import { SubCategory } from "@/app/_types/SubCategory";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
-import { fetchInvoices, updateInvoice } from "@/app/api/invoiceApi";
+// import { fetchInvoices, updateInvoice } from "@/app/api/invoiceApi";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ReportIcon from "@mui/icons-material/Report";
-import InvoiceFormModal from "@/app/components/shared/InvoiceFormModal";
 
-import { fetchTransports } from "@/app/api/transport";
 import dayjs from "dayjs";
-
 import { useRouter } from "next/navigation";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import { Supplier } from "../../invoices/_types/supplier";
-import { Transport } from "../../invoices/_types/transport";
-import {
-  INITIAL_INVOICE,
-  InvoiceErrors,
-} from "../../invoices/create/invoice.types";
-import InvoiceFilter, {
-  InvoiceFilterType,
-} from "../../invoices/list/InvoiceFilter";
-import { InvoiceDetails } from "../../invoices/_types/invoiceDetails";
+
 import {
   fetchWorkflowRequests,
   updateWorkflowRequests,
@@ -63,6 +51,12 @@ import { useUser } from "@/app/context/UserContext";
 import ApprovalIcon from "@mui/icons-material/Approval";
 import { WorkflowRequestStatus } from "@/app/_types/WorkflowRequestStatus";
 import { Roles } from "@/app/_types/RoleType";
+import WorkflowFilter, { WorkflowFilterType } from "./WorkflowFilter";
+import { fetchUsers } from "@/app/api/userApi";
+import { UserListItem } from "@/app/_types/User";
+
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 
 type SubCategoryWithQuantity = {
   id: number;
@@ -82,6 +76,44 @@ interface BatchRow {
   subCategories: SubCategoryWithQuantity[];
 }
 
+const getStatusChip = (status: WorkflowRequestStatus) => {
+  switch (status) {
+    case WorkflowRequestStatus.APPROVED:
+      return (
+        <Chip
+          icon={<CheckCircleIcon sx={{ fontSize: "16px !important" }} />}
+          label="Approved"
+          size="small"
+          color="success"
+          sx={{ fontWeight: 500 }}
+        />
+      );
+    case WorkflowRequestStatus.PENDING:
+      return (
+        <Chip
+          icon={<HourglassEmptyIcon sx={{ fontSize: "16px !important" }} />}
+          label="Pending"
+          size="small"
+          color="warning"
+          sx={{ fontWeight: 500 }}
+        />
+      );
+    default:
+      return <Chip label={status} size="small" />;
+  }
+};
+
+const getTypeChip = (type: string) => {
+  return (
+    <Chip
+      icon={<ReceiptLongIcon sx={{ fontSize: "16px !important" }} />}
+      label={type.replace(/_/g, " ")}
+      size="small"
+      sx={{ fontWeight: 500, bgcolor: "grey.200" }}
+    />
+  );
+};
+
 const HEADERS = [
   {
     id: "id",
@@ -91,6 +123,7 @@ const HEADERS = [
   {
     id: "requestType",
     label: "Request Type",
+    render: (row: any) => getTypeChip(row.requestType),
   },
   {
     id: "requestedBy",
@@ -98,7 +131,6 @@ const HEADERS = [
     render: (row: any) => (
       <Chip
         size="small"
-        // sx={{bgcolor : "transparent"}}
         icon={<BadgeIcon />}
         label={row.requestedBy}
       />
@@ -116,6 +148,7 @@ const HEADERS = [
   {
     id: "requestStatus",
     label: "Status",
+    render: (row: any) => getStatusChip(row.requestStatus),
   },
 ];
 
@@ -131,18 +164,14 @@ export default function Page() {
   const [totalCount, setTotalCount] = useState(0);
 
   const [rows, setRows] = useState<WorkflowRequest[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [transports, setTransports] = useState<Transport[]>([]);
-  const [invoiceErrors, setInvoiceErrors] = useState<InvoiceErrors>({});
+  const [users, setUsers] = useState<UserListItem[]>([]);
 
-  const [filters, setFilters] = useState<InvoiceFilterType>({
-    supplierNames: [],
-    transportNames: [],
-    isPaid: [],
-    invoiceStartDate: "",
-    invoiceEndDate: "",
-    receivedStartDate: "",
-    receivedEndDate: "",
+  const [filters, setFilters] = useState<WorkflowFilterType>({
+    requestedByNames: [],
+    requestTypes: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
   });
 
   const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
@@ -150,10 +179,6 @@ export default function Page() {
   );
 
   const openFilter = Boolean(filterAnchorEl);
-
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] =
-    useState<InvoiceDetails>(INITIAL_INVOICE);
 
   // ✅ Popper state
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -163,10 +188,10 @@ export default function Page() {
 
   // Count active filters
   const activeFilterCount =
-    (filters.supplierNames?.length || 0) +
-    (filters.transportNames?.length || 0) +
-    (filters.isPaid?.length || 0) +
-    (filters.invoiceStartDate || filters.invoiceEndDate ? 1 : 0);
+    (filters.requestedByNames?.length || 0) +
+    (filters.requestTypes?.length || 0) +
+    (filters.statuses?.length || 0) +
+    (filters.startDate || filters.endDate ? 1 : 0);
 
   const handleOpenFilter = (e: React.MouseEvent<HTMLElement>) => {
     setFilterAnchorEl(e.currentTarget);
@@ -178,33 +203,20 @@ export default function Page() {
 
   const handleApplyFilter = () => {
     setPage(0);
-    loadRequests(); // optional but clear
+    loadRequests();
     handleCloseFilter();
   };
 
   const handleResetFilter = () => {
     setFilters({
-      supplierNames: [],
-      transportNames: [],
-      isPaid: [],
-      invoiceStartDate: "",
-      invoiceEndDate: "",
-      receivedStartDate: "",
-      receivedEndDate: "",
+      requestedByNames: [],
+      requestTypes: [],
+      statuses: [],
+      startDate: "",
+      endDate: "",
     });
     setPage(0);
     handleCloseFilter();
-  };
-
-  const handleInvoiceChange = (patch: Partial<InvoiceDetails>) => {
-    setSelectedInvoice((prev) => ({ ...prev, ...patch }));
-    setInvoiceErrors((prev) => {
-      const next = { ...prev };
-      Object.keys(patch).forEach(
-        (key) => delete next[key as keyof InvoiceErrors]
-      );
-      return next;
-    });
   };
 
   const handleApproval = (row: WorkflowRequest) => {
@@ -219,97 +231,41 @@ export default function Page() {
       .catch((err) => notify("Error approving request", "error"));
   };
 
-  const validateInvoice = (invoice: InvoiceDetails): boolean => {
-    console.log("validation", invoice);
-    const errors: InvoiceErrors = {};
-    if (!invoice.invoiceNumber.trim())
-      errors.invoiceNumber = "Invoice number is required";
-
-    if (!invoice.invoiceDate) errors.invoiceDate = "Invoice date is required";
-    else if (
-      dayjs(invoice.invoiceDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
-    ) {
-      errors.invoiceDate = "Cannot select a future date";
-    }
-
-    if (!invoice.supplierName) {
-      errors.supplierName = "Supplier is required";
-    }
-
-    if (!invoice.transportName) {
-      errors.transportName = "Transport is required";
-    }
-
-    if (!invoice.receivedDate)
-      errors.receivedDate = "Received date is required";
-    else if (
-      dayjs(invoice.receivedDate, "DD-MM-YYYY", true).isAfter(dayjs(), "day")
-    ) {
-      errors.receivedDate = "Cannot select a future date";
-    }
-    if (invoice.transportCost === undefined) {
-      errors.transportCost = "Transport cost cannot be empty";
-    } else if (invoice.transportCost < 0) {
-      errors.transportCost = "Transport cost must be > 0";
-    }
-
-    if (!invoice.supplierName) errors.supplierName = "Supplier is required";
-
-    if (!invoice.transportName) errors.transportName = "Transport is required";
-
-    setInvoiceErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const toISODate = (date: string) => {
+    if (!date) return "";
     const [dd, mm, yyyy] = date.split("-");
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const handleInvoiceSubmit = async (data: InvoiceDetails) => {
-    try {
-      if (!validateInvoice(data)) {
-        return;
-      }
-      const payload = {
-        ...data,
-        invoiceDate: toISODate(data.invoiceDate),
-        receivedDate: toISODate(data.receivedDate),
-      };
-
-      await updateInvoice(data.id, payload);
-      notify("Invoice updated successfully", "success");
-      setOpenModal(false);
-      // setSelectedInvoice(null);
-      loadRequests();
-    } catch (err: any) {
-      notify(err?.response?.data?.message ?? "Error saving invoice", "error");
-    }
-  };
-
   const handleCloseDetails = () => {
     setAnchorEl(null);
-    setOpenModal(false);
     setSubCategories([]);
-    setInvoiceErrors({});
   };
+
+  const isSuperAdmin = user?.roles.includes(Roles.SUPER_ADMIN);
 
   const loadRequests = async () => {
     try {
-      const requestedByNames: string = user?.username ?? "";
-
       const data = await fetchWorkflowRequests({
         pageNo: page,
         pageSize: rowsPerPage,
         sortBy,
         sortOrder,
-        requestedByNames: [requestedByNames],
+        requestedByNames: isSuperAdmin
+          ? filters.requestedByNames
+          : user?.username
+          ? [user.username]
+          : [],
+        requestTypes: filters.requestTypes,
+        statuses: filters.statuses,
+        startDate: toISODate(filters.startDate),
+        endDate: toISODate(filters.endDate),
       });
 
       setTotalCount(data.totalElements);
-      setRows(data.content); // assuming backend returns { content, totalElements, etc. }
+      setRows(data.content);
     } catch (err) {
-      console.error("Error loading invoices:", err);
+      console.error("Error loading workflow requests:", err);
     }
   };
 
@@ -329,20 +285,29 @@ export default function Page() {
   ]);
 
   useEffect(() => {
-    fetchSuppliers()
-      .then(setSuppliers)
-      .catch(() => notify("Error fetching suppliers", "error"));
-
-    fetchTransports()
-      .then(setTransports)
-      .catch(() => notify("Error fetching transports", "error"));
+    fetchUsers()
+      .then((data) => setUsers(data.content || []))
+      .catch(() => notify("Error fetching users", "error"));
   }, []);
 
   console.log(Roles.SUPER_ADMIN);
   // const canApprove = user?.role?.name === Roles.SUPER_ADMIN;
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, mx : 1 }}>
+          <Typography variant="h4" fontWeight={600}>
+            Workflow Requests
+          </Typography>
+          <Chip 
+            label={`${totalCount}`} 
+            size="small" 
+            color="primary" 
+            sx={{ fontWeight: 700 }}
+          />
+        </Stack>
+      </Grid>
       <Grid size={12}>
         <GenericTable<WorkflowRequest>
           title="Your Requests"
@@ -384,44 +349,31 @@ export default function Page() {
           //     : undefined
           // }
 
-          //   toolbarExtras={
-          //     <Badge
-          //       badgeContent={activeFilterCount}
-          //       color="primary"
-          //       overlap="circular"
-          //       invisible={activeFilterCount === 0} // hide badge when no filters active
-          //     >
-          //       <IconButton onClick={handleOpenFilter}>
-          //         <FilterAltIcon />
-          //       </IconButton>
-          //     </Badge>
-          //   }
+          toolbarExtras={
+            <Badge
+              badgeContent={activeFilterCount}
+              color="primary"
+              overlap="circular"
+              invisible={activeFilterCount === 0}
+            >
+              <IconButton onClick={handleOpenFilter}>
+                <FilterAltIcon />
+              </IconButton>
+            </Badge>
+          }
         />
       </Grid>
 
-      <InvoiceFilter
+      <WorkflowFilter
         anchorEl={filterAnchorEl}
         open={openFilter}
         filters={filters}
-        suppliers={suppliers}
-        transports={transports}
+        usernames={users.map((u) => u.username)}
         onChange={setFilters}
         onApply={handleApplyFilter}
         onReset={handleResetFilter}
         onClose={handleCloseFilter}
-      />
-
-      {/* ✅ POPPER (render ONCE, outside table) */}
-      <InvoiceFormModal
-        open={openModal}
-        mode={selectedInvoice ? "edit" : "create"}
-        onChange={handleInvoiceChange}
-        initialData={selectedInvoice}
-        onClose={handleCloseDetails}
-        onSubmit={handleInvoiceSubmit}
-        suppliers={suppliers}
-        transports={transports}
-        errors={invoiceErrors}
+        showRequestedByFilter={!!isSuperAdmin}
       />
     </Grid>
   );

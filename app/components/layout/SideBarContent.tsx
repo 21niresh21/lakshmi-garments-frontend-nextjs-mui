@@ -154,12 +154,12 @@ export default function SideBarContent({
                   const isNested = Boolean(item.children);
                   const isActive = isNested
                     ? item.children?.some(
-                        (child) =>
-                          child.href && pathname.startsWith(child.href),
-                      )
+                      (child) =>
+                        child.href && pathname.startsWith(child.href),
+                    )
                     : item.href
-                    ? pathname.startsWith(item.href)
-                    : false;
+                      ? pathname.startsWith(item.href)
+                      : false;
 
                   return (
                     <React.Fragment key={item.label}>
@@ -223,7 +223,7 @@ export default function SideBarContent({
                           <List dense disablePadding>
                             {item.children!.map((child: NavItem) => {
                               if (!hasAccess(child.allowFor) || child.hideInSidebar) return null;
-                              
+
                               const isChildActive = child.href ? pathname.startsWith(child.href) : false;
 
                               return (
@@ -251,7 +251,7 @@ export default function SideBarContent({
                                     }
                                   }}
                                 >
-                                  <ListItemIcon sx={{ minWidth: 32}}>
+                                  <ListItemIcon sx={{ minWidth: 32 }}>
                                     {child.icon}
                                   </ListItemIcon>
                                   <ListItemText primary={child.label} />
@@ -376,110 +376,6 @@ export default function SideBarContent({
         )}
       </Popper>
 
-      {!collapsed && (
-
-        <Box
-          sx={{
-            mx: 1.5,
-            mb: 2,
-            position: "relative",
-            "&:hover .main-card": {
-              transform: "translateY(15px)",
-              boxShadow: 8,
-            },
-            "&:hover .back-card": {
-              transform: "translateY(-45px) scale(0.96)",
-              opacity: 1,
-            },
-          }}
-        >
-          {/* Back Card (Upcoming: Accounts) */}
-          <Card
-            className="back-card"
-            elevation={5}
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              zIndex: 0,
-              opacity: 0,
-              borderRadius: 2,
-              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
-              transform: "translateY(0) scale(0.9)",
-              transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-              display: "flex",
-              alignItems: "flex-start",
-              px: 2,
-              py : 2
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, width: "100%" }}>
-              <PrecisionManufacturingIcon 
-                sx={{ fontSize: 22, color: "secondary.main", mb: 0.5 }} 
-              />
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: "secondary.main", display: "block", lineHeight: 1, fontSize: "0.85rem" }}>
-                  Production Module
-                </Typography>
-              </Box>
-            </Box>
-          </Card>
-
-          {/* Main Card */}
-          <Card
-            className="main-card"
-            elevation={3}
-            sx={{
-              position: "relative",
-              zIndex: 2,
-              borderRadius: 2,
-              background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}15 100%)`,
-              border: (theme) => `1px solid ${theme.palette.primary.main}30`,
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                }}
-              >
-                <RocketLaunchIcon sx={{ fontSize: 20 }} />
-              </Box>
-
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 700, color: "primary.main", mb: 0.25 }}
-                >
-                  More Features Coming Soon
-                </Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.4 }}>
-                  We're working on new features to enhance your experience.
-                </Typography>
-              </Box>
-            </Box>
-          </Card>
-        </Box>
-      )}
-
 
 
       {/* ================= USER / SETTINGS ================= */}
@@ -577,7 +473,7 @@ export default function SideBarContent({
         </MenuItem>
 
         <Divider />
-        {/* <MenuItem
+        <MenuItem
           onClick={() => {
             setUserMenuAnchorEl(null);
             router.push("/settings/customize");
@@ -588,9 +484,9 @@ export default function SideBarContent({
             <PaletteIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="Customize" primaryTypographyProps={{ variant: "body2" }} />
-        </MenuItem> */}
+        </MenuItem>
 
-        {/* <Divider /> */}
+        <Divider />
         <MenuItem
           onClick={() => {
             setUserMenuAnchorEl(null);
