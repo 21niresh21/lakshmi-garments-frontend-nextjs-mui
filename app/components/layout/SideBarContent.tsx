@@ -13,26 +13,18 @@ import {
   Popper,
   Paper,
   Fade,
-  Avatar,
-  Menu,
-  MenuItem,
   Card,
 } from "@mui/material";
 
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
-import LogoutIcon from "@mui/icons-material/Logout";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import PaletteIcon from "@mui/icons-material/Palette";
-import SettingsIcon from "@mui/icons-material/Settings";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
+import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
 import { alpha } from "@mui/material/styles";
 
 import { usePathname, useRouter } from "next/navigation";
 import { navigationConfig, NavItem } from "../navigation/navigationConfig";
 import { useUser } from "@/app/context/UserContext";
-import { useAuthActions } from "@/app/hooks/useAuthActions";
 
 interface SideBarContentProps {
   collapsed: boolean;
@@ -47,7 +39,6 @@ export default function SideBarContent({
   const router = useRouter();
   const { user } = useUser();
   const userRole = user?.roles?.[0] ?? "GUEST";
-  const { logout } = useAuthActions();
 
   /** open / close state per parent menu (for expanded sidebar) */
   const [openMap, setOpenMap] = React.useState<Record<string, boolean>>({});
@@ -57,10 +48,6 @@ export default function SideBarContent({
     null,
   );
   const [hoveredItem, setHoveredItem] = React.useState<NavItem | null>(null);
-
-  /** User menu anchor */
-  const [userMenuAnchorEl, setUserMenuAnchorEl] =
-    React.useState<HTMLElement | null>(null);
 
   // Timer to prevent immediate closing when moving to popper
   const closeTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -128,7 +115,9 @@ export default function SideBarContent({
       <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
         {navigationConfig.map((group) => {
           const isAllowedGroup = hasAccess(group.allowFor);
-          const visibleItems = group.items.filter((i) => !i.hideInSidebar && hasAccess(i.allowFor));
+          const visibleItems = group.items.filter(
+            (i) => !i.hideInSidebar && hasAccess(i.allowFor),
+          );
 
           if (!isAllowedGroup || visibleItems.length === 0) return null;
 
@@ -180,7 +169,7 @@ export default function SideBarContent({
                           mx: 1,
                           my: 0.5,
                           py: 1,
-                          borderRadius: 1,
+                          borderRadius: (theme: any) => `${theme.shape.borderRadius}px`,
                           justifyContent: collapsed ? "center" : "flex-start",
                           "&.Mui-selected": {
                             backgroundColor: "primary.main",
@@ -222,9 +211,15 @@ export default function SideBarContent({
                         >
                           <List dense disablePadding>
                             {item.children!.map((child: NavItem) => {
-                              if (!hasAccess(child.allowFor) || child.hideInSidebar) return null;
+                              if (
+                                !hasAccess(child.allowFor) ||
+                                child.hideInSidebar
+                              )
+                                return null;
 
-                              const isChildActive = child.href ? pathname.startsWith(child.href) : false;
+                              const isChildActive = child.href
+                                ? pathname.startsWith(child.href)
+                                : false;
 
                               return (
                                 <ListItemButton
@@ -235,13 +230,17 @@ export default function SideBarContent({
                                     mx: 1,
                                     my: 0.25,
                                     py: 1,
-                                    borderRadius: 1,
+                                    borderRadius: (theme: any) => `${theme.shape.borderRadius}px`,
                                     "&.Mui-selected": {
                                       backgroundColor: "primary.main",
                                       color: "primary.contrastText",
                                       fontWeight: 600,
-                                      "& .MuiListItemIcon-root": { color: "inherit" },
-                                      "&:hover": { backgroundColor: "primary.dark" },
+                                      "& .MuiListItemIcon-root": {
+                                        color: "inherit",
+                                      },
+                                      "&:hover": {
+                                        backgroundColor: "primary.dark",
+                                      },
                                     },
                                   }}
                                   onClick={() => {
@@ -296,7 +295,7 @@ export default function SideBarContent({
               sx={{
                 minWidth: 200,
                 overflow: "hidden",
-                borderRadius: 2,
+                borderRadius: 0,
                 border: "1px solid",
                 borderColor: "divider",
                 bgcolor: "background.paper",
@@ -319,9 +318,12 @@ export default function SideBarContent({
               </Box>
               <List dense>
                 {hoveredItem?.children?.map((child) => {
-                  if (!hasAccess(child.allowFor) || child.hideInSidebar) return null;
+                  if (!hasAccess(child.allowFor) || child.hideInSidebar)
+                    return null;
 
-                  const isChildActive = child.href ? pathname.startsWith(child.href) : false;
+                  const isChildActive = child.href
+                    ? pathname.startsWith(child.href)
+                    : false;
                   return (
                     <ListItemButton
                       key={child.href}
@@ -338,7 +340,7 @@ export default function SideBarContent({
                         px: 2,
                         mx: 1,
                         my: 0.5,
-                        borderRadius: 1,
+                        borderRadius: 0,
                         // Match main item styling
                         "&.Mui-selected": {
                           backgroundColor: "primary.main",
@@ -376,137 +378,128 @@ export default function SideBarContent({
         )}
       </Popper>
 
-
-
-      {/* ================= USER / SETTINGS ================= */}
-
-      <Divider />
-
-      <List dense sx={{ p: 1 }}>
-        <ListItemButton
-          onClick={(e) => setUserMenuAnchorEl(e.currentTarget)}
+      {!collapsed && (
+        <Box
           sx={{
-            mx: 1,
-            borderRadius: 1,
-            justifyContent: collapsed ? "center" : "flex-start",
-            "&:hover": { bgcolor: "action.hover" },
+            mx: 1.5,
+            mb: 2,
+            position: "relative",
+            "&:hover .main-card": {
+              transform: "translateY(15px)",
+              boxShadow: 8,
+            },
+            "&:hover .back-card": {
+              transform: "translateY(-45px) scale(0.96)",
+              opacity: 1,
+            },
           }}
         >
-          <ListItemIcon
+          {/* Back Card (Upcoming: Accounts) */}
+          <Card
+            className="back-card"
+            elevation={5}
             sx={{
-              minWidth: collapsed ? "auto" : 40,
-              justifyContent: "center",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 0,
+              opacity: 0,
+              borderRadius: 0,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
+              transform: "translateY(0) scale(0.9)",
+              transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              display: "flex",
+              alignItems: "flex-start",
+              px: 2,
+              py: 2,
             }}
           >
-            <Avatar
+            <Box
               sx={{
-                width: 32,
-                height: 32,
-                bgcolor: "primary.main",
-                fontSize: "0.875rem",
-                fontWeight: 700,
-                color: "primary.contrastText",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                width: "100%",
               }}
             >
-              {user?.username?.[0]?.toUpperCase() || "U"}
-            </Avatar>
-          </ListItemIcon>
+              <PrecisionManufacturingIcon
+                sx={{ fontSize: 22, color: "secondary.main", mb: 0.5 }}
+              />
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 700,
+                    color: "secondary.main",
+                    display: "block",
+                    lineHeight: 1,
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  Production Module
+                </Typography>
+              </Box>
+            </Box>
+          </Card>
 
-          {!collapsed && (
-            <ListItemText
-              primary={user?.username || "User"}
-              primaryTypographyProps={{ fontWeight: 600, noWrap: true }}
-              secondary="Account Settings"
-              secondaryTypographyProps={{ variant: "caption" }}
-            />
-          )}
-        </ListItemButton>
-      </List>
+          {/* Main Card */}
+          <Card
+            className="main-card"
+            elevation={3}
+            sx={{
+              position: "relative",
+              zIndex: 2,
+              borderRadius: 0,
+              background: (theme) =>
+                `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}15 100%)`,
+              border: (theme) => `1px solid ${theme.palette.primary.main}30`,
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          >
+            <Box
+              sx={{
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                }}
+              >
+                <RocketLaunchIcon sx={{ fontSize: 20 }} />
+              </Box>
 
-      {/* User Dropdown Menu */}
-      <Menu
-        anchorEl={userMenuAnchorEl}
-        open={Boolean(userMenuAnchorEl)}
-        onClose={() => setUserMenuAnchorEl(null)}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: collapsed ? "right" : "center",
-        }}
-        transformOrigin={{
-          vertical: "bottom",
-          horizontal: collapsed ? "left" : "center",
-        }}
-        PaperProps={{
-          sx: {
-            mt: -1,
-            minWidth: 180,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-            borderRadius: 2,
-            border: "1px solid",
-            borderColor: "divider",
-          },
-        }}
-      >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            {user?.username}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" display="block">
-            {userRole.replace("_", " ")}
-          </Typography>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 700, color: "primary.main", mb: 0.25 }}
+                >
+                  More Features Coming Soon
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", lineHeight: 1.4 }}
+                >
+                  We're working on new features to enhance your experience.
+                </Typography>
+              </Box>
+            </Box>
+          </Card>
         </Box>
-        <Divider />
-        <MenuItem
-          onClick={() => {
-            setUserMenuAnchorEl(null);
-            router.push("/profile");
-          }}
-          sx={{ py: 1 }}
-        >
-          <ListItemIcon>
-            <AccountCircleIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText
-            primary="My Profile"
-            primaryTypographyProps={{ variant: "body2" }}
-          />
-        </MenuItem>
-
-        <Divider />
-        <MenuItem
-          onClick={() => {
-            setUserMenuAnchorEl(null);
-            router.push("/settings/customize");
-          }}
-          sx={{ py: 1 }}
-        >
-          <ListItemIcon>
-            <PaletteIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Customize" primaryTypographyProps={{ variant: "body2" }} />
-        </MenuItem>
-
-        <Divider />
-        <MenuItem
-          onClick={() => {
-            setUserMenuAnchorEl(null);
-            logout();
-          }}
-          sx={{
-            py: 1,
-            color: "error.main",
-            "& .MuiListItemIcon-root": { color: "error.main" },
-          }}
-        >
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText
-            primary="Logout"
-            primaryTypographyProps={{ variant: "body2", fontWeight: 600 }}
-          />
-        </MenuItem>
-      </Menu>
+      )}
+      <Divider />
     </Box>
   );
 }

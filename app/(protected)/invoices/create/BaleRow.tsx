@@ -7,6 +7,7 @@ import {
   Tooltip,
   useMediaQuery,
   useTheme,
+  alpha,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useCallback, useMemo, useState } from "react";
@@ -78,10 +79,19 @@ export default function BaleRow({
 
   const handleNumberChange = useCallback(
     (field: keyof Bale) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      onChange({
-        [field]: value === "" ? undefined : Number(sanitizeNumberInput(value)),
-      });
+      let value = e.target.value;
+      // Allow only digits and a single dot
+      const regex = /^[0-9]*\.?[0-9]*$/;
+      if (regex.test(value) || value === "") {
+        // Prevent leading zeros unless followed by a decimal
+        if (value.length > 1 && value.startsWith("0") && value[1] !== ".") {
+          value = value.replace(/^0+/, "");
+          if (value === "") value = "0"; // handle case where all zeros were trimmed
+        }
+        onChange({
+          [field]: value === "" ? undefined : value,
+        });
+      }
     },
     [onChange]
   );
@@ -159,29 +169,29 @@ export default function BaleRow({
         onBlur={handleTextBlur("baleNumber")}
         error={!!errors?.baleNumber}
         helperText={errors?.baleNumber}
-        sx={isMobile ? { width: "100%" } : { flex: 2, minWidth: 120 }}
+        sx={isMobile ? { width: "100%" } : { flex: 1.2, minWidth: 90 }}
       />
 
       <TextField
         label="Price"
         size="small"
-        type="number"
         value={bale.price ?? ""}
         onChange={handleNumberChange("price")}
         error={!!errors?.price}
         helperText={errors?.price}
-        sx={isMobile ? { width: "100%" } : { flex: 1.5, minWidth: 100 }}
+        inputProps={{ inputMode: "decimal" }}
+        sx={isMobile ? { width: "100%" } : { flex: 1, minWidth: 80 }}
       />
 
       <TextField
-        label="Quantity"
+        label="Qty"
         size="small"
-        type="number"
         value={bale.quantity ?? ""}
         onChange={handleNumberChange("quantity")}
         error={!!errors?.quantity}
         helperText={errors?.quantity}
-        sx={isMobile ? { width: "100%" } : { flex: 1.5, minWidth: 100 }}
+        inputProps={{ inputMode: "decimal" }}
+        sx={isMobile ? { width: "100%" } : { flex: 0.8, minWidth: 70 }}
       />
 
       <TextField
@@ -192,18 +202,18 @@ export default function BaleRow({
         onBlur={handleTextBlur("quality")}
         error={!!errors?.quality}
         helperText={errors?.quality}
-        sx={isMobile ? { width: "100%" } : { flex: 1.5, minWidth: 120 }}
+        sx={isMobile ? { width: "100%" } : { flex: 1.5, minWidth: 100 }}
       />
 
       <TextField
         label="Length"
         size="small"
-        type="number"
         value={bale.length ?? ""}
         onChange={handleNumberChange("length")}
         error={!!errors?.length}
         helperText={errors?.length}
-        sx={isMobile ? { width: "100%" } : { flex: 1.5, minWidth: 100 }}
+        inputProps={{ inputMode: "decimal" }}
+        sx={isMobile ? { width: "100%" } : { flex: 0.7, minWidth: 70 }}
       />
 
       <GenericAutocomplete<Category>
@@ -219,7 +229,7 @@ export default function BaleRow({
           setCreateDialog({ type: "category", prefillName: name })
         }
         error={errors?.categoryID}
-        sx={isMobile ? { width: "100%" } : { flex: 2.5, minWidth: 180 }}
+        sx={isMobile ? { width: "100%" } : { flex: 2, minWidth: 140 }}
       />
 
       <GenericAutocomplete<SubCategory>
@@ -235,12 +245,19 @@ export default function BaleRow({
           setCreateDialog({ type: "subCategory", prefillName: name })
         }
         error={errors?.subCategoryID}
-        sx={isMobile ? { width: "100%" } : { flex: 2.5, minWidth: 180 }}
+        sx={isMobile ? { width: "100%" } : { flex: 2, minWidth: 140 }}
       />
 
       <Tooltip title="Delete bale">
-        <IconButton color="error" onClick={onDelete}>
-          <DeleteIcon />
+        <IconButton 
+          color="error" 
+          onClick={onDelete}
+          sx={{ 
+            bgcolor: alpha(theme.palette.error.main, 0.05),
+            "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.1) }
+          }}
+        >
+          <DeleteIcon fontSize="small" />
         </IconButton>
       </Tooltip>
 

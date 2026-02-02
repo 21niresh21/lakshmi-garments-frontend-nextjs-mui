@@ -9,11 +9,9 @@ import { UserProvider } from "../context/UserContext";
 import {
   Box,
   LinearProgress,
-  ThemeProvider,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import theme from "../themes/theme";
 import {
   LoadingProvider,
   useGlobalLoading,

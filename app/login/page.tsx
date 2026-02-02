@@ -103,7 +103,7 @@ export default function LoginPage() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bgcolor="#f0f2f5"
+      bgcolor="background.default"
       px={2}
     >
       <Paper

@@ -42,6 +42,7 @@ export default function AppBreadcrumbs() {
                 alignItems: "center",
                 gap: 0.5,
                 cursor: "pointer",
+                color: "inherit",
               }}
               onClick={() => crumb.href && router.push(crumb.href)}
             >
