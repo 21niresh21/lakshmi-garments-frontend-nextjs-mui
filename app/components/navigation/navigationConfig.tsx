@@ -45,28 +45,28 @@ export type NavGroup = {
 };
 
 export const navigationConfig: NavGroup[] = [
-  // {
-  //   title: "Overview",
-  //   allowFor: [],
-  //   items: [
-  //     {
-  //       label: "Dashboard",
-  //       href: "/dashboard",
-  //       icon: <DashboardIcon fontSize="small" />,
-  //     },
-  //   ],
-  // },
   {
-    title: "Requests",
+    title: "Overview",
     allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
     items: [
       {
-        label: "Workflow Requests",
-        href: "/requests/workflow",
-        icon: <BackHandIcon fontSize="small" />,
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: <DashboardIcon fontSize="small" />,
       },
     ],
   },
+  // {
+  //   title: "Requests",
+  //   allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
+  //   items: [
+  //     {
+  //       label: "Workflow Requests",
+  //       href: "/requests/workflow",
+  //       icon: <BackHandIcon fontSize="small" />,
+  //     },
+  //   ],
+  // },
   {
     title: "Invoice",
     allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
@@ -97,83 +97,83 @@ export const navigationConfig: NavGroup[] = [
       },
     ],
   },
-  {
-    title: "Inventory",
-    allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
-    items: [
-      {
-        label: "Inventory",
-        href: "/inventory",
-        icon: <WarehouseIcon fontSize="small" />,
-      },
-    ],
-  },
-  {
-    title: "Production",
-    allowFor: [Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
-    items: [
-      {
-        label: "Production",
-        icon: <LayersIcon fontSize="small" />,
-        children: [
-          {
-            label: "Create Batch",
-            href: "/batch/create",
-            icon: <AssignmentAddIcon fontSize="small" />,
-          },
-          {
-            label: "View Batches",
-            href: "/batch/list",
-            icon: <DynamicFeedIcon fontSize="small" />,
-          },
-          {
-            label: "Batch Timeline",
-            href: "/batch/:id", // 👈 This pattern matches /batch/ANYTHING
-            icon: <VisibilityIcon fontSize="small" />,
-            hideInSidebar: true, // 👈 Hide from sidebar navigation
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Jobwork",
-    allowFor: [Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
-    items: [
-      {
-        label: "Jobwork",
-        icon: <AssignmentIcon fontSize="small" />,
-        children: [
-          {
-            label: "View Jobworks",
-            href: "/jobwork/list",
-            icon: <AssignmentIcon fontSize="small" />,
-          },
-          {
-            label: "In Pass",
-            href: "/jobwork/inpass",
-            icon: <AssignmentTurnedInIcon fontSize="small" />,
-          },
-          {
-            label: "Out Pass",
-            href: "/batch/assign",
-            icon: <AssignmentAddIcon fontSize="small" />,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Finance",
-    allowFor: [Roles.SUPER_ADMIN, Roles.ACCOUNT_ADMIN],
-    items: [
-      {
-        label: "Payday Summary",
-        href: "/payday",
-        icon: <MoneyIcon fontSize="small" />,
-      },
-    ],
-  },
+  // {
+  //   title: "Inventory",
+  //   allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN],
+  //   items: [
+  //     {
+  //       label: "Inventory",
+  //       href: "/inventory",
+  //       icon: <WarehouseIcon fontSize="small" />,
+  //     },
+  //   ],
+  // },
+  // {
+  //   title: "Production",
+  //   allowFor: [Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
+  //   items: [
+  //     {
+  //       label: "Production",
+  //       icon: <LayersIcon fontSize="small" />,
+  //       children: [
+  //         {
+  //           label: "Create Batch",
+  //           href: "/batch/create",
+  //           icon: <AssignmentAddIcon fontSize="small" />,
+  //         },
+  //         {
+  //           label: "View Batches",
+  //           href: "/batch/list",
+  //           icon: <DynamicFeedIcon fontSize="small" />,
+  //         },
+  //         {
+  //           label: "Batch Timeline",
+  //           href: "/batch/:id", // 👈 This pattern matches /batch/ANYTHING
+  //           icon: <VisibilityIcon fontSize="small" />,
+  //           hideInSidebar: true, // 👈 Hide from sidebar navigation
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
+  // {
+  //   title: "Jobwork",
+  //   allowFor: [Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
+  //   items: [
+  //     {
+  //       label: "Jobwork",
+  //       icon: <AssignmentIcon fontSize="small" />,
+  //       children: [
+  //         {
+  //           label: "View Jobworks",
+  //           href: "/jobwork/list",
+  //           icon: <AssignmentIcon fontSize="small" />,
+  //         },
+  //         {
+  //           label: "In Pass",
+  //           href: "/jobwork/inpass",
+  //           icon: <AssignmentTurnedInIcon fontSize="small" />,
+  //         },
+  //         {
+  //           label: "Out Pass",
+  //           href: "/batch/assign",
+  //           icon: <AssignmentAddIcon fontSize="small" />,
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
+  // {
+  //   title: "Finance",
+  //   allowFor: [Roles.SUPER_ADMIN, Roles.ACCOUNT_ADMIN],
+  //   items: [
+  //     {
+  //       label: "Payday Summary",
+  //       href: "/payday",
+  //       icon: <MoneyIcon fontSize="small" />,
+  //     },
+  //   ],
+  // },
   {
     title: "User Management",
     allowFor: [Roles.SUPER_ADMIN],

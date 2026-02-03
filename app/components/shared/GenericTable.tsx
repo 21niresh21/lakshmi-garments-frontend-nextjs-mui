@@ -284,9 +284,6 @@ export default function GenericTable<T extends { id?: string | number }>({
                     <Typography variant="h6" sx={{ fontWeight: 600, opacity: 0.5 }}>
                       {noDataText}
                     </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.5 }}>
-                      Try adjusting your search or filters
-                    </Typography>
                   </Box>
                 </TableCell>
               </TableRow>

@@ -67,8 +67,8 @@ export default function UserFormModal({
           {mode === "create" ? "Add User" : "Edit User"}
         </DialogTitle>
 
-        <DialogContent dividers>
-          <Stack spacing={2} mt={1}>
+        <DialogContent>
+          <Stack spacing={2} mt={3}>
             <TextField
               inputRef={nameRef}
               label="First name"
@@ -135,6 +135,7 @@ export default function UserFormModal({
             )}
           </Stack>
           <FormControlLabel
+            sx={{ mt: 2 }}
             control={
               <Switch
                 checked={initialData.isActive}

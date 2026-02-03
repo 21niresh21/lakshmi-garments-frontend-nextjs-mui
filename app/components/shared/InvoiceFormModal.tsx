@@ -171,7 +171,7 @@ export default function InvoiceFormModal({
           {mode === "create" ? "Add Invoice" : "Edit Invoice"}
         </DialogTitle>
 
-        <DialogContent dividers>
+        <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
               inputRef={nameRef}

@@ -18,6 +18,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import { LRDetails } from "../_types/LRDetails";
 import { InvoiceDetails } from "../_types/invoiceDetails";
+import { sanitizeNumberInput, formatCurrency } from "@/app/utils/number";
 
 interface Props {
   invoice: InvoiceDetails;
@@ -56,13 +57,6 @@ export default function InvoiceSummary({
     return { totalBales, totalQty, totalLength, estimatedAmount };
   }, [lr]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   return (
     <Box sx={{ position: "sticky", top: 100 }}>

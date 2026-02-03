@@ -10,7 +10,7 @@ import {
   alpha,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef } from "react";
 import { Bale } from "../_types/Bale";
 import { Category } from "@/app/_types/Category";
 import { SubCategory } from "@/app/_types/SubCategory";
@@ -62,6 +62,9 @@ export default function BaleRow({
   }>({ type: null, prefillName: "" });
   const [categoryErrors, setCategoryErrors] = useState<CategoryErrors>({});
   const [subCategoryErrors, setSubCategoryErrors] = useState<SubCategoryErrors>({});
+
+  const categoryAutocompleteRef = useRef<any>(null);
+  const subCategoryAutocompleteRef = useRef<any>(null);
 
   /* ---------------- Memoized Values ---------------- */
 
@@ -121,6 +124,7 @@ export default function BaleRow({
         notify("Category created successfully", "success");
         setCreateDialog({ type: null, prefillName: "" });
         setCategoryErrors({});
+        setTimeout(() => categoryAutocompleteRef.current?.focus(), 100);
       } catch (err: any) {
         if (err.validationErrors) {
           setCategoryErrors(err.validationErrors);
@@ -141,6 +145,7 @@ export default function BaleRow({
         notify("Sub Category created successfully", "success");
         setCreateDialog({ type: null, prefillName: "" });
         setSubCategoryErrors({});
+        setTimeout(() => subCategoryAutocompleteRef.current?.focus(), 100);
       } catch (err: any) {
         if (err.validationErrors) {
           setSubCategoryErrors(err.validationErrors);
@@ -217,6 +222,7 @@ export default function BaleRow({
       />
 
       <GenericAutocomplete<Category>
+        ref={categoryAutocompleteRef}
         size="small"
         label="Category"
         options={categories}
@@ -233,6 +239,7 @@ export default function BaleRow({
       />
 
       <GenericAutocomplete<SubCategory>
+        ref={subCategoryAutocompleteRef}
         size="small"
         label="Sub Category"
         options={subCategories}
@@ -269,6 +276,7 @@ export default function BaleRow({
         onClose={() => {
           setCreateDialog({ type: null, prefillName: "" });
           setCategoryErrors({});
+          setTimeout(() => categoryAutocompleteRef.current?.focus(), 100);
         }}
         initialData={{ name: createDialog.prefillName, code: "" }}
         errors={categoryErrors}
@@ -282,6 +290,7 @@ export default function BaleRow({
         onClose={() => {
           setCreateDialog({ type: null, prefillName: "" });
           setSubCategoryErrors({});
+          setTimeout(() => subCategoryAutocompleteRef.current?.focus(), 100);
         }}
         initialData={{ name: createDialog.prefillName }}
         errors={subCategoryErrors}

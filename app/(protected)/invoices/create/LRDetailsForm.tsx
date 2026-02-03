@@ -206,7 +206,7 @@ export default function LRDetailsForm({
                     onClick={handleAddLr}
                     disabled={isAddDisabled}
                     ref={submitButtonRef}
-                    sx={{ height: 40, px: 4, borderRadius: 2 }}
+                    sx={{ height: 37, px: 4, borderRadius: 2 }}
                   >
                     Add LR
                   </Button>

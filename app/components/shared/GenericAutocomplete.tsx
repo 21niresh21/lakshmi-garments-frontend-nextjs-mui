@@ -1,5 +1,5 @@
-import { Autocomplete, TextField, createFilterOptions } from "@mui/material";
-import { useState } from "react";
+import { Autocomplete, TextField, createFilterOptions, Box } from "@mui/material";
+import { useState, useRef, useImperativeHandle, forwardRef } from "react";
 
 type CreateOption = {
   inputValue: string;
@@ -25,28 +25,41 @@ type GenericAutocompleteProps<T extends object> = {
   sx?: any;
 
   loading?: boolean;
-
   error?: string;
 };
 
 const filter = createFilterOptions<AutocompleteOption<any>>();
 
-export function GenericAutocomplete<T extends object>({
-  label,
-  placeholder,
-  options,
-  value,
-  onChange,
-  getOptionLabel,
-  isOptionEqualToValue,
-  allowCreate = false,
-  onCreateClick,
-  size,
-  sx,
-  error,
-  loading = false,
-}: GenericAutocompleteProps<T>) {
+const GenericAutocompleteInner = forwardRef(function GenericAutocomplete<T extends object>(
+  {
+    label,
+    placeholder,
+    options,
+    value,
+    onChange,
+    getOptionLabel,
+    isOptionEqualToValue,
+    allowCreate = false,
+    onCreateClick,
+    size,
+    sx,
+    error,
+    loading = false,
+  }: GenericAutocompleteProps<T>,
+  ref: React.Ref<any>
+) {
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current?.focus();
+    },
+    blur: () => {
+      inputRef.current?.blur();
+    }
+  }));
+
   return (
     <Autocomplete<AutocompleteOption<T>, false, false, false>
       open={open}
@@ -94,6 +107,8 @@ export function GenericAutocomplete<T extends object>({
       }
       onChange={(_, newValue) => {
         if (newValue && "isCreate" in newValue) {
+          // Force dropdown close by blurring input
+          inputRef.current?.blur();
           setOpen(false);
           onCreateClick?.(newValue.inputValue);
           return;
@@ -101,15 +116,21 @@ export function GenericAutocomplete<T extends object>({
         onChange(newValue as T | null);
       }}
       renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          placeholder={placeholder}
-          error={Boolean(error)}
-          helperText={error}
-        />
+        <Box sx={{ position: 'relative' }}>
+          <TextField
+              {...params}
+              inputRef={inputRef}
+              label={label}
+              placeholder={placeholder}
+              error={Boolean(error)}
+              helperText={error}
+          />
+        </Box>
       )}
-
     />
   );
-}
+});
+
+export const GenericAutocomplete = GenericAutocompleteInner as <T extends object>(
+  props: GenericAutocompleteProps<T> & { ref?: React.Ref<any> }
+) => React.ReactElement;

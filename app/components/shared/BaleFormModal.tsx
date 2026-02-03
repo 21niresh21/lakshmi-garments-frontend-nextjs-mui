@@ -113,7 +113,7 @@ export default function BaleFormModal({
           {mode === "create" ? "Add Bale" : "Edit Bale"}
         </DialogTitle>
 
-        <DialogContent dividers>
+        <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
               label="Bale Number"

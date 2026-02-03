@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   Box,
   Card,
@@ -105,6 +105,11 @@ function InvoiceDetailsForm({
 
   /* ---------- Create handlers ---------- */
 
+  const supplierAutocompleteRef = useRef<any>(null);
+  const transportAutocompleteRef = useRef<any>(null);
+
+  /* ---------- Create handlers ---------- */
+
   const closeDialog = useCallback(
     () => setCreateDialog({ type: null, prefillName: "" }),
     []
@@ -119,6 +124,8 @@ function InvoiceDetailsForm({
         notify("Supplier created successfully", "success");
         setCreateDialog({ type: null, prefillName: "" });
         setSupplierErrors({});
+        // Restore focus to allow tabbing
+        setTimeout(() => supplierAutocompleteRef.current?.focus(), 100);
       } catch (err: any) {
         if (err.validationErrors) {
           setSupplierErrors(err.validationErrors);
@@ -127,7 +134,7 @@ function InvoiceDetailsForm({
         }
       }
     },
-    [closeDialog, notify, onChange, setSuppliers]
+    [notify, onChange, setSuppliers]
   );
 
   const createTransport = useCallback(
@@ -139,6 +146,8 @@ function InvoiceDetailsForm({
         notify("Transport created successfully", "success");
         setCreateDialog({ type: null, prefillName: "" });
         setTransportErrors({});
+        // Restore focus to allow tabbing
+        setTimeout(() => transportAutocompleteRef.current?.focus(), 100);
       } catch (err: any) {
         if (err.validationErrors) {
           setTransportErrors(err.validationErrors);
@@ -147,7 +156,7 @@ function InvoiceDetailsForm({
         }
       }
     },
-    [closeDialog, notify, onChange, setTransports]
+    [notify, onChange, setTransports]
   );
 
   /* ---------- Render ---------- */
@@ -240,6 +249,7 @@ function InvoiceDetailsForm({
             {/* Supplier */}
             <Grid size={{ xs: 12, md: 4 }}>
               <GenericAutocomplete<Supplier>
+                ref={supplierAutocompleteRef}
                 label="Supplier"
                 placeholder="Select Supplier"
                 options={suppliers}
@@ -260,6 +270,7 @@ function InvoiceDetailsForm({
                 onClose={() => {
                   setCreateDialog({ type: null, prefillName: "" });
                   setSupplierErrors({});
+                  setTimeout(() => supplierAutocompleteRef.current?.focus(), 100);
                 }}
                 initialData={{ name: createDialog.prefillName, location: "" }}
                 errors={supplierErrors}
@@ -270,6 +281,7 @@ function InvoiceDetailsForm({
             {/* Transport */}
             <Grid size={{ xs: 12, md: 4 }}>
               <GenericAutocomplete<Transport>
+                ref={transportAutocompleteRef}
                 label="Transport"
                 placeholder="Select Transport"
                 options={transports}
@@ -290,6 +302,7 @@ function InvoiceDetailsForm({
                 onClose={() => {
                   setCreateDialog({ type: null, prefillName: "" });
                   setTransportErrors({});
+                  setTimeout(() => transportAutocompleteRef.current?.focus(), 100);
                 }}
                 initialData={{ name: createDialog.prefillName }}
                 errors={transportErrors}

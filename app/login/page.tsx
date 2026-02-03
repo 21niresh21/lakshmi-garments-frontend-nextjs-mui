@@ -74,11 +74,7 @@ export default function LoginPage() {
         expiresAt.getTime().toString(),
       );
 
-      if (response.roles.includes(Roles.SUPER_ADMIN)) {
-        router.push("/users");
-      } else {
-        router.push("/profile");
-      }
+      router.push("/dashboard");
     } catch (err: any) {
       if (err.status === 403) {
         setError(err.message || "Your account is inactive");

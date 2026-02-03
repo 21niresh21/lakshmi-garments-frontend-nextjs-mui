@@ -10,3 +10,23 @@ export function sanitizeNumberInput(value: string): string {
 
   return sanitized;
 }
+
+export const formatCurrency = (amount: number | string): string => {
+  if (amount === undefined || amount === null || amount === "") return "₹0.00";
+
+  let num: number;
+  if (typeof amount === 'string') {
+    // Remove currency symbols, commas, and other non-numeric chars except dot
+    num = parseFloat(amount.replace(/[^\d.-]/g, ''));
+  } else {
+    num = amount;
+  }
+
+  if (isNaN(num)) return "₹0.00";
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(num);
+};

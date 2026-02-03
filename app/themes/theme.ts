@@ -428,7 +428,8 @@ export const getThemeOptions = (config: ThemeConfiguration): ThemeOptions => {
                 styleOverrides: {
                     paper: ({ theme }: any) => ({
                         ...getPaperStyles(theme),
-                        borderRadius: style === 'flat' ? 0 : Math.max(16, config.borderRadius * 2),
+                        border: 'none',
+                        borderRadius: style === 'flat' ? 0 : (style === 'glass' || style === 'frosted' ? Math.max(16, config.borderRadius * 2) : config.borderRadius),
                     }),
                 },
             },

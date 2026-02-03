@@ -39,3 +39,8 @@ export function formatToShortDateTime(dateString: string): string {
     hour12: true,
   });
 }
+export const getStartOfWeek = (): string =>
+  dayjs().startOf('week').format('YYYY-MM-DD');
+
+export const getEndOfWeek = (): string =>
+  dayjs().endOf('week').format('YYYY-MM-DD');

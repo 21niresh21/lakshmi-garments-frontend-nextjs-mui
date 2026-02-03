@@ -88,7 +88,7 @@ export default function ItemFormModal({
       <DialogTitle>{mode === "create" ? "Add Item" : "Edit Item"}</DialogTitle>
 
       <form onSubmit={handleSubmit}>
-        <DialogContent dividers>
+        <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
               inputRef={nameRef}

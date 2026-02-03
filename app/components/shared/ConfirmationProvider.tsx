@@ -54,7 +54,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
       <Dialog open={open} onClose={() => handleClose(false)}>
         <DialogTitle>{options.title || "Are you sure?"}</DialogTitle>
         {options.description && (
-          <DialogContent dividers>
+          <DialogContent>
             <Typography>{options.description}</Typography>
           </DialogContent>
         )}

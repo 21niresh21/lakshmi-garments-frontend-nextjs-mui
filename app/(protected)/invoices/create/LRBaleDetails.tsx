@@ -202,7 +202,8 @@ export default function LRAccordionSection({
                     borderRadius: 2,
                     borderStyle: "dashed",
                     borderWidth: 2,
-                    px: 4,
+                    px: 3,
+                    height : 35,
                     "&:hover": { borderWidth: 2, borderStyle: "dashed" }
                   }}
                 >
