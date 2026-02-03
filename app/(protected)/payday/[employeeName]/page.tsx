@@ -142,7 +142,7 @@ export default function EmployeePaydayDetailPage() {
       </Stack>
 
       {/* Stats Grid */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={2}>
           <StatCard title="Total Jobworks" value={stats.totalJobworks} icon={<AssignmentIcon />} color="#6366f1" />
         </Grid>
@@ -161,7 +161,7 @@ export default function EmployeePaydayDetailPage() {
         <Grid item xs={12} sm={12} md={2}>
           <StatCard title="Total Wage" value={`₹${totalWage.toLocaleString()}`} icon={<PaymentsIcon />} color="#c026d3" />
         </Grid>
-      </Grid>
+      </Grid> */}
 
       {/* Jobwork Detailed List */}
       <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
