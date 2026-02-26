@@ -45,17 +45,17 @@ export type NavGroup = {
 };
 
 export const navigationConfig: NavGroup[] = [
-  // {
-  //   title: "Overview",
-  //   allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
-  //   items: [
-  //     {
-  //       label: "Dashboard",
-  //       href: "/dashboard",
-  //       icon: <DashboardIcon fontSize="small" />,
-  //     },
-  //   ],
-  // },
+    {
+      title: "Overview",
+      allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],
+      items: [
+        {
+          label: "Dashboard",
+          href: "/dashboard",
+          icon: <DashboardIcon fontSize="small" />,
+        },
+      ],
+    },
   // {
   //   title: "Requests",
   //   allowFor: [Roles.ACCOUNT_ADMIN, Roles.SUPER_ADMIN, Roles.PRODUCTION_ADMIN],

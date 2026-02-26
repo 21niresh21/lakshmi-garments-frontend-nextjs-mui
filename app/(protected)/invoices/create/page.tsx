@@ -50,7 +50,7 @@ const DRAFT_KEY = "invoiceDraft";
 const isFutureDate = (date?: string) =>
   !!date && dayjs(date, "DD-MM-YYYY", true).isAfter(dayjs(), "day");
 
-const validateInvoice = (invoice: InvoiceDetails): InvoiceErrors => {
+const validateInvoice = (invoice: InvoiceDetails, lr: LRDetails): InvoiceErrors => {
   const errors: InvoiceErrors = {};
 
   if (!invoice.invoiceNumber.trim())
@@ -68,7 +68,8 @@ const validateInvoice = (invoice: InvoiceDetails): InvoiceErrors => {
 
   if (!invoice.transportID) errors.transportID = "Transport is required";
 
-  if (invoice.transportCost !== undefined && invoice.transportCost <= 0)
+  // Only validate transport cost > 0 when it's not self transport
+  if (lr.transportType !== "self" && invoice.transportCost !== undefined && invoice.transportCost <= 0)
     errors.transportCost = "Transport cost must be greater than 0";
 
   return errors;
@@ -177,6 +178,33 @@ export default function InvoicePage() {
     });
   }, []);
 
+  // Handle LR transport type changes
+  const handleLRChange = useCallback((patch: Partial<LRDetails>) => {
+    setLr((p) => ({ ...p, ...patch }));
+    
+    // When transport type changes, update invoice accordingly
+    if (patch.transportType) {
+      if (patch.transportType === "self") {
+        // For Self transport: set cost to 0 and mark as paid
+        setInvoice(prev => ({
+          ...prev,
+          transportCost: 0,
+          isTransportPaid: true
+        }));
+      } else {
+        // For Transport: reset to default state (empty cost, unpaid)
+        // Use a small delay to ensure the auto-toggle effect doesn't override this
+        setTimeout(() => {
+          setInvoice(prev => ({
+            ...prev,
+            transportCost: undefined,
+            isTransportPaid: false
+          }));
+        }, 0);
+      }
+    }
+  }, []);
+
   const clearBaleError = useCallback(
     (lrId: string, baleId: string, field: keyof Bale) => {
       setLrErrors((prev) => {
@@ -202,7 +230,7 @@ export default function InvoicePage() {
   };
 
   const submitInvoice = async () => {
-    const invErrors = validateInvoice(invoice);
+    const invErrors = validateInvoice(invoice, lr);
     setInvoiceErrors(invErrors);
     if (Object.keys(invErrors).length) return;
 
@@ -256,11 +284,12 @@ export default function InvoicePage() {
               transports={transports}
               setSuppliers={setSuppliers}
               setTransports={setTransports}
+              isTransportCostDisabled={lr.transportType === "self"}
             />
 
             <LRDetailsForm
               value={lr}
-              onChange={(p) => setLr((v) => ({ ...v, ...p }))}
+              onChange={handleLRChange}
               categories={categories}
               subCategories={subCategories}
               lrErrors={lrErrors}

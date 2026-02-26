@@ -14,7 +14,7 @@ import {
 import TimerIcon from "@mui/icons-material/Timer";
 import { useAuthActions } from "@/app/hooks/useAuthActions";
 
-const WARNING_THRESHOLD_MS = 60 * 1000; // 1 minute
+const WARNING_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 const CHECK_INTERVAL_MS = 10 * 1000; // 10 seconds
 
 export default function SessionExpiryTracker() {

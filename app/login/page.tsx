@@ -74,7 +74,7 @@ export default function LoginPage() {
         expiresAt.getTime().toString(),
       );
 
-      router.push("/dashboard");
+      router.push("/guide");
     } catch (err: any) {
       if (err.status === 403) {
         setError(err.message || "Your account is inactive");

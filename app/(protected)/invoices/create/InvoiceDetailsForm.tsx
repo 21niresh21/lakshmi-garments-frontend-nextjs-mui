@@ -55,6 +55,7 @@ interface Props {
   transports: Transport[];
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
   setTransports: React.Dispatch<React.SetStateAction<Transport[]>>;
+  isTransportCostDisabled?: boolean; // New prop to control disabled state
 }
 
 type CreateEntityType = "supplier" | "transport" | null;
@@ -69,6 +70,7 @@ function InvoiceDetailsForm({
   transports,
   setSuppliers,
   setTransports,
+  isTransportCostDisabled = false,
 }: Props) {
   const theme = useTheme();
   const { notify } = useNotification();
@@ -96,12 +98,14 @@ function InvoiceDetailsForm({
 
   const isTransportCostZero = !value.transportCost || value.transportCost <= 0;
 
-  // ✅ Auto-toggle paid when cost is zero
+  //✅ Auto-toggle paid when cost is zero (but not when transport type is transport with undefined cost)
   useEffect(() => {
-    if (isTransportCostZero && !value.isTransportPaid) {
+    // Only auto-toggle if cost is explicitly zero or negative, not when it's undefined
+    // This prevents overriding the explicit "false" state when switching to transport
+    if (isTransportCostZero && value.transportCost !== undefined && !value.isTransportPaid) {
       onChange({ isTransportPaid: true });
     }
-  }, [isTransportCostZero, onChange, value.isTransportPaid]);
+  }, [isTransportCostZero, onChange, value.isTransportPaid, value.transportCost]);
 
   /* ---------- Create handlers ---------- */
 
@@ -316,6 +320,7 @@ function InvoiceDetailsForm({
                 label="Transport Cost"
                 placeholder="Enter Transport Cost"
                 fullWidth
+                disabled={isTransportCostDisabled}
                 value={value.transportCost ?? ""}
                 onChange={(e) => {
                   let val = e.target.value;
@@ -352,7 +357,7 @@ function InvoiceDetailsForm({
                   control={
                     <Switch
                       checked={value.isTransportPaid}
-                      disabled={isTransportCostZero}
+                      disabled={isTransportCostZero || isTransportCostDisabled}
                       onChange={(e) =>
                         onChange({ isTransportPaid: e.target.checked })
                       }
