@@ -442,61 +442,7 @@ export default function SideBarContent({
                 </Typography>
               </Box>
             </Box>
-          </Card>
-
-          {/* Main Card */}
-          <Card
-            className="main-card"
-            elevation={3}
-            sx={{
-              position: "relative",
-              zIndex: 2,
-              borderRadius: 0,
-              background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}15 100%)`,
-              border: (theme) => `1px solid ${theme.palette.primary.main}30`,
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                }}
-              >
-                <RocketLaunchIcon sx={{ fontSize: 20 }} />
-              </Box>
-
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 700, color: "primary.main", mb: 0.25 }}
-                >
-                  More Features Coming Soon
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "text.secondary", lineHeight: 1.4 }}
-                >
-                  We're working on new features to enhance your experience.
-                </Typography>
-              </Box>
-            </Box>
-          </Card>
+          </Card>         
         </Box>
       )}
       <Divider />

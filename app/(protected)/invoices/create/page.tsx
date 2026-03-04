@@ -257,7 +257,7 @@ export default function InvoicePage() {
         receivedDate: invoice.receivedDate.replaceAll("-", "/"),
         lorryReceipts: lr.lorryReceipts,
         createdById: user?.id,
-        isTransportPaid: invoice.transportCost ? invoice.isTransportPaid : true,
+        isTransportPaid: lr.transportType === 'self' ? true : invoice.isTransportPaid,
       });
       notify("Invoice saved successfully", "success");
       clearForm();

@@ -96,13 +96,13 @@ function InvoiceDetailsForm({
 
   /* ---------- Transport cost side effects ---------- */
 
-  const isTransportCostZero = !value.transportCost || value.transportCost <= 0;
+  // Only consider cost as zero when it's explicitly 0, not when undefined/empty
+  const isTransportCostZero = value.transportCost !== undefined && value.transportCost <= 0;
 
-  //✅ Auto-toggle paid when cost is zero (but not when transport type is transport with undefined cost)
+  //✅ Auto-toggle paid when cost is explicitly zero
   useEffect(() => {
-    // Only auto-toggle if cost is explicitly zero or negative, not when it's undefined
-    // This prevents overriding the explicit "false" state when switching to transport
-    if (isTransportCostZero && value.transportCost !== undefined && !value.isTransportPaid) {
+    // Only auto-toggle if cost is explicitly set to 0 (not undefined or empty)
+    if (isTransportCostZero && !value.isTransportPaid) {
       onChange({ isTransportPaid: true });
     }
   }, [isTransportCostZero, onChange, value.isTransportPaid, value.transportCost]);
