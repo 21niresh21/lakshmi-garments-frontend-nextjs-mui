@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import React, { useEffect, useState } from "react";
 import { People } from "@mui/icons-material";
 import { fetchSuppliers } from "@/app/api/supplier";
@@ -212,6 +213,11 @@ export default function Page() {
   const [sortBy, setSortBy] = useState<string | undefined>();
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [totalCount, setTotalCount] = useState(0);
+
+  const handleCopyJobworkNumber = (jobworkNumber: string) => {
+    navigator.clipboard.writeText(jobworkNumber);
+    notify(`Copied ${jobworkNumber} to clipboard`, "success");
+  };
 
   const [rows, setRows] = useState<JobworkRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -510,52 +516,81 @@ export default function Page() {
         </Stack>
       </Grid>
       <Grid size={12}>
-        <GenericTable<JobworkRow>
-          title="Jobworks"
-          rows={rows}
-          pagination={true}
-          totalCount={totalCount}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={setPage}
-          onRowsPerPageChange={setRowsPerPage}
-          showSearch={true}
-          searchPlacedHolder="Search jobwork number"
-          searchValue={search}
-          onSearchChange={setSearch}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={(col, order) => {
-            setSortBy(col);
-            setSortOrder(order);
-          }}
-          columns={HEADERS}
-          onRowClick={(row) => router.push(`/jobwork/${row.id}`)}
-          toolbarExtras={
-            <Stack direction="row" alignItems="center">
-              <Badge
-                badgeContent={activeFilterCount}
-                color="primary"
-                overlap="circular"
-                invisible={activeFilterCount === 0} // hide badge when no filters active
-              >
-                <Tooltip title="Filter Jobworks">
-                  <IconButton onClick={handleOpenFilter}>
-                    <FilterAltIcon />
-                  </IconButton>
-                </Tooltip>
-              </Badge>
-              <Tooltip title="Add Jobowork">
-                <IconButton
-                  size="small"
-                  onClick={() => router.push("/batch/assign")}
-                >
-                  <AddIcon />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          }
-          rowActions={[
+        {(() => {
+          const columnsWithRender = HEADERS.map(col => 
+            col.id === "jobworkNumber"
+              ? {
+                  ...col,
+                  render: (row: any) => (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="body2" fontWeight={500}>
+                        {row.jobworkNumber}
+                      </Typography>
+                      <Tooltip title="Copy Jobwork Number">
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyJobworkNumber(row.jobworkNumber);
+                          }}
+                          size="small"
+                          color="primary"
+                        >
+                          <ContentCopyIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  ),
+                }
+              : col
+          );
+
+          return (
+            <GenericTable<JobworkRow>
+              title="Jobworks"
+              rows={rows}
+              pagination={true}
+              totalCount={totalCount}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={setPage}
+              onRowsPerPageChange={setRowsPerPage}
+              showSearch={true}
+              searchPlacedHolder="Search jobwork number"
+              searchValue={search}
+              onSearchChange={setSearch}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSortChange={(col, order) => {
+                setSortBy(col);
+                setSortOrder(order);
+              }}
+              columns={columnsWithRender}
+              onRowClick={(row) => router.push(`/jobwork/${row.id}`)}
+              toolbarExtras={
+                <Stack direction="row" alignItems="center">
+                  <Badge
+                    badgeContent={activeFilterCount}
+                    color="primary"
+                    overlap="circular"
+                    invisible={activeFilterCount === 0}
+                  >
+                    <Tooltip title="Filter Jobworks">
+                      <IconButton onClick={handleOpenFilter}>
+                        <FilterAltIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Badge>
+                  <Tooltip title="Add Jobowork">
+                    <IconButton
+                      size="small"
+                      onClick={() => router.push("/batch/assign")}
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
+              }
+              rowActions={[
             {
               label: "Close Jobwork",
               icon: (row: JobworkRow) =>
@@ -592,7 +627,9 @@ export default function Page() {
               onClick: (row) => handleReAssignJob(row),
             },
           ]}
-        />
+            />
+          );
+        })()}
       </Grid>
 
       <EmployeeReassignModal

@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Chip,
+  IconButton,
   Paper,
   Stack,
   Table,
@@ -14,6 +15,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -23,6 +25,7 @@ import { Employee } from "@/app/_types/Employee";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
 import { formatToShortDateTime } from "@/app/utils/date";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 type JobworkItem = {
   itemName: string | null;
@@ -59,6 +62,11 @@ export default function EmployeeLookupPage() {
 
   // null = not searched yet
   const [jobworks, setJobworks] = useState<EmployeeJobwork[] | null>(null);
+
+  const handleCopyJobworkNumber = (jobworkNumber: string) => {
+    navigator.clipboard.writeText(jobworkNumber);
+    notify(`Copied ${jobworkNumber} to clipboard`, "success");
+  };
 
   useEffect(() => {
     fetchEmployees()
@@ -157,9 +165,20 @@ export default function EmployeeLookupPage() {
               {jobworks.map((jobwork) => (
                 <TableRow key={jobwork.jobworkNumber} hover>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {jobwork.jobworkNumber}
-                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="body2" fontWeight={500}>
+                        {jobwork.jobworkNumber}
+                      </Typography>
+                      <Tooltip title="Copy Jobwork Number">
+                        <IconButton
+                          onClick={() => handleCopyJobworkNumber(jobwork.jobworkNumber)}
+                          size="small"
+                          color="primary"
+                        >
+                          <ContentCopyIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </TableCell>
 
                   <TableCell>

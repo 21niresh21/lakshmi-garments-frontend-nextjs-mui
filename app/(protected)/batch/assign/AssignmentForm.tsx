@@ -7,11 +7,14 @@ import {
   Divider,
   Drawer,
   Grid,
+  IconButton,
   Paper,
+  Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { Employee } from "@/app/_types/Employee";
 import { INITIAL_JOBWORK, JobworkForm } from "./_types/jobwork.types";
 import CuttingForm from "./CuttingForm";
@@ -21,6 +24,16 @@ import { createJobwork } from "@/app/api/jobworkApi";
 import { fetchJobworkPdf } from "@/app/api/pdfApi";
 import ItemJobForm from "./ItemJobForm";
 import { fetchBatchItems } from "@/app/api/BatchItemApi";
+import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
+import AddIcon from "@mui/icons-material/Add";
+import EmployeeFormModal, {
+  EmployeeFormData,
+} from "@/app/components/shared/EmployeeFormModal";
+import SkillFormModal, {
+  SkillFormData,
+} from "@/app/components/shared/SkillFormModal";
+import { createEmployee } from "@/app/api/employeeApi";
+import { addSkill } from "@/app/api/skillApi";
 
 export type BatchSerialCode = {
   id: number;
@@ -36,6 +49,7 @@ interface Props {
   availableQty: number;
   refresh: Dispatch<SetStateAction<boolean>>;
   refreshState: boolean;
+  refreshEmployees: () => void;
 }
 
 export default function AssignmentForm({
@@ -47,6 +61,7 @@ export default function AssignmentForm({
   availableQty,
   refresh,
   refreshState,
+  refreshEmployees,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -54,8 +69,55 @@ export default function AssignmentForm({
 
   const [batchItems, setBatchItems] = useState();
 
+  // Modal states for quick add
+  const [openEmployeeModal, setOpenEmployeeModal] = useState(false);
+  const [openSkillModal, setOpenSkillModal] = useState(false);
+  const [employeeErrors, setEmployeeErrors] = useState<{ name?: string; skills?: string }>({});
+  const [skillErrors, setSkillErrors] = useState<{ name?: string }>({});
+  const [skillRefreshKey, setSkillRefreshKey] = useState(0);
+
   const { user } = useUser();
   const { notify } = useNotification();
+
+  /* ================= QUICK ADD HANDLERS ================= */
+
+  const handleEmployeeSubmit = useCallback(
+    async (data: EmployeeFormData) => {
+      try {
+        await createEmployee(data);
+        notify("Employee created successfully", "success");
+        setOpenEmployeeModal(false);
+        setEmployeeErrors({});
+        refreshEmployees(); // Refresh employee list immediately
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setEmployeeErrors(err.validationErrors);
+        } else {
+          notify(err.message || "Failed to create employee", "error");
+        }
+      }
+    },
+    [notify, refreshEmployees]
+  );
+
+  const handleSkillSubmit = useCallback(
+    async (data: SkillFormData) => {
+      try {
+        await addSkill(data);
+        notify("Skill created successfully", "success");
+        setOpenSkillModal(false);
+        setSkillErrors({});
+        setSkillRefreshKey((prev) => prev + 1); // Increment to trigger skill refresh in EmployeeFormModal
+      } catch (err: any) {
+        if (err.validationErrors) {
+          setSkillErrors(err.validationErrors);
+        } else {
+          notify(err.message || "Failed to create skill", "error");
+        }
+      }
+    },
+    [notify]
+  );
 
   console.log(user);
 
@@ -238,9 +300,31 @@ export default function AssignmentForm({
 
   return (
     <Box sx={{ p: { xs: 2, md: 0 } }}>
-      <Typography fontWeight={600} variant="h6">
-        Assign Batch
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography fontWeight={600} variant="h6">
+          Assign Batch
+        </Typography>
+        <Stack direction="row" spacing={0.5}>
+          <Tooltip title="Add Employee">
+            <IconButton
+              size="small"
+              onClick={() => setOpenEmployeeModal(true)}
+              color="primary"
+            >
+              <PersonAddAlt1Icon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Add Skill">
+            <IconButton
+              size="small"
+              onClick={() => setOpenSkillModal(true)}
+              color="primary"
+            >
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Stack>
       <Divider sx={{ my: 2 }} />
 
       <Grid container spacing={2}>
@@ -376,6 +460,33 @@ export default function AssignmentForm({
           )}
         </Box>
       </Drawer>
+
+      {/* Employee Quick Add Modal */}
+      <EmployeeFormModal
+        open={openEmployeeModal}
+        mode="create"
+        errors={employeeErrors}
+        setErrors={setEmployeeErrors}
+        onClose={() => {
+          setOpenEmployeeModal(false);
+          setEmployeeErrors({});
+        }}
+        onSubmit={handleEmployeeSubmit}
+        skillRefreshKey={skillRefreshKey}
+      />
+
+      {/* Skill Quick Add Modal */}
+      <SkillFormModal
+        open={openSkillModal}
+        mode="create"
+        errors={skillErrors}
+        setErrors={setSkillErrors}
+        onClose={() => {
+          setOpenSkillModal(false);
+          setSkillErrors({});
+        }}
+        onSubmit={handleSkillSubmit}
+      />
     </Box>
   );
 }

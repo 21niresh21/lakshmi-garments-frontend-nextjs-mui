@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Button, Divider, Grid, Link, Stack, TextField } from "@mui/material";
+import { Alert, Button, Divider, Grid, IconButton, Link, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { fetchJobworkDetail, getItemsForJobwork } from "@/app/api/jobworkApi";
 import CuttingForm from "../../batch/assign/CuttingForm";
@@ -12,6 +12,7 @@ import JobworkItemsTable from "./JobworkItemsTable";
 import { Item } from "@/app/_types/Item";
 import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
 import { JobworkStatus } from "@/app/_types/JobworkStatus";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 export default function Page() {
   const { notify } = useNotification();
@@ -22,6 +23,13 @@ export default function Page() {
 
   const [items, setItems] = useState<Item[]>([]);
   const [itemsForJobwork, setItemsForJobWork] = useState([]);
+
+  const handleCopyJobworkNumber = () => {
+    if (jobwork?.jobworkNumber) {
+      navigator.clipboard.writeText(jobwork.jobworkNumber);
+      notify("Jobwork number copied to clipboard", "success");
+    }
+  };
 
   const handleFind = async () => {
     const trimmed = jobworkNumber.trim().toUpperCase();
@@ -34,6 +42,7 @@ export default function Page() {
       return;
     }
     showLoading();
+    setJobwork(null);
     try {
       const res = await fetchJobworkDetail(trimmed);
       setJobwork(res);
@@ -105,6 +114,18 @@ export default function Page() {
               Find by Employee
             </Link>
           </Stack>
+          {jobwork && (
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2, mb: 2 }}>
+              <Typography variant="h6" fontWeight={700}>
+                {jobwork.jobworkNumber}
+              </Typography>
+              <Tooltip title="Copy Jobwork Number">
+                <IconButton onClick={handleCopyJobworkNumber} size="small" color="primary">
+                  <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          )}
           {jobwork?.jobworkStatus === JobworkStatus.AWAITING_APPROVAL && (
             <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
               This jobwork has a receipt raised already and is still pending approval. 
@@ -113,6 +134,7 @@ export default function Page() {
           )}
           {jobwork && (
             <JobworkItemsTable
+              key={jobwork.jobworkNumber}
               setJobwork={setJobwork}
               jobwork={jobwork}
               allItems={jobwork?.jobworkType == 'CUTTING' ? items : itemsForJobwork}

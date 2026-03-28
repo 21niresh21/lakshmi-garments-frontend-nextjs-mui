@@ -29,6 +29,7 @@ type EmployeeFormModalProps = {
   setErrors: React.Dispatch<React.SetStateAction<EmployeeErrors>>;
   onClose: () => void;
   onSubmit: (data: EmployeeFormData) => void;
+  skillRefreshKey?: number;
 };
 
 export default function EmployeeFormModal({
@@ -39,6 +40,7 @@ export default function EmployeeFormModal({
   setErrors,
   onClose,
   onSubmit,
+  skillRefreshKey,
 }: EmployeeFormModalProps) {
   const { loading } = useGlobalLoading();
 
@@ -62,9 +64,10 @@ export default function EmployeeFormModal({
     }
   }, [open, initialData, setErrors]);
 
+  // Refresh skills when skillRefreshKey changes or on initial mount
   useEffect(() => {
     fetchSkills("").then(setSkills);
-  }, []);
+  }, [skillRefreshKey]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -8,7 +8,7 @@ import {
   getUnfinishedUrgentBatches,
 } from "@/app/api/batchApi";
 import { Box, Divider, Grid } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import BatchList from "./BatchList";
 import AssignmentForm from "./AssignmentForm";
 import { fetchEmployees, fetchEmployeeStats } from "@/app/api/employeeApi";
@@ -28,6 +28,17 @@ export default function Page() {
   const [jobwork, setJobwork] = useState<JobworkForm>(INITIAL_JOBWORK);
   const [availableQty, setAvailableQty] = useState<number>();
   const [refresh, setRefresh] = useState<boolean>(false);
+
+  // Function to refresh employees based on current jobworkType
+  const refreshEmployees = useCallback(() => {
+    if (jobwork.jobworkType && jobwork.batchSerialCode.trim() !== "") {
+      fetchEmployees({ skillNames: [jobwork.jobworkType] })
+        .then((res: any) => {
+          setEmployees(res.content);
+        })
+        .catch((err) => console.log("error fetching emp"));
+    }
+  }, [jobwork.jobworkType, jobwork.batchSerialCode]);
 
   useEffect(() => {
     getUnfinishedUrgentBatches().then((res) => {
@@ -103,6 +114,7 @@ export default function Page() {
             availableQty={availableQty ?? 0}
             refreshState={refresh}
             refresh={setRefresh}
+            refreshEmployees={refreshEmployees}
           />
         </Grid>
 
