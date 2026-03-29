@@ -7,6 +7,11 @@ import {
   TextField,
   IconButton,
   Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Box,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { GenericAutocomplete } from "@/app/components/shared/GenericAutocomplete";
@@ -18,6 +23,8 @@ import ItemFormModal, {
 import { ItemErrors } from "../../item/page";
 import { addItem } from "@/app/api/itemApi";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
+import { DamageSource, DamageSourceLabels } from "@/app/_types/DamageSource";
+import { DamageType } from "@/app/_types/DamageType";
 
 interface JobworkItemRowProps {
   row: JobworkItemRowData;
@@ -82,6 +89,15 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
     damages[index] = {
       ...damages[index],
       quantity: sanitizeNumber(value) === '' ? 0 : sanitizeNumber(value),
+    };
+    onChange({ ...row, damages });
+  };
+
+  const handleDamageSourceChange = (index: number, source: DamageSource) => {
+    const damages = [...row.damages];
+    damages[index] = {
+      ...damages[index],
+      source,
     };
     onChange({ ...row, damages });
   };
@@ -227,14 +243,33 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
       {/* Damages */}
       {row.damages.map((d, i) => (
         <TableCell key={i}>
-          <TextField
-            size="small"
-            type="number"
-            value={d.quantity}
-            onChange={(e) => handleDamageChange(i, e.target.value)}
-            error={d.quantity === 0 && emptyRow}
-            inputProps={{ min: 0 }}
-          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <TextField
+              size="small"
+              type="number"
+              value={d.quantity}
+              onChange={(e) => handleDamageChange(i, e.target.value)}
+              error={d.quantity === 0 && emptyRow}
+              inputProps={{ min: 0 }}
+              sx={{ width: 70 }}
+            />
+            {d.type === DamageType.REPAIRABLE && (
+              <FormControl size="small" sx={{ minWidth: 100 }}>
+                <Select
+                  value={d.source || DamageSource.CURRENT_JOBWORK}
+                  onChange={(e) => handleDamageSourceChange(i, e.target.value as DamageSource)}
+                  displayEmpty
+                  sx={{ fontSize: "0.75rem" }}
+                >
+                  {Object.values(DamageSource).map((src) => (
+                    <MenuItem key={src} value={src} sx={{ fontSize: "0.75rem" }}>
+                      {DamageSourceLabels[src]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
         </TableCell>
       ))}
 

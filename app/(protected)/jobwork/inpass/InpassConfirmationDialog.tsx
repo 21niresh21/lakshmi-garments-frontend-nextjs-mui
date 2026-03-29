@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { JobworkItemRowData } from "./_types/jobwork";
 import { DamageType } from "@/app/_types/DamageType";
+import { DamageSourceLabels } from "@/app/_types/DamageSource";
 
 interface InpassConfirmationDialogProps {
   open: boolean;
@@ -80,17 +81,27 @@ export default function InpassConfirmationDialog({
                 <TableCell align="right"><b>Accepted</b></TableCell>
                 <TableCell align="right"><b>Sales Qty</b></TableCell>
                 <TableCell align="right"><b>Supplier Damage</b></TableCell>
-                <TableCell align="right"><b>Repairable</b></TableCell>
+                <TableCell align="center" colSpan={2}><b>Repairable</b></TableCell>
                 <TableCell align="right"><b>Unrepairable</b></TableCell>
                 <TableCell align="right"><b>Total</b></TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell />
+                <TableCell />
+                <TableCell />
+                <TableCell />
+                <TableCell align="right"><Typography variant="caption">Qty</Typography></TableCell>
+                <TableCell align="right"><Typography variant="caption">Source</Typography></TableCell>
+                <TableCell />
+                <TableCell />
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((row) => {
-                const supplierDamage = toNumber(row.damages.find(d => d.type === DamageType.SUPPLIER_DAMAGE)?.quantity || 0);
-                const repairable = toNumber(row.damages.find(d => d.type === DamageType.REPAIRABLE)?.quantity || 0);
-                const unrepairable = toNumber(row.damages.find(d => d.type === DamageType.UNREPAIRABLE)?.quantity || 0);
-                const damageTotal = supplierDamage + repairable + unrepairable;
+                const supplierDamage = row.damages.find(d => d.type === DamageType.SUPPLIER_DAMAGE);
+                const repairable = row.damages.find(d => d.type === DamageType.REPAIRABLE);
+                const unrepairable = row.damages.find(d => d.type === DamageType.UNREPAIRABLE);
+                const damageTotal = toNumber(supplierDamage?.quantity || 0) + toNumber(repairable?.quantity || 0) + toNumber(unrepairable?.quantity || 0);
                 const total = toNumber(row.acceptedQuantity) + toNumber(row.salesQuantity) + damageTotal;
 
                 return (
@@ -98,14 +109,19 @@ export default function InpassConfirmationDialog({
                     <TableCell>{row.itemName}</TableCell>
                     <TableCell align="right">{row.acceptedQuantity || 0}</TableCell>
                     <TableCell align="right">{row.salesQuantity || 0}</TableCell>
-                    <TableCell align="right" sx={{ color: supplierDamage > 0 ? "error.main" : "inherit" }}>
-                        {supplierDamage}
+                    <TableCell align="right" sx={{ color: toNumber(supplierDamage?.quantity || 0) > 0 ? "error.main" : "inherit" }}>
+                        {toNumber(supplierDamage?.quantity || 0)}
                     </TableCell>
-                    <TableCell align="right" sx={{ color: repairable > 0 ? "warning.main" : "inherit" }}>
-                        {repairable}
+                    <TableCell align="right" sx={{ color: toNumber(repairable?.quantity || 0) > 0 ? "warning.main" : "inherit" }}>
+                        {toNumber(repairable?.quantity || 0)}
                     </TableCell>
-                    <TableCell align="right" sx={{ color: unrepairable > 0 ? "error.dark" : "inherit" }}>
-                        {unrepairable}
+                    <TableCell align="right">
+                      <Typography variant="caption" color="text.secondary">
+                        {repairable?.source ? DamageSourceLabels[repairable.source as keyof typeof DamageSourceLabels] : "-"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: toNumber(unrepairable?.quantity || 0) > 0 ? "error.dark" : "inherit" }}>
+                        {toNumber(unrepairable?.quantity || 0)}
                     </TableCell>
                     <TableCell align="right"><b>{total}</b></TableCell>
                   </TableRow>

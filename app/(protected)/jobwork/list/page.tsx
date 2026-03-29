@@ -565,7 +565,7 @@ export default function Page() {
                 setSortOrder(order);
               }}
               columns={columnsWithRender}
-              onRowClick={(row) => router.push(`/jobwork/${row.id}`)}
+              onRowClick={(row) => router.push(`/jobwork/${row.jobworkNumber}`)}
               toolbarExtras={
                 <Stack direction="row" alignItems="center">
                   <Badge

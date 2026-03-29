@@ -1,52 +1,65 @@
 "use client";
 
-import Link from "next/link";
-import Breadcrumbs from "@mui/material/Breadcrumbs";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import BatchTimeline from "./BatchTimeline";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { fetchTimeline } from "@/app/api/batchApi";
-import { useNotification } from "@/app/components/shared/NotificationProvider";
+import { useParams, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Container,
+  IconButton,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useGlobalLoading } from "@/app/components/layout/LoadingProvider";
+import BatchTimeline from "./BatchTimeline";
+import { fetchTimeline } from "@/app/api/batchApi";
+import { BatchTimelineResponse } from "@/app/api/_types/BatchTimeline";
+import { useNotification } from "@/app/components/shared/NotificationProvider";
 
 export default function Page() {
   const params = useParams();
-  const { loading, showLoading, hideLoading } = useGlobalLoading();
+  const router = useRouter();
   const { notify } = useNotification();
-  const id = params.id as string;
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<BatchTimelineResponse | null>(null);
 
-  const [batchTimeline, setBatchTimeline] = useState<any>();
+  const batchId = params.id as string;
 
   useEffect(() => {
-    if (id) {
-      showLoading();
-      fetchTimeline(Number(id))
-        .then((res) => {
-          setBatchTimeline(res);
-          console.log(res);
-        })
-        .catch((err) => {
-          notify("An error occured", "error");
-        })
-        .finally(() => {
-          hideLoading();
-        });
-    }
-  }, []);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetchTimeline(Number(batchId));
+        setData(res);
+      } catch (err: any) {
+        notify("Error fetching batch timeline", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [batchId, notify]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Container maxWidth="md" sx={{ py: 3 }}>
+        <Typography variant="h6" color="text.secondary">
+          Batch not found
+        </Typography>
+      </Container>
+    );
+  }
 
   return (
     <Box>
-
-
-      {/* Page Content */}
-      <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, ml: 2.5 }}>
-        Batch Timeline {batchTimeline?.batchDetails?.serialCode}
-      </Typography>
-      <BatchTimeline batchTimeline={batchTimeline} />
+      <BatchTimeline batchTimeline={data} />
     </Box>
   );
 }

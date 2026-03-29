@@ -19,11 +19,15 @@ import { Item } from "@/app/_types/Item";
 import { JobworkItemRowData } from "./_types/jobwork";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { DamageType } from "@/app/_types/DamageType";
+import { DamageSource } from "@/app/_types/DamageSource";
 import { createJobworkReceipt } from "@/app/api/jobworkReceipt";
 import { JobworkStatus } from "@/app/_types/JobworkStatus";
 import { createWorflowRequest } from "@/app/api/workflowRequestApi";
 import { WorkflowRequestType } from "@/app/_types/WorkflowRequestType";
 import InpassConfirmationDialog from "./InpassConfirmationDialog";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import HourglassTopIcon from "@mui/icons-material/HourglassTop";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 interface JobworkItemsTableProps {
   allItems: Item[];
@@ -160,11 +164,11 @@ export default function JobworkItemsTable({
         salesPrice: 0,
         acceptedQuantity: "",
         damages: [
-          { type: DamageType.SUPPLIER_DAMAGE, quantity: 0 },
-          { type: DamageType.REPAIRABLE, quantity: 0 },
-          { type: DamageType.UNREPAIRABLE, quantity: 0 },
+          { type: DamageType.SUPPLIER_DAMAGE, quantity: 0 as number | "", source: DamageSource.CURRENT_JOBWORK },
+          { type: DamageType.REPAIRABLE, quantity: 0 as number | "", source: DamageSource.CURRENT_JOBWORK },
+          { type: DamageType.UNREPAIRABLE, quantity: 0 as number | "", source: DamageSource.CURRENT_JOBWORK },
         ],
-      },
+      } as JobworkItemRowData,
     ]);
   };
 
@@ -194,10 +198,33 @@ export default function JobworkItemsTable({
     const { mode } = confirmDialog;
     setConfirmDialog((prev) => ({ ...prev, open: false }));
 
+    // Transform rows to API format - filter out damages with 0 quantity
+    // Only include source for REPAIRABLE damage type
+    const transformedRows = rows.map((row) => ({
+      itemName: row.itemName,
+      acceptedQuantity: row.acceptedQuantity === "" ? 0 : row.acceptedQuantity,
+      salesQuantity: row.salesQuantity === "" ? 0 : row.salesQuantity,
+      salesPrice: row.salesPrice === "" ? 0 : row.salesPrice,
+      wagePerItem: row.wagePerItem === "" ? 0 : row.wagePerItem,
+      damages: row.damages
+        .filter((d) => (d.quantity === "" ? 0 : d.quantity) > 0)
+        .map((d) => {
+          const damage: { type: string; quantity: number; source?: string } = {
+            type: d.type,
+            quantity: d.quantity === "" ? 0 : d.quantity,
+          };
+          // Only include source for REPAIRABLE damage
+          if (d.type === DamageType.REPAIRABLE) {
+            damage.source = d.source;
+          }
+          return damage;
+        }),
+    }));
+
     if (mode === "submit") {
       createJobworkReceipt({
         jobworkNumber: jobwork.jobworkNumber,
-        jobworkReceiptItems: rows,
+        jobworkReceiptItems: transformedRows,
       })
         .then(() => {
           notify("Jobwork receipt created successfully", "success");
@@ -211,7 +238,7 @@ export default function JobworkItemsTable({
         requestType: WorkflowRequestType.JOBWORK_RECEIPT,
         payload: JSON.stringify({
           jobworkNumber: jobwork.jobworkNumber,
-          items: rows,
+          items: transformedRows,
         }),
         systemComments: "Quantity mismatch",
       })
@@ -231,25 +258,102 @@ export default function JobworkItemsTable({
 
   return (
     <>
-      <Typography sx={{ my: 2 }}>
-        Assigned Qty: <b>{assignedQuantity}</b>
-        {" | "}
-        Pending quantity: <b>{pendingQuantity > 0 ? pendingQuantity : 0}</b>
-        {" | "}
-        Remaining:{" "}
-        <Box
-          component="span"
+      {/* Quantity Summary Cards */}
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
+        {/* Assigned Qty */}
+        <Paper
+          variant="outlined"
           sx={{
-            fontWeight: "bold",
-            color: remainingQty < 0 ? "error.main" : "inherit",
+            display: "flex",
+            alignItems: "center",
+            px: 1.5,
+            py: 0.75,
+            borderRadius: 1,
+            bgcolor: "action.hover",
           }}
         >
-          {jobwork.jobworkStatus === JobworkStatus.CLOSED ||
-          jobwork.jobworkStatus === JobworkStatus.REASSIGNED
-            ? 0
-            : remainingQty}
-        </Box>
-      </Typography>
+          <InventoryIcon fontSize="small" color="primary" sx={{ mr: 0.75 }} />
+          <Typography variant="caption" color="text.secondary">
+            Assigned:
+          </Typography>
+          <Typography variant="body2" fontWeight={700} color="primary.main" sx={{ ml: 0.5 }}>
+            {assignedQuantity}
+          </Typography>
+        </Paper>
+
+        {/* Pending Qty */}
+        <Paper
+          variant="outlined"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            px: 1.5,
+            py: 0.75,
+            borderRadius: 1,
+            bgcolor: "action.hover",
+          }}
+        >
+          <HourglassTopIcon fontSize="small" color="warning" sx={{ mr: 0.75 }} />
+          <Typography variant="caption" color="text.secondary">
+            Pending:
+          </Typography>
+          <Typography variant="body2" fontWeight={700} color="warning.main" sx={{ ml: 0.5 }}>
+            {pendingQuantity > 0 ? pendingQuantity : 0}
+          </Typography>
+        </Paper>
+
+        {/* Remaining Qty */}
+        <Paper
+          variant="outlined"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            px: 1.5,
+            py: 0.75,
+            borderRadius: 1,
+            bgcolor: remainingQty < 0 ? "error.50" : "action.hover",
+            borderColor: remainingQty < 0 ? "error.main" : "divider",
+          }}
+        >
+          <CheckCircleOutlineIcon
+            fontSize="small"
+            color={remainingQty < 0 ? "error" : "success"}
+            sx={{ mr: 0.75 }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            Remaining:
+          </Typography>
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            color={remainingQty < 0 ? "error.main" : "success.main"}
+            sx={{ ml: 0.5 }}
+          >
+            {jobwork.jobworkStatus === JobworkStatus.CLOSED ||
+            jobwork.jobworkStatus === JobworkStatus.REASSIGNED
+              ? 0
+              : remainingQty}
+          </Typography>
+        </Paper>
+      </Stack>
+
+      {/* Warning for exceeded quantity */}
+      {remainingQty < 0 && (
+        <Typography
+          variant="body2"
+          color="error.main"
+          sx={{
+            mb: 2,
+            p: 1.5,
+            bgcolor: "error.50",
+            borderRadius: 1,
+            border: "1px solid",
+            borderColor: "error.main",
+          }}
+        >
+          ⚠️ Total quantity exceeds assigned limit by {Math.abs(remainingQty)} items!
+        </Typography>
+      )}
 
       { disableAddItem ? (
         <Typography variant="body2" color="error.main" sx={{ mt: 2 }}>

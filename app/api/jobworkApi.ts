@@ -148,3 +148,17 @@ export const fetchDetailedJobworkByEmployee = async (
     throw error;
   }
 };
+
+export const fetchJobworkTimeline = async (
+  jobworkNumber: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `${baseUrl}/timeline/${jobworkNumber}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching jobwork timeline:", error);
+    throw error;
+  }
+};
