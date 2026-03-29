@@ -194,81 +194,7 @@ export default function BatchTimeline({ batchTimeline }: Props) {
             </CardContent>
           </Card>
 
-          {/* Progress Cards */}
-          <Card sx={{ mb: 3, borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                Production Progress
-              </Typography>
-              <Stack spacing={2}>
-                {/* Cutting Progress */}
-                <Box>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <ContentCutIcon fontSize="small" color="action" />
-                      <Typography variant="body2" fontWeight={500}>Cutting</Typography>
-                    </Stack>
-                    <Typography variant="body2" fontWeight={600}>
-                      {batchTimeline.cuttingProgress?.progressPercentage || "0%"}
-                    </Typography>
-                  </Stack>
-                  <LinearProgress
-                    variant="determinate"
-                    value={parsePercentage(batchTimeline.cuttingProgress?.progressPercentage || "0%")}
-                    color={getProgressColor(parsePercentage(batchTimeline.cuttingProgress?.progressPercentage || "0%"))}
-                    sx={{ height: 8, borderRadius: 1 }}
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    {batchTimeline.cuttingProgress?.completedQuantity ?? 0} / {batchTimeline.cuttingProgress?.totalQuantity ?? 0}
-                  </Typography>
-                </Box>
 
-                {/* Stitching Progress */}
-                <Box>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <AssignmentIcon fontSize="small" color="action" />
-                      <Typography variant="body2" fontWeight={500}>Stitching</Typography>
-                    </Stack>
-                    <Typography variant="body2" fontWeight={600}>
-                      {batchTimeline.stitchingProgress?.progressPercentage || "0%"}
-                    </Typography>
-                  </Stack>
-                  <LinearProgress
-                    variant="determinate"
-                    value={parsePercentage(batchTimeline.stitchingProgress?.progressPercentage || "0%")}
-                    color={getProgressColor(parsePercentage(batchTimeline.stitchingProgress?.progressPercentage || "0%"))}
-                    sx={{ height: 8, borderRadius: 1 }}
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    {batchTimeline.stitchingProgress?.completedQuantity ?? 0} / {batchTimeline.stitchingProgress?.totalQuantity ?? 0}
-                  </Typography>
-                </Box>
-
-                {/* Packaging Progress */}
-                <Box>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <InventoryIcon fontSize="small" color="action" />
-                      <Typography variant="body2" fontWeight={500}>Packaging</Typography>
-                    </Stack>
-                    <Typography variant="body2" fontWeight={600}>
-                      {batchTimeline.packagingProgress?.progressPercentage || "0%"}
-                    </Typography>
-                  </Stack>
-                  <LinearProgress
-                    variant="determinate"
-                    value={parsePercentage(batchTimeline.packagingProgress?.progressPercentage || "0%")}
-                    color={getProgressColor(parsePercentage(batchTimeline.packagingProgress?.progressPercentage || "0%"))}
-                    sx={{ height: 8, borderRadius: 1 }}
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    {batchTimeline.packagingProgress?.completedQuantity ?? 0} / {batchTimeline.packagingProgress?.totalQuantity ?? 0}
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
 
           {/* Stats Card */}
           <Card sx={{ borderRadius: 2 }}>
@@ -382,8 +308,8 @@ export default function BatchTimeline({ batchTimeline }: Props) {
                     <TableHead>
                       <TableRow>
                         <TableCell>Sub Category</TableCell>
-                        <TableCell align="right">Original</TableCell>
-                        <TableCell align="right">Available</TableCell>
+                        <TableCell align="right">Quantity</TableCell>
+                        {/* <TableCell align="right">Available</TableCell> */}
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -393,11 +319,11 @@ export default function BatchTimeline({ batchTimeline }: Props) {
                             <Typography variant="body2" fontWeight={500}>{sub.subCategoryName}</Typography>
                           </TableCell>
                           <TableCell align="right">{sub.originalQuantity}</TableCell>
-                          <TableCell align="right">
+                          {/* <TableCell align="right">
                             <Typography variant="body2" color={sub.availableQuantity === 0 ? "error.main" : "success.main"}>
                               {sub.availableQuantity}
                             </Typography>
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -527,7 +453,7 @@ export default function BatchTimeline({ batchTimeline }: Props) {
                               {event.items?.slice(0, 3).map((item, i) => (
                                 <Chip
                                   key={i}
-                                  label={`${item.itemName} (${item.quantity})`}
+                                  label={`${item.itemName} (${item.quantity || (item.acceptedQuantity || 0) + (item.damagedQuantity || 0) + (item.salesQuantity || 0)})`}
                                   size="small"
                                   variant="outlined"
                                   sx={{ fontSize: "0.7rem" }}

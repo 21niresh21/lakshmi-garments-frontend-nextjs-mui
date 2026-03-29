@@ -199,7 +199,6 @@ export default function JobworkItemsTable({
     setConfirmDialog((prev) => ({ ...prev, open: false }));
 
     // Transform rows to API format - filter out damages with 0 quantity
-    // Only include source for REPAIRABLE damage type
     const transformedRows = rows.map((row) => ({
       itemName: row.itemName,
       acceptedQuantity: row.acceptedQuantity === "" ? 0 : row.acceptedQuantity,

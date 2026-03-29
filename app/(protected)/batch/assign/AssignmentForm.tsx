@@ -452,7 +452,7 @@ export default function AssignmentForm({
         <Box sx={{ p: 1, height: "100%" }}>
           {pdfUrl && (
             <iframe
-              src={pdfUrl}
+              src={pdfUrl || undefined}
               width="100%"
               height="100%"
               style={{ border: "none" }}

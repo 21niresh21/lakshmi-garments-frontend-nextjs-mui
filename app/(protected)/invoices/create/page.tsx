@@ -226,7 +226,7 @@ export default function InvoicePage() {
     setLr(INITIAL_LR);
     setInvoiceErrors({});
     setLrErrors({});
-    localStorage.removeItem(DRAFT_KEY);
+    // localStorage.removeItem(DRAFT_KEY);
   };
 
   const submitInvoice = async () => {

@@ -255,6 +255,7 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
             />
             {d.type === DamageType.REPAIRABLE && (
               <FormControl size="small" sx={{ minWidth: 100 }}>
+                <InputLabel sx={{ fontSize: "0.75rem" }}>Source</InputLabel>
                 <Select
                   value={d.source || DamageSource.CURRENT_JOBWORK}
                   onChange={(e) => handleDamageSourceChange(i, e.target.value as DamageSource)}
