@@ -162,3 +162,17 @@ export const fetchJobworkTimeline = async (
     throw error;
   }
 };
+
+export const fetchBatchPriorJobworks = async (
+  batchNumber: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `${baseUrl}/${batchNumber}/batch-prior-jobworks`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batch prior jobworks:", error);
+    throw error;
+  }
+};

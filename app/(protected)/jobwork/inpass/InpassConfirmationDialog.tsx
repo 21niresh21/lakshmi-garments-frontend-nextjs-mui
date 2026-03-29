@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { JobworkItemRowData } from "./_types/jobwork";
 import { DamageType } from "@/app/_types/DamageType";
-import { DamageSourceLabels } from "@/app/_types/DamageSource";
+import { DamageSource, DamageSourceLabels } from "@/app/_types/DamageSource";
 
 interface InpassConfirmationDialogProps {
   open: boolean;
@@ -80,28 +80,20 @@ export default function InpassConfirmationDialog({
                 <TableCell><b>Item Name</b></TableCell>
                 <TableCell align="right"><b>Accepted</b></TableCell>
                 <TableCell align="right"><b>Sales Qty</b></TableCell>
-                <TableCell align="right"><b>Supplier Damage</b></TableCell>
-                <TableCell align="center" colSpan={2}><b>Repairable</b></TableCell>
+                <TableCell align="right"><b>Supplier</b></TableCell>
+                <TableCell align="right"><b>Repairable (Current)</b></TableCell>
+                <TableCell align="right"><b>Repairable (Previous)</b></TableCell>
                 <TableCell align="right"><b>Unrepairable</b></TableCell>
                 <TableCell align="right"><b>Total</b></TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell />
-                <TableCell />
-                <TableCell />
-                <TableCell />
-                <TableCell align="right"><Typography variant="caption">Qty</Typography></TableCell>
-                <TableCell align="right"><Typography variant="caption">Source</Typography></TableCell>
-                <TableCell />
-                <TableCell />
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((row) => {
                 const supplierDamage = row.damages.find(d => d.type === DamageType.SUPPLIER_DAMAGE);
-                const repairable = row.damages.find(d => d.type === DamageType.REPAIRABLE);
+                const repairableCurrent = row.damages.find(d => d.type === DamageType.REPAIRABLE && !d.source);
+                const repairablePrevious = row.damages.find(d => d.type === DamageType.REPAIRABLE && d.source === DamageSource.PREVIOUS_JOBWORK);
                 const unrepairable = row.damages.find(d => d.type === DamageType.UNREPAIRABLE);
-                const damageTotal = toNumber(supplierDamage?.quantity || 0) + toNumber(repairable?.quantity || 0) + toNumber(unrepairable?.quantity || 0);
+                const damageTotal = toNumber(supplierDamage?.quantity || 0) + toNumber(repairableCurrent?.quantity || 0) + toNumber(repairablePrevious?.quantity || 0) + toNumber(unrepairable?.quantity || 0);
                 const total = toNumber(row.acceptedQuantity) + toNumber(row.salesQuantity) + damageTotal;
 
                 return (
@@ -112,13 +104,20 @@ export default function InpassConfirmationDialog({
                     <TableCell align="right" sx={{ color: toNumber(supplierDamage?.quantity || 0) > 0 ? "error.main" : "inherit" }}>
                         {toNumber(supplierDamage?.quantity || 0)}
                     </TableCell>
-                    <TableCell align="right" sx={{ color: toNumber(repairable?.quantity || 0) > 0 ? "warning.main" : "inherit" }}>
-                        {toNumber(repairable?.quantity || 0)}
+                    <TableCell align="right" sx={{ color: toNumber(repairableCurrent?.quantity || 0) > 0 ? "warning.main" : "inherit" }}>
+                        {toNumber(repairableCurrent?.quantity || 0)}
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="caption" color="text.secondary">
-                        {repairable?.source ? DamageSourceLabels[repairable.source as keyof typeof DamageSourceLabels] : "-"}
-                      </Typography>
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                        <Typography variant="body2" sx={{ color: toNumber(repairablePrevious?.quantity || 0) > 0 ? "warning.main" : "inherit" }}>
+                          {toNumber(repairablePrevious?.quantity || 0)}
+                        </Typography>
+                        {repairablePrevious?.reworkJobworkNumber && (
+                          <Typography variant="caption" color="primary.main" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+                            {repairablePrevious.reworkJobworkNumber}
+                          </Typography>
+                        )}
+                      </Box>
                     </TableCell>
                     <TableCell align="right" sx={{ color: toNumber(unrepairable?.quantity || 0) > 0 ? "error.dark" : "inherit" }}>
                         {toNumber(unrepairable?.quantity || 0)}

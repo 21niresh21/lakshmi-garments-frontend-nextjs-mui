@@ -164,9 +164,10 @@ export default function JobworkItemsTable({
         salesPrice: 0,
         acceptedQuantity: "",
         damages: [
-          { type: DamageType.SUPPLIER_DAMAGE, quantity: 0 as number | "", source: DamageSource.CURRENT_JOBWORK },
-          { type: DamageType.REPAIRABLE, quantity: 0 as number | "", source: DamageSource.CURRENT_JOBWORK },
-          { type: DamageType.UNREPAIRABLE, quantity: 0 as number | "", source: DamageSource.CURRENT_JOBWORK },
+          { type: DamageType.SUPPLIER_DAMAGE, quantity: 0 as number | "" }, // Index 0: Supplier Damage
+          { type: DamageType.REPAIRABLE, quantity: 0 as number | "" }, // Index 1: Repairable (Current Jobwork)
+          { type: DamageType.REPAIRABLE, quantity: 0 as number | "", source: DamageSource.PREVIOUS_JOBWORK }, // Index 2: Repairable (Previous Jobwork)
+          { type: DamageType.UNREPAIRABLE, quantity: 0 as number | "" }, // Index 3: Unrepairable
         ],
       } as JobworkItemRowData,
     ]);
@@ -208,13 +209,16 @@ export default function JobworkItemsTable({
       damages: row.damages
         .filter((d) => (d.quantity === "" ? 0 : d.quantity) > 0)
         .map((d) => {
-          const damage: { type: string; quantity: number; source?: string } = {
+          const damage: { type: string; quantity: number; source?: string; reworkJobworkNumber?: string | null } = {
             type: d.type,
             quantity: d.quantity === "" ? 0 : d.quantity,
           };
-          // Only include source for REPAIRABLE damage
-          if (d.type === DamageType.REPAIRABLE) {
+          // For Repairable damage from Previous Jobwork, include source and reworkJobworkNumber
+          if (d.type === DamageType.REPAIRABLE && d.source === DamageSource.PREVIOUS_JOBWORK) {
             damage.source = d.source;
+            if (d.reworkJobworkNumber) {
+              damage.reworkJobworkNumber = d.reworkJobworkNumber;
+            }
           }
           return damage;
         }),
@@ -366,15 +370,35 @@ export default function JobworkItemsTable({
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Item</TableCell>
-              <TableCell>Returned</TableCell>
-              <TableCell>Wage</TableCell>
-              <TableCell>Sales Cost</TableCell>
-              <TableCell>Sales Qty</TableCell>
-              <TableCell>Supplier Damage</TableCell>
-              <TableCell>Repairable</TableCell>
-              <TableCell>Unrepairable</TableCell>
-              <TableCell>Remove</TableCell>
+              <TableCell rowSpan={2}>Item</TableCell>
+              <TableCell rowSpan={2}>Returned</TableCell>
+              <TableCell rowSpan={2}>Wage/₹</TableCell>
+              <TableCell rowSpan={2}>Sales Cost</TableCell>
+              <TableCell rowSpan={2}>Sales Qty</TableCell>
+              <TableCell align="center" colSpan={4}>Damages</TableCell>
+              <TableCell rowSpan={2}>Remove</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell align="right">
+                <Typography variant="caption" fontWeight={600} color="error.main">
+                  Supplier
+                </Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="caption" fontWeight={600} color="warning.main">
+                  Repairable (Current)
+                </Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="caption" fontWeight={600} color="warning.main">
+                  Repairable (Previous)
+                </Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="caption" fontWeight={600} color="error.dark">
+                  Unrepairable
+                </Typography>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -403,6 +427,7 @@ export default function JobworkItemsTable({
                   showItemQuantity={
                     jobwork.jobworkType === "CUTTING" ? false : true
                   }
+                  jobworkNumber={jobwork.jobworkNumber} // Pass jobwork number for prior jobworks lookup
                   // jobworkType={jobwork.jobworkType} // Pass type so Row knows whether to show limit
                 />
               );

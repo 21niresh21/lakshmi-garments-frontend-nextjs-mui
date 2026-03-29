@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TableRow,
   TableCell,
@@ -25,6 +25,7 @@ import { addItem } from "@/app/api/itemApi";
 import { useNotification } from "@/app/components/shared/NotificationProvider";
 import { DamageSource, DamageSourceLabels } from "@/app/_types/DamageSource";
 import { DamageType } from "@/app/_types/DamageType";
+import { fetchBatchPriorJobworks } from "@/app/api/jobworkApi";
 
 interface JobworkItemRowProps {
   row: JobworkItemRowData;
@@ -34,6 +35,7 @@ interface JobworkItemRowProps {
   totalExceeded: boolean; // global total exceeded flag
   rowRemaining: number;
   showItemQuantity: boolean;
+  jobworkNumber?: string; // Add jobwork number prop for fetching prior jobworks
 }
 
 /**
@@ -68,11 +70,13 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
   totalExceeded,
   rowRemaining,
   showItemQuantity,
+  jobworkNumber,
 }) => {
   const noItemSelected = row.itemId === null;
   const emptyRow = isRowEmpty(row);
   const [items, setItems] = useState(availableItems);
   const { notify } = useNotification();
+  const [priorJobworks, setPriorJobworks] = useState<any[]>([]);
 
   const handleNumberChange = (
     field: keyof JobworkItemRowData,
@@ -84,23 +88,34 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
     });
   };
 
-  const handleDamageChange = (index: number, value: string) => {
+  const handleDamageChange = (damageIndex: number, value: string) => {
     const damages = [...row.damages];
-    damages[index] = {
-      ...damages[index],
+    damages[damageIndex] = {
+      ...damages[damageIndex],
       quantity: sanitizeNumber(value) === '' ? 0 : sanitizeNumber(value),
     };
     onChange({ ...row, damages });
   };
 
-  const handleDamageSourceChange = (index: number, source: DamageSource) => {
+  const handleReworkJobworkChange = (damageIndex: number, jobworkNumber: string) => {
     const damages = [...row.damages];
-    damages[index] = {
-      ...damages[index],
-      source,
+    damages[damageIndex] = {
+      ...damages[damageIndex],
+      reworkJobworkNumber: jobworkNumber,
     };
     onChange({ ...row, damages });
   };
+
+  useEffect(() => {
+    if (jobworkNumber) {
+      fetchBatchPriorJobworks(jobworkNumber)
+        .then((data) => setPriorJobworks(data))
+        .catch((error) => {
+          console.error("Error fetching prior jobworks:", error);
+          setPriorJobworks([]);
+        });
+    }
+  }, [jobworkNumber]);
 
   // ✅ Row error flag for UI
   const rowError = totalExceeded || noItemSelected || emptyRow;
@@ -240,39 +255,104 @@ const JobworkItemRow: React.FC<JobworkItemRowProps> = ({
         />
       </TableCell>
 
-      {/* Damages */}
-      {row.damages.map((d, i) => (
-        <TableCell key={i}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            <TextField
-              size="small"
-              type="number"
-              value={d.quantity}
-              onChange={(e) => handleDamageChange(i, e.target.value)}
-              error={d.quantity === 0 && emptyRow}
-              inputProps={{ min: 0 }}
-              sx={{ width: 70 }}
-            />
-            {d.type === DamageType.REPAIRABLE && (
-              <FormControl size="small" sx={{ minWidth: 100 }}>
-                <InputLabel sx={{ fontSize: "0.75rem" }}>Source</InputLabel>
-                <Select
-                  value={d.source || DamageSource.CURRENT_JOBWORK}
-                  onChange={(e) => handleDamageSourceChange(i, e.target.value as DamageSource)}
-                  displayEmpty
-                  sx={{ fontSize: "0.75rem" }}
-                >
-                  {Object.values(DamageSource).map((src) => (
-                    <MenuItem key={src} value={src} sx={{ fontSize: "0.75rem" }}>
-                      {DamageSourceLabels[src]}
+      {/* Damages - Structured Layout */}
+      <TableCell>
+        <TextField
+          size="small"
+          type="number"
+          value={row.damages[0]?.quantity || ""}
+          onChange={(e) => handleDamageChange(0, e.target.value)}
+          error={(row.damages[0]?.quantity === "" ? 0 : row.damages[0]?.quantity || 0) === 0 && emptyRow}
+          inputProps={{ min: 0 }}
+          sx={{ width: 75 }}
+          placeholder="0"
+        />
+      </TableCell>
+
+      <TableCell>
+        <TextField
+          size="small"
+          type="number"
+          value={row.damages[1]?.quantity || ""}
+          onChange={(e) => handleDamageChange(1, e.target.value)}
+          error={(row.damages[1]?.quantity === "" ? 0 : row.damages[1]?.quantity || 0) === 0 && emptyRow}
+          inputProps={{ min: 0 }}
+          sx={{ width: 75 }}
+          placeholder="0"
+        />
+      </TableCell>
+
+      <TableCell>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <TextField
+            size="small"
+            type="number"
+            value={row.damages[2]?.quantity || ""}
+            onChange={(e) => handleDamageChange(2, e.target.value)}
+            error={(row.damages[2]?.quantity === "" ? 0 : row.damages[2]?.quantity || 0) === 0 && emptyRow}
+            inputProps={{ min: 0 }}
+            sx={{ width: 75 }}
+            placeholder="0"
+          />
+          {row.damages[2]?.quantity && Number(row.damages[2].quantity) > 0 && (
+            <FormControl size="small" variant="outlined" sx={{ minWidth: 130 }}>
+              <InputLabel 
+                sx={{ 
+                  fontSize: "0.7rem",
+                  "&.Mui-focused": {
+                    fontSize: "0.7rem"
+                  }
+                }}
+              >
+                Prior Jobwork
+              </InputLabel>
+              <Select
+                value={row.damages[2]?.reworkJobworkNumber || ""}
+                onChange={(e) => handleReworkJobworkChange(2, e.target.value)}
+                displayEmpty
+                label="Prior Jobwork"
+                sx={{ 
+                  fontSize: "0.7rem",
+                  minHeight: "40px",
+                  "& .MuiSelect-select": {
+                    padding: "8px 32px 8px 12px",
+                    display: "flex",
+                    alignItems: "center"
+                  }
+                }}
+                MenuProps={{
+                  PaperProps: { sx: { maxHeight: 300 } }
+                }}
+              >
+                {priorJobworks.length > 0 ? (
+                  priorJobworks.map((pjw) => (
+                    <MenuItem key={pjw.jobworkNumber} value={pjw.jobworkNumber} sx={{ fontSize: "0.7rem" }}>
+                      {`${pjw.jobworkNumber} - ${pjw.employeeName}`}
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          </Box>
-        </TableCell>
-      ))}
+                  ))
+                ) : (
+                  <MenuItem disabled value="" sx={{ fontSize: "0.7rem", fontStyle: "italic", color: "text.secondary" }}>
+                    No prior jobworks
+                  </MenuItem>
+                )}
+              </Select>
+            </FormControl>
+          )}
+        </Box>
+      </TableCell>
+
+      <TableCell>
+        <TextField
+          size="small"
+          type="number"
+          value={row.damages[3]?.quantity || ""}
+          onChange={(e) => handleDamageChange(3, e.target.value)}
+          error={(row.damages[3]?.quantity === "" ? 0 : row.damages[3]?.quantity || 0) === 0 && emptyRow}
+          inputProps={{ min: 0 }}
+          sx={{ width: 75 }}
+          placeholder="0"
+        />
+      </TableCell>
 
       {/* Remove */}
       <TableCell>

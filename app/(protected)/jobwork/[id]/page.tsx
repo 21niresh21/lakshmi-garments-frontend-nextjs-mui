@@ -549,7 +549,7 @@ export default function JobworkDetailPage() {
                               <TableRow>
                                 <TableCell>Item</TableCell>
                                 <TableCell align="right">Accepted</TableCell>
-                                <TableCell align="right" colSpan={4}>Damaged</TableCell>
+                                <TableCell align="right" colSpan={5}>Damaged</TableCell>
                                 <TableCell align="right">Sales</TableCell>
                                 <TableCell align="right">Wage/Item</TableCell>
                               </TableRow>
@@ -557,7 +557,8 @@ export default function JobworkDetailPage() {
                                 <TableCell />
                                 <TableCell />
                                 <TableCell align="right"><Typography variant="caption">Supplier</Typography></TableCell>
-                                <TableCell align="right"><Typography variant="caption">Repairable</Typography></TableCell>
+                                <TableCell align="right"><Typography variant="caption">Repairable (Current)</Typography></TableCell>
+                                <TableCell align="right"><Typography variant="caption">Repairable (Previous)</Typography></TableCell>
                                 <TableCell align="right"><Typography variant="caption">Unrepairable</Typography></TableCell>
                                 <TableCell align="right"><Typography variant="caption">Total</Typography></TableCell>
                                 <TableCell />
@@ -567,9 +568,10 @@ export default function JobworkDetailPage() {
                             <TableBody>
                               {receipt.receiptItems?.map((item, i) => {
                                 const supplierDamage = item.damages?.find(d => d.damageType === DamageType.SUPPLIER_DAMAGE);
-                                const repairableDamage = item.damages?.find(d => d.damageType === DamageType.REPAIRABLE);
+                                const repairableCurrent = item.damages?.find(d => d.damageType === DamageType.REPAIRABLE && !d.damageSource);
+                                const repairablePrevious = item.damages?.find(d => d.damageType === DamageType.REPAIRABLE && d.damageSource === "PREVIOUS_JOBWORK");
                                 const unrepairableDamage = item.damages?.find(d => d.damageType === DamageType.UNREPAIRABLE);
-                                const totalDamage = (supplierDamage?.quantity || 0) + (repairableDamage?.quantity || 0) + (unrepairableDamage?.quantity || 0);
+                                const totalDamage = (supplierDamage?.quantity || 0) + (repairableCurrent?.quantity || 0) + (repairablePrevious?.quantity || 0) + (unrepairableDamage?.quantity || 0);
 
                                 return (
                                   <TableRow key={i}>
@@ -583,12 +585,19 @@ export default function JobworkDetailPage() {
                                       )}
                                     </TableCell>
                                     <TableCell align="right">
-                                      {repairableDamage && repairableDamage.quantity > 0 ? (
+                                      {repairableCurrent && repairableCurrent.quantity > 0 ? (
+                                        <Typography variant="body2" color="warning.main">{repairableCurrent.quantity}</Typography>
+                                      ) : (
+                                        "-"
+                                      )}
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      {repairablePrevious && repairablePrevious.quantity > 0 ? (
                                         <Box>
-                                          <Typography variant="body2" color="warning.main">{repairableDamage.quantity}</Typography>
-                                          {repairableDamage.damageSource && (
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontSize: "0.65rem" }}>
-                                              {repairableDamage.damageSource === "CURRENT_JOBWORK" ? "Current" : "Previous"}
+                                          <Typography variant="body2" color="warning.main">{repairablePrevious.quantity}</Typography>
+                                          {repairablePrevious.damageSource === "PREVIOUS_JOBWORK" && repairablePrevious.reworkJobworkNumber && (
+                                            <Typography variant="caption" color="primary.main" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+                                              {repairablePrevious.reworkJobworkNumber}
                                             </Typography>
                                           )}
                                         </Box>

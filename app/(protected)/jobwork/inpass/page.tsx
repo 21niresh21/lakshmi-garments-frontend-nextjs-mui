@@ -60,6 +60,12 @@ export default function Page() {
       setError("Jobwork Number format must be JW-YYYYMMDD-XXX");
       return;
     }
+    
+    // Clear previous state before fetching new jobwork
+    setJobwork(null);
+    setItemsForJobWork([]);
+    setError("");
+    
     showLoading();
     try {
       const res = await fetchJobworkDetail(trimmed);
@@ -172,6 +178,7 @@ export default function Page() {
         {/* Jobwork Items Table - Main Content */}
         {jobwork && (
           <JobworkItemsTable
+            key={jobwork.jobworkNumber}
             setJobwork={setJobwork}
             jobwork={jobwork}
             allItems={jobwork?.jobworkType == 'CUTTING' ? items : itemsForJobwork}
