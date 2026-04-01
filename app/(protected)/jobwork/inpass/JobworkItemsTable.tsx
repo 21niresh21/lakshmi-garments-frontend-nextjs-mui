@@ -199,60 +199,120 @@ export default function JobworkItemsTable({
     const { mode } = confirmDialog;
     setConfirmDialog((prev) => ({ ...prev, open: false }));
 
-    // Transform rows to API format - filter out damages with 0 quantity
-    const transformedRows = rows.map((row) => ({
-      itemName: row.itemName,
-      acceptedQuantity: row.acceptedQuantity === "" ? 0 : row.acceptedQuantity,
-      salesQuantity: row.salesQuantity === "" ? 0 : row.salesQuantity,
-      salesPrice: row.salesPrice === "" ? 0 : row.salesPrice,
-      wagePerItem: row.wagePerItem === "" ? 0 : row.wagePerItem,
-      damages: row.damages
-        .filter((d) => (d.quantity === "" ? 0 : d.quantity) > 0)
-        .map((d) => {
-          const damage: { type: string; quantity: number; source?: string; reworkJobworkNumber?: string | null } = {
-            type: d.type,
-            quantity: d.quantity === "" ? 0 : d.quantity,
-          };
-          // For Repairable damage from Previous Jobwork, include source and reworkJobworkNumber
-          if (d.type === DamageType.REPAIRABLE && d.source === DamageSource.PREVIOUS_JOBWORK) {
-            damage.source = d.source;
-            if (d.reworkJobworkNumber) {
-              damage.reworkJobworkNumber = d.reworkJobworkNumber;
+    // Helper function to transform rows to API format (includes ALL damages)
+    const transformRows = (rows: JobworkItemRowData[]) => {
+      return rows.map((row) => ({
+        itemName: row.itemName,
+        acceptedQuantity: row.acceptedQuantity === "" ? 0 : row.acceptedQuantity,
+        salesQuantity: row.salesQuantity === "" ? 0 : row.salesQuantity,
+        salesPrice: row.salesPrice === "" ? 0 : row.salesPrice,
+        wagePerItem: row.wagePerItem === "" ? 0 : row.wagePerItem,
+        damages: row.damages
+          .filter((d) => (d.quantity === "" ? 0 : d.quantity) > 0)
+          .map((d) => {
+            const damage: { type: string; quantity: number; source?: string; reworkJobworkNumber?: string | null } = {
+              type: d.type,
+              quantity: d.quantity === "" ? 0 : d.quantity,
+            };
+            // For Repairable damage from Previous Jobwork, include source and reworkJobworkNumber
+            if (d.type === DamageType.REPAIRABLE && d.source === DamageSource.PREVIOUS_JOBWORK) {
+              damage.source = d.source;
+              if (d.reworkJobworkNumber) {
+                damage.reworkJobworkNumber = d.reworkJobworkNumber;
+              }
             }
-          }
-          return damage;
-        }),
-    }));
+            return damage;
+          }),
+      }));
+    };
 
-    if (mode === "submit") {
-      createJobworkReceipt({
+    // Helper function to extract only previous jobwork damages for separate receipts
+    const extractPreviousJobworkDamages = () => {
+      const previousJobworkMap = new Map<string, any[]>();
+      
+      rows.forEach((row) => {
+        const prevJobworkDamage = row.damages.find(
+          d => d.type === DamageType.REPAIRABLE && d.source === DamageSource.PREVIOUS_JOBWORK && d.reworkJobworkNumber
+        );
+        
+        if (prevJobworkDamage && prevJobworkDamage.reworkJobworkNumber) {
+          const jobworkNumber = prevJobworkDamage.reworkJobworkNumber;
+          if (!previousJobworkMap.has(jobworkNumber)) {
+            previousJobworkMap.set(jobworkNumber, []);
+          }
+          
+          // Include only the repairable damage from previous jobwork (not full receipt data)
+          previousJobworkMap.get(jobworkNumber)!.push({
+            itemName: row.itemName,
+            acceptedQuantity: 0,
+            salesQuantity: 0,
+            salesPrice: 0,
+            wagePerItem: 0,
+            damages: [{
+              type: DamageType.REPAIRABLE,
+              quantity: prevJobworkDamage.quantity === "" ? 0 : prevJobworkDamage.quantity,
+              source: DamageSource.CURRENT_JOBWORK, // From old jobwork's perspective, this is current damage
+              reportedJobworkFrom: jobwork.jobworkNumber, // Track which jobwork reported this damage
+            }],
+          });
+        }
+      });
+      
+      return previousJobworkMap;
+    };
+
+    const submitReceipts = async (receiptData: { jobworkNumber: string; items: any[] }[]) => {
+      try {
+        for (const receipt of receiptData) {
+          if (mode === "submit") {
+            await createJobworkReceipt({
+              jobworkNumber: receipt.jobworkNumber,
+              jobworkReceiptItems: receipt.items,
+            });
+          } else {
+            await createWorflowRequest({
+              requestType: WorkflowRequestType.JOBWORK_RECEIPT,
+              payload: JSON.stringify({
+                jobworkNumber: receipt.jobworkNumber,
+                items: receipt.items,
+              }),
+              systemComments: "Quantity mismatch",
+            });
+          }
+        }
+        notify(mode === "submit" ? "Jobwork receipts created successfully" : "Requests raised successfully", "success");
+        setRows([]);
+        setJobwork(null);
+        setJobworkNumber("");
+      } catch (error) {
+        notify("Error occurred", "error");
+      }
+    };
+
+    // Prepare current jobwork receipt with ALL damages (including previous jobwork damages)
+    const currentJobworkItems = transformRows(rows);
+    
+    // Extract previous jobwork damages for separate receipts
+    const previousJobworkDamagesMap = extractPreviousJobworkDamages();
+    
+    // Build list of receipts to submit
+    const receiptsToSubmit = [
+      {
         jobworkNumber: jobwork.jobworkNumber,
-        jobworkReceiptItems: transformedRows,
-      })
-        .then(() => {
-          notify("Jobwork receipt created successfully", "success");
-          setRows([]);
-          setJobwork(null);
-          setJobworkNumber("");
-        })
-        .catch(() => notify("Error occurred", "error"));
-    } else {
-      createWorflowRequest({
-        requestType: WorkflowRequestType.JOBWORK_RECEIPT,
-        payload: JSON.stringify({
-          jobworkNumber: jobwork.jobworkNumber,
-          items: transformedRows,
-        }),
-        systemComments: "Quantity mismatch",
-      })
-        .then(() => {
-          notify("Request raised", "success");
-          setRows([]);
-          setJobwork(null);
-          setJobworkNumber("");
-        })
-        .catch(() => notify("Error raising request", "error"));
-    }
+        items: currentJobworkItems, // Complete receipt with all damages
+      },
+    ];
+    
+    // Add receipts for each previous jobwork that has damages
+    previousJobworkDamagesMap.forEach((items, jobworkNumber) => {
+      receiptsToSubmit.push({
+        jobworkNumber,
+        items, // Only repairable damages from this previous jobwork
+      });
+    });
+    
+    // Submit all receipts
+    submitReceipts(receiptsToSubmit);
   };
 
   const selectedItemIds = rows

@@ -28,12 +28,14 @@ export default function Page() {
       categoryName: category.categoryName,
       urgent: false,
       remarks: "",
-      items: category.subCategories.map((sc) => ({
-        name: sc.subCategoryName,
-        maxQty: sc.count,
-        qty: sc.count > 0 ? sc.count : 0,
-        selected: false,
-      })),
+      items: category.subCategories
+        .filter((sc) => sc.count > 0) // Filter out subcategories with 0 quantities
+        .map((sc) => ({
+          name: sc.subCategoryName,
+          maxQty: sc.count,
+          qty: "", // Start with empty quantity
+          selected: false,
+        })),
     });
   };
 

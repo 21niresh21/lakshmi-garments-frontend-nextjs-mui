@@ -93,17 +93,17 @@ const HEADERS = [
     sortable: true,
   },
   {
-    id: "totalAcceptedQuantity",
+    id: "totalAssignedQuantity",
     label: "Volume Handled",
     sortable: true,
   },
   {
-    id: "totalDamages",
+    id: "totalDamagedQuantity",
     label: "Damages",
   },
   {
-    id: "totalSales",
-    label: "Purchase done",
+    id: "salesQuantity",
+    label: "Sales",
   },
   {
     id: "netWage",
@@ -334,6 +334,35 @@ export default function Page() {
   ]);
 
   useEffect(() => {
+    // Set default dates to this week on initial load
+    const now = dayjs();
+    
+    // Dayjs: Sunday = 0, Saturday = 6
+    const todayDay = now.day();
+    
+    // Get this week's Saturday 6 PM
+    let thisSaturday6PM = now
+      .day(6)
+      .hour(18)
+      .minute(0)
+      .second(0)
+      .millisecond(0);
+    
+    // If today is before Saturday, day(6) gives NEXT Saturday
+    if (todayDay < 6) {
+      thisSaturday6PM = thisSaturday6PM.subtract(7, "day");
+    }
+    
+    // If current time is before this Saturday 6 PM, go to last Saturday
+    const fromDateValue = now.isBefore(thisSaturday6PM)
+      ? thisSaturday6PM.subtract(7, "day")
+      : thisSaturday6PM;
+    
+    setFromDate(fromDateValue);
+    setToDate(now);
+  }, []);
+
+  useEffect(() => {
     fetchSuppliers()
       .then(setSuppliers)
       .catch(() => notify("Error fetching suppliers", "error"));
@@ -386,15 +415,15 @@ export default function Page() {
           }}
           columns={HEADERS}
           rowActions={[
-            {
-              label: "Edit",
-              icon: () => (
-                <IconButton size="small">
-                  <EditIcon sx={{ color: "gray" }} />
-                </IconButton>
-              ),
-              onClick: (row) => handleEditInvoice(row),
-            },
+            // {
+            //   label: "Edit",
+            //   icon: () => (
+            //     <IconButton size="small">
+            //       <EditIcon sx={{ color: "gray" }} />
+            //     </IconButton>
+            //   ),
+            //   onClick: (row) => handleEditInvoice(row),
+            // },
           ]}
           toolbarExtras={
             <Stack direction="row" alignItems="center" spacing={2}>

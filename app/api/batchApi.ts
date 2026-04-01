@@ -55,10 +55,11 @@ export const getUnfinishedBatches = async () => {
 
 export const getAllowedJobworkTypes = async (serialCode: string) => {
   try {
+    // Encode the serial code to handle special characters like '/'
+    const encodedSerialCode = encodeURIComponent(serialCode);
     const response = await axiosInstance.get(
-      `${baseUrl}/${serialCode}/jobwork-types`,
+      `${baseUrl}/${encodedSerialCode}/jobwork-types`,
     );
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error("Error getting possible jobwork types:", error);
@@ -91,8 +92,10 @@ export const fetchAvailableQuantity = async (
   jobworkType: string,
 ) => {
   try {
+    // Encode the serial code to handle special characters like '/'
+    const encodedSerialCode = encodeURIComponent(serialCode);
     const response = await axiosInstance.get(
-      `${baseUrl}/${serialCode}/${jobworkType}/available-quantity`,
+      `${baseUrl}/${encodedSerialCode}/${jobworkType}/available-quantity`,
     );
     return response.data;
   } catch (error) {

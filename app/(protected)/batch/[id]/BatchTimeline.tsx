@@ -202,7 +202,7 @@ export default function BatchTimeline({ batchTimeline }: Props) {
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                 Statistics
               </Typography>
-              <Grid container spacing={2}>
+              {/* <Grid container spacing={2}>
                 <Grid size={6}>
                   <Box sx={{ textAlign: "center", p: 1.5, bgcolor: "background.default", borderRadius: 2 }}>
                     <Typography variant="h5" fontWeight={700} color={getEfficiencyColor(batchTimeline.stats?.productionEfficiencyScore || "")}>
@@ -219,7 +219,7 @@ export default function BatchTimeline({ batchTimeline }: Props) {
                     <Typography variant="caption" color="text.secondary">Acceptance</Typography>
                   </Box>
                 </Grid>
-              </Grid>
+              </Grid> */}
               <Divider sx={{ my: 2 }} />
               <Stack spacing={1}>
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -251,7 +251,7 @@ export default function BatchTimeline({ batchTimeline }: Props) {
                   <Typography variant="body2" color="text.secondary">Total Cost</Typography>
                   <Typography variant="body2" fontWeight={700} color="primary">₹{(batchTimeline.stats?.totalCostOfProduction ?? 0).toFixed(2)}</Typography>
                 </Box>
-                <Divider />
+                {/* <Divider />
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="body2" color="text.secondary">Time from last event</Typography>
                   <Typography variant="body2" fontWeight={500}>{batchTimeline.stats?.totalDurationFromCreation || "-"}</Typography>
@@ -259,7 +259,7 @@ export default function BatchTimeline({ batchTimeline }: Props) {
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="body2" color="text.secondary">Rework Count</Typography>
                   <Typography variant="body2" fontWeight={500}>{batchTimeline.stats?.totalReworkCount ?? 0}</Typography>
-                </Box>
+                </Box> */}
               </Stack>
             </CardContent>
           </Card>

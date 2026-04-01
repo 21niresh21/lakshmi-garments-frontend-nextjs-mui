@@ -33,9 +33,14 @@ export default function BatchPreview({
   const selectedItems =
     batchDetails?.items?.filter((item) => item.selected) || [];
 
+  // Check if ALL selected items have valid quantities (> 0)
+  const allItemsHaveValidQuantity =
+    selectedItems.length > 0 &&
+    selectedItems.every((item) => item.qty !== "" && item.qty > 0);
+
   const submitBatch = async () => {
     setLoading(true);
-    const getQty = (item: any) => (item.qty === "" ? item.maxQty : item.qty);
+    const getQty = (item: any) => (item.qty === "" ? 0 : item.qty);
     const totalQuantity = selectedItems.reduce(
       (sum, item) => sum + getQty(item),
       0,
@@ -107,9 +112,9 @@ export default function BatchPreview({
             <Typography variant="body2">{item.name}</Typography>
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="body2" fontWeight={600}>
-                {item.qty === "" ? item.maxQty : item.qty}
+                {item.qty === "" ? 0 : item.qty}
               </Typography>
-              {item.qty === item.maxQty && (
+              {item.qty !== "" && item.qty === item.maxQty && (
                 <Chip
                   label="MAX"
                   size="small"
@@ -136,7 +141,7 @@ export default function BatchPreview({
           onClick={submitBatch}
           startIcon={<CheckCircleIcon />}
           variant="contained"
-          disabled={loading}
+          disabled={loading || !allItemsHaveValidQuantity}
         >
           {loading ? "Creating..." : "Create Batch"}
         </Button>

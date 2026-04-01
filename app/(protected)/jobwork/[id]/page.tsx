@@ -293,10 +293,18 @@ export default function JobworkDetailPage() {
                 )}
                 {(data.childJobworkNumbers?.length ?? 0) > 0 && (
                   <Box>
-                    <Typography variant="body2" color="text.secondary">Children:</Typography>
+                    <Typography variant="body2" color="text.secondary">Assigned Jobworks:</Typography>
                     <Stack direction="row" flexWrap="wrap" spacing={0.5} sx={{ mt: 0.5 }}>
                       {data.childJobworkNumbers?.map((jw) => (
-                        <Chip key={jw} label={jw} size="small" sx={{ mb: 0.5 }} />
+                        <Chip 
+                          key={jw} 
+                          label={jw} 
+                          size="small" 
+                          sx={{ mb: 0.5, cursor: 'pointer' }}
+                          component="a"
+                          href={`/jobwork/${jw}`}
+                          clickable
+                        />
                       ))}
                     </Stack>
                   </Box>
@@ -380,15 +388,15 @@ export default function JobworkDetailPage() {
                   <Typography variant="body2" color="text.secondary">Net Wages</Typography>
                   <Typography variant="body2" fontWeight={700} color="primary">₹{data.metrics.netWagesEarned.toFixed(2)}</Typography>
                 </Box>
-                <Divider />
+                {/* <Divider />
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="body2" color="text.secondary">Receipts</Typography>
                   <Typography variant="body2" fontWeight={500}>{data.metrics.receiptCount}</Typography>
                 </Box>
-                {/* <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="body2" color="text.secondary">Avg Time/Receipt</Typography>
                   <Typography variant="body2" fontWeight={500}>{data.metrics.averageTimePerReceipt}</Typography>
-                </Box> */}
+                </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="body2" color="text.secondary">Total Duration</Typography>
                   <Typography variant="body2" fontWeight={500}>{data.metrics.totalDuration}</Typography>
@@ -396,7 +404,7 @@ export default function JobworkDetailPage() {
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="body2" color="text.secondary">Rework Count</Typography>
                   <Typography variant="body2" fontWeight={500}>{data.metrics.reworkCount}</Typography>
-                </Box>
+                </Box> */}
               </Stack>
             </CardContent>
           </Card>
